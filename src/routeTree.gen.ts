@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppAlbumsRouteImport } from './routes/_authenticated/app/albums'
+import { Route as AuthenticatedAppAlbumsAlbumIdRouteImport } from './routes/_authenticated/app/albums/$albumId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -39,18 +40,26 @@ const AuthenticatedAppAlbumsRoute = AuthenticatedAppAlbumsRouteImport.update({
   path: '/app/albums',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppAlbumsAlbumIdRoute =
+  AuthenticatedAppAlbumsAlbumIdRouteImport.update({
+    id: '/$albumId',
+    path: '/$albumId',
+    getParentRoute: () => AuthenticatedAppAlbumsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/app/albums': typeof AuthenticatedAppAlbumsRoute
+  '/app/albums': typeof AuthenticatedAppAlbumsRouteWithChildren
+  '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/app/albums': typeof AuthenticatedAppAlbumsRoute
+  '/app/albums': typeof AuthenticatedAppAlbumsRouteWithChildren
+  '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,13 +67,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_authenticated/app/albums': typeof AuthenticatedAppAlbumsRoute
+  '/_authenticated/app/albums': typeof AuthenticatedAppAlbumsRouteWithChildren
+  '/_authenticated/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup' | '/app/albums'
+  fullPaths: '/' | '/login' | '/signup' | '/app/albums' | '/app/albums/$albumId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/app/albums'
+  to: '/' | '/login' | '/signup' | '/app/albums' | '/app/albums/$albumId'
   id:
     | '__root__'
     | '/'
@@ -72,6 +82,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/app/albums'
+    | '/_authenticated/app/albums/$albumId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,15 +129,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAlbumsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/albums/$albumId': {
+      id: '/_authenticated/app/albums/$albumId'
+      path: '/$albumId'
+      fullPath: '/app/albums/$albumId'
+      preLoaderRoute: typeof AuthenticatedAppAlbumsAlbumIdRouteImport
+      parentRoute: typeof AuthenticatedAppAlbumsRoute
+    }
   }
 }
 
+interface AuthenticatedAppAlbumsRouteChildren {
+  AuthenticatedAppAlbumsAlbumIdRoute: typeof AuthenticatedAppAlbumsAlbumIdRoute
+}
+
+const AuthenticatedAppAlbumsRouteChildren: AuthenticatedAppAlbumsRouteChildren =
+  {
+    AuthenticatedAppAlbumsAlbumIdRoute: AuthenticatedAppAlbumsAlbumIdRoute,
+  }
+
+const AuthenticatedAppAlbumsRouteWithChildren =
+  AuthenticatedAppAlbumsRoute._addFileChildren(
+    AuthenticatedAppAlbumsRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAppAlbumsRoute: typeof AuthenticatedAppAlbumsRoute
+  AuthenticatedAppAlbumsRoute: typeof AuthenticatedAppAlbumsRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAppAlbumsRoute: AuthenticatedAppAlbumsRoute,
+  AuthenticatedAppAlbumsRoute: AuthenticatedAppAlbumsRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
