@@ -1,15 +1,23 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { parseLine, transposeChord, ALL_KEYS, semitonesBetween } from "@/lib/chords";
-import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ component: SongView });
+export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ 
+  component: SongView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      setlist: (search.setlist as string) || undefined,
+    };
+  },
+});
 
 function SongView() {
   const { songId } = Route.useParams();
+  const { setlist: setlistId } = Route.useSearch();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [song, setSong] = useState<any>(null);
@@ -21,6 +29,9 @@ function SongView() {
   const [scrollSpeed, setScrollSpeed] = useState(1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+
+  const [setlistSongs, setSetlistSongs] = useState<any[]>([]);
+  const currentIndex = setlistSongs.findIndex(s => s.song_id === songId);
 
   useEffect(() => {
     (async () => {
@@ -34,8 +45,17 @@ function SongView() {
           setFav(!!f);
         }
       }
+
+      if (setlistId) {
+        const { data: ss } = await supabase
+          .from("setlist_songs")
+          .select("song_id, position")
+          .eq("setlist_id", setlistId)
+          .order("position");
+        setSetlistSongs(ss || []);
+      }
     })();
-  }, [songId, user]);
+  }, [songId, user, setlistId]);
 
   // Autoscroll
   useEffect(() => {
@@ -94,12 +114,30 @@ function SongView() {
   );
 
   if (presenting) {
+    const nextSong = () => {
+      if (currentIndex < setlistSongs.length - 1) {
+        navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex + 1].song_id }, search: { setlist: setlistId } });
+        window.scrollTo(0, 0);
+      }
+    };
+    const prevSong = () => {
+      if (currentIndex > 0) {
+        navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex - 1].song_id }, search: { setlist: setlistId } });
+        window.scrollTo(0, 0);
+      }
+    };
+
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
           <div className="flex items-center gap-3">
             <h1 className="font-serif text-xl">{song.title}</h1>
             <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-gold-soft text-gold">{currentKey}</span>
+            {setlistId && (
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground ml-2">
+                {currentIndex + 1} / {setlistSongs.length}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Toolbar
@@ -111,7 +149,27 @@ function SongView() {
             <button onClick={() => setPresenting(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-accent">Sair</button>
           </div>
         </div>
+        
         <div className="px-6 md:px-16 py-12 max-w-4xl mx-auto">{Body}</div>
+
+        {setlistId && (
+          <div className="fixed bottom-0 left-0 right-0 p-6 flex justify-between pointer-events-none">
+            <button 
+              onClick={prevSong} 
+              disabled={currentIndex === 0}
+              className="pointer-events-auto flex items-center gap-2 rounded-full bg-card/80 backdrop-blur border border-border px-6 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-accent disabled:opacity-30"
+            >
+              <ChevronLeft className="h-4 w-4" /> Anterior
+            </button>
+            <button 
+              onClick={nextSong} 
+              disabled={currentIndex === setlistSongs.length - 1}
+              className="pointer-events-auto flex items-center gap-2 rounded-full bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:scale-105 transition-transform disabled:opacity-30"
+            >
+              Próxima <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     );
   }
