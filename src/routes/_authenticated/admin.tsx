@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin")({ component: AdminLayout });
+export const Route = createFileRoute("/_authenticated/app/admin")({ component: AdminLayout });
 
 function AdminLayout() {
   const { isAdmin, loading } = useAuth();
