@@ -141,11 +141,12 @@ function SongView() {
       if (isChordLine(line)) {
         const transposed = transposeChordLine(line, transposeDelta);
         return (
-          <div key={idx} className="font-bold text-orange-600 whitespace-pre mb-0" style={{ minHeight: '1.2em' }}>
+          <div key={idx} className="font-bold text-orange-500 whitespace-pre mb-0" style={{ minHeight: '1.2em', filter: 'drop-shadow(0px 0px 1px rgba(249, 115, 22, 0.2))' }}>
             {transposed}
           </div>
         );
       }
+
 
       // Handle Mixed lines or ChordPro format [C]Lyric
       const tokens = parseLine(line);
