@@ -208,7 +208,7 @@ function SongView() {
           </div>
           <div className="flex items-center gap-2">
             <Toolbar
-              currentKey={currentKey} setCurrentKey={setCurrentKey}
+              currentKey={currentKey} setTransposeDelta={setTransposeDelta}
               fontSize={fontSize} setFontSize={setFontSize}
               scrolling={scrolling} setScrolling={setScrolling}
               scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
@@ -221,7 +221,7 @@ function SongView() {
         </div>
         
         <div className="px-6 md:px-16 py-12 max-w-4xl mx-auto">
-          {Body}
+          {ChordSheet}
           <div className="mt-12 text-center text-[10px] text-muted-foreground/30 uppercase tracking-[0.2em]">
             Atalhos: Espaço (Scroll) | Setas (Navegação)
           </div>
