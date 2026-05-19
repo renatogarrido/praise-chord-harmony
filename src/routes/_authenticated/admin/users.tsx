@@ -53,6 +53,29 @@ function AdminUsers() {
     toast.success("Atualizado!"); load();
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-user-admin", {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      toast.success("Usuário criado com sucesso!");
+      setIsDialogOpen(false);
+      setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+      load();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Erro ao criar usuário");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
       <header className="mb-8 flex justify-between items-end">
