@@ -298,22 +298,13 @@ function SongView() {
   );
 }
 
-function Toolbar({ currentKey, setCurrentKey, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
-  const shift = (d: number) => {
-    const i = noteIndex(currentKey);
-    if (i === -1) {
-      setCurrentKey(ALL_KEYS[0]);
-      return;
-    }
-    const nextIdx = ((i + d) % 12 + 12) % 12;
-    setCurrentKey(ALL_KEYS[nextIdx]);
-  };
+function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
-        <button onClick={() => shift(-1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Diminuir Tom">−</button>
-        <span className="font-mono text-xs px-3 py-1.5 bg-gold-soft text-gold min-w-[3.5rem] text-center font-bold">{currentKey}</span>
-        <button onClick={() => shift(+1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Aumentar Tom">+</button>
+        <button onClick={() => setTransposeDelta((d: number) => d - 1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Diminuir Tom">−</button>
+        <span className="font-mono text-xs px-3 py-1.5 bg-orange-500/10 text-orange-500 min-w-[3.5rem] text-center font-bold">{currentKey}</span>
+        <button onClick={() => setTransposeDelta((d: number) => d + 1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Aumentar Tom">+</button>
       </div>
       <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
         <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="px-3 py-1.5 hover:bg-accent active:scale-95 transition-transform"><Minus className="h-3.5 w-3.5" /></button>
