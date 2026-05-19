@@ -298,100 +298,175 @@ function SongView() {
   }
 
   return (
-    <div className="px-6 md:px-12 py-6 md:py-10 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={() => navigate({ to: ".." as any })} className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-gold">
-          <ChevronLeft className="h-4 w-4" /> Voltar
-        </button>
-        <button onClick={toggleFav} className={`rounded-full p-2 transition-colors ${fav ? "text-gold" : "text-muted-foreground hover:text-foreground"}`}>
-          <Heart className="h-5 w-5" fill={fav ? "currentColor" : "none"} />
-        </button>
+    <div className="px-4 md:px-12 py-6 md:py-10 max-w-5xl mx-auto space-y-8">
+      {/* Header Section with Glassmorphism */}
+      <div className="relative overflow-hidden rounded-3xl bg-card border border-border/50 p-6 md:p-10 shadow-2xl shadow-black/20">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-gold/10 blur-3xl" />
+        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+        
+        <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-4">
+            <button 
+              onClick={() => navigate({ to: ".." as any })} 
+              className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-gold transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Voltar
+            </button>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center rounded-full bg-gold/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-gold">
+                  {song.albums?.title ?? "Cifra"}
+                </span>
+                {fav && <Heart className="h-4 w-4 text-gold fill-gold" />}
+              </div>
+              <h1 className="font-serif text-4xl md:text-6xl leading-tight tracking-tight text-balance">
+                {song.title}
+              </h1>
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-1 w-1 rounded-full bg-gold" />
+                Tom original: <span className="font-mono font-bold text-foreground bg-accent/50 px-2 py-0.5 rounded">{song.original_key}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={toggleFav} 
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border transition-all ${
+                fav 
+                  ? "border-gold/50 bg-gold/10 text-gold shadow-lg shadow-gold/20" 
+                  : "border-border bg-accent/30 text-muted-foreground hover:border-gold/50 hover:text-gold"
+              }`}
+            >
+              <Heart className="h-5 w-5" fill={fav ? "currentColor" : "none"} />
+            </button>
+            
+            <button 
+              onClick={() => {
+                setPresenting(true);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                }
+              }} 
+              className="flex h-12 items-center gap-3 rounded-2xl bg-orange-500 px-8 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-orange-500/25 active:scale-95 transition-all hover:bg-orange-600 hover:shadow-orange-600/30"
+            >
+              <Maximize2 className="h-4 w-4" /> 
+              <span className="hidden sm:inline">Modo Apresentação</span>
+              <span className="sm:hidden">Apresentar</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-8">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">{song.albums?.title ?? "Cifra"}</p>
-        <h1 className="font-serif text-4xl md:text-5xl">{song.title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Tom original: <span className="font-mono text-foreground">{song.original_key}</span></p>
-      </div>
-
-      <div className="sticky top-14 md:top-3 z-20 mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card/90 backdrop-blur-xl p-4 shadow-lg shadow-black/20">
+      {/* Control Bar - Floating Stickied */}
+      <div className="sticky top-4 z-30 flex flex-wrap items-center gap-4 rounded-2xl border border-white/5 bg-card/80 backdrop-blur-2xl p-3 shadow-2xl shadow-black/40">
         <Toolbar
           currentKey={currentKey} setTransposeDelta={setTransposeDelta}
           fontSize={fontSize} setFontSize={setFontSize}
           scrolling={scrolling} setScrolling={setScrolling}
           scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
         />
-        <button 
-          onClick={() => {
-            setPresenting(true);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            // Try to enter fullscreen automatically
-            if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(() => {});
-            }
-          }} 
-          className="ml-auto inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-all hover:bg-orange-600"
-        >
-          <Maximize2 className="h-3.5 w-3.5" /> Apresentação
-        </button>
-      </div>
-
-      <div {...handlers} ref={scrollRef} className="rounded-2xl border border-border bg-card p-6 md:p-10 max-h-[70vh] overflow-y-auto relative group">
-        {ChordSheet}
         
         {setlistId && setlistSongs.length > 0 && (
-          <>
-            <button 
-              onClick={prevSong}
-              disabled={currentIndex <= 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity hidden md:flex items-center justify-center"
-              title="Cifra Anterior"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button 
-              onClick={nextSong}
-              disabled={currentIndex >= setlistSongs.length - 1}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity hidden md:flex items-center justify-center"
-              title="Próxima Cifra"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          </>
+          <div className="ml-auto hidden md:flex items-center gap-1 bg-accent/50 rounded-xl p-1 px-3">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Repertório:</span>
+            <span className="text-xs font-mono font-bold text-gold">{currentIndex + 1} / {setlistSongs.length}</span>
+          </div>
         )}
       </div>
 
+      {/* Main Song Content */}
+      <div className="relative group">
+        <div 
+          {...handlers} 
+          ref={scrollRef} 
+          className="rounded-[2.5rem] border border-border/50 bg-card/50 p-6 md:p-14 shadow-inner min-h-[60vh] relative overflow-hidden"
+        >
+          {/* Paper texture overlay */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
+          
+          <div className="relative">
+            {ChordSheet}
+          </div>
+          
+          {/* Navigation Arrows for Setlist */}
+          {setlistId && setlistSongs.length > 0 && (
+            <>
+              <button 
+                onClick={prevSong}
+                disabled={currentIndex <= 0}
+                className="fixed left-8 top-1/2 -translate-y-1/2 h-14 w-14 rounded-full bg-card/90 border border-border text-muted-foreground shadow-2xl opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-all hover:scale-110 hover:text-gold hidden xl:flex items-center justify-center z-20"
+                title="Cifra Anterior"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+              <button 
+                onClick={nextSong}
+                disabled={currentIndex >= setlistSongs.length - 1}
+                className="fixed right-8 top-1/2 -translate-y-1/2 h-14 w-14 rounded-full bg-card/90 border border-border text-muted-foreground shadow-2xl opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-all hover:scale-110 hover:text-gold hidden xl:flex items-center justify-center z-20"
+                title="Próxima Cifra"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Setlist Navigation */}
       {setlistId && setlistSongs.length > 0 && (
-        <div className="mt-4 flex items-center justify-between md:hidden">
+        <div className="flex items-center justify-between md:hidden bg-accent/30 rounded-2xl p-4 border border-border/50">
           <button 
             onClick={prevSong} 
             disabled={currentIndex <= 0}
-            className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-muted-foreground disabled:opacity-30"
+            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-card border border-border text-xs font-bold uppercase tracking-widest text-muted-foreground disabled:opacity-30 active:scale-95 transition-all"
           >
-            <ChevronLeft className="h-4 w-4" /> Anterior
+            <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-[10px] font-bold text-gold uppercase tracking-[0.2em]">
-            {currentIndex + 1} / {setlistSongs.length}
-          </span>
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Música</span>
+            <span className="text-sm font-mono font-bold text-gold">
+              {currentIndex + 1} de {setlistSongs.length}
+            </span>
+          </div>
           <button 
             onClick={nextSong} 
             disabled={currentIndex >= setlistSongs.length - 1}
-            className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-gold disabled:opacity-30"
+            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-gold text-primary-foreground text-xs font-bold uppercase tracking-widest disabled:opacity-30 active:scale-95 transition-all shadow-lg shadow-gold/20"
           >
-            Próxima <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       )}
 
+      {/* Notes/Observations Section */}
       {song.notes && (
-        <div className="mt-6 rounded-2xl border border-border bg-card p-5">
-          <p className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-gold mb-2"><StickyNote className="h-3 w-3" /> Observações</p>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{song.notes}</p>
+        <div className="rounded-3xl border border-border/50 bg-accent/20 p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <StickyNote className="h-12 w-12 text-gold" />
+          </div>
+          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-gold mb-4">
+            <StickyNote className="h-3.5 w-3.5" /> Observações da Música
+          </p>
+          <div className="prose prose-invert max-w-none">
+            <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">{song.notes}</p>
+          </div>
         </div>
       )}
+      
+      {/* Footer Info */}
+      <div className="pt-8 pb-12 text-center">
+        <div className="h-px w-24 bg-gradient-to-r from-transparent via-border to-transparent mx-auto mb-6" />
+        <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground/40 font-medium">
+          Sistema de Cifras • Profissional
+        </p>
+      </div>
     </div>
   );
 }
+
 
 function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: { 
   currentKey: string; 
