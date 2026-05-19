@@ -125,7 +125,7 @@ function SongView() {
         {tokens.map((t: any, i: number) => t.type === "lyric" ? (
           <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
             {t.chord && (
-              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/5 px-1 rounded transform -translate-y-1">
+              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20 shadow-sm transform -translate-y-[1.4em] scale-90 origin-left whitespace-nowrap z-10">
                 {transposeChord(t.chord, steps)}
               </span>
             )}
@@ -186,11 +186,6 @@ function SongView() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [presenting, nextSong, prevSong, scrolling]);
 
-  const Body = (
-    <div className="chord-sheet" style={{ fontSize: `${fontSize}px` }}>
-      {renderedLines}
-    </div>
-  );
 
   if (presenting) {
     return (
@@ -300,10 +295,8 @@ function SongView() {
 
 function Toolbar({ currentKey, setCurrentKey, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
   const shift = (d: number) => {
-    const i = ALL_KEYS.indexOf(currentKey);
+    const i = noteIndex(currentKey);
     if (i === -1) {
-      // Handle keys with flats or sharps that might not be in ALL_KEYS directly
-      // Fallback: search for index or reset to C
       setCurrentKey(ALL_KEYS[0]);
       return;
     }
