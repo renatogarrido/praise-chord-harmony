@@ -12,6 +12,7 @@ function SetlistDetail() {
   const [items, setItems] = useState<any[]>([]);
   const [allSongs, setAllSongs] = useState<any[]>([]);
   const [adding, setAdding] = useState("");
+  const [songFilter, setSongFilter] = useState("");
 
   const load = useCallback(async () => {
     const { data: sl } = await supabase.from("setlists").select("*").eq("id", setlistId).maybeSingle();
@@ -75,12 +76,44 @@ function SetlistDetail() {
         )}
       </div>
 
-      <div className="mb-6 flex gap-2">
-        <select value={adding} onChange={(e) => setAdding(e.target.value)} className="flex-1 rounded-full border border-border bg-card px-5 py-3 text-sm focus:border-gold/50 focus:outline-none">
-          <option value="">Selecionar música para adicionar...</option>
-          {allSongs.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
-        </select>
-        <button onClick={add} className="inline-flex items-center gap-2 rounded-full bg-gold px-5 text-xs font-semibold uppercase tracking-widest text-primary-foreground"><Plus className="h-4 w-4" /></button>
+      <div className="mb-6 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input 
+            value={songFilter} 
+            onChange={(e) => setSongFilter(e.target.value)} 
+            placeholder="Pesquisar música para adicionar..."
+            className="w-full rounded-full border border-border bg-card pl-11 pr-4 py-3 text-sm focus:border-gold/50 focus:outline-none" 
+          />
+        </div>
+        
+        {songFilter && (
+          <div className="rounded-2xl border border-border bg-card overflow-hidden max-h-60 overflow-y-auto shadow-xl">
+            {allSongs.filter(s => s.title.toLowerCase().includes(songFilter.toLowerCase())).length === 0 ? (
+              <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma música encontrada</div>
+            ) : (
+              allSongs
+                .filter(s => s.title.toLowerCase().includes(songFilter.toLowerCase()))
+                .filter(s => !items.find(it => it.song_id === s.id))
+                .map((s) => (
+                  <button 
+                    key={s.id} 
+                    onClick={async () => {
+                      const pos = items.length;
+                      await supabase.from("setlist_songs").insert({ setlist_id: setlistId, song_id: s.id, position: pos });
+                      setSongFilter("");
+                      load();
+                      toast.success(`${s.title} adicionada!`);
+                    }}
+                    className="w-full text-left px-5 py-3 text-sm hover:bg-accent flex justify-between items-center transition-colors"
+                  >
+                    <span>{s.title}</span>
+                    <Plus className="h-4 w-4 text-gold" />
+                  </button>
+                ))
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
