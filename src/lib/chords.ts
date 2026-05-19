@@ -2,7 +2,7 @@
 const SHARP_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const FLAT_KEYS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-function noteIndex(note: string): number {
+export function noteIndex(note: string): number {
   const n = note[0].toUpperCase() + (note[1] === '#' || note[1] === 'b' ? note[1] : '');
   const i = SHARP_KEYS.indexOf(n);
   if (i >= 0) return i;
