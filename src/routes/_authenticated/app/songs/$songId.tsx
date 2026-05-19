@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex } from "@/lib/chords";
+import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex, isChordLine, transposeChordLine } from "@/lib/chords";
+
 import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 
