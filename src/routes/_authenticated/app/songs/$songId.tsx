@@ -465,8 +465,8 @@ function SongView() {
       </div>
     </div>
   );
-  );
 }
+
 
 function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: { 
   currentKey: string; 
