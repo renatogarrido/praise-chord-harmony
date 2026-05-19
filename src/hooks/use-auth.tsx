@@ -25,7 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin")
             .then(({ data, error }) => {
               if (error) console.error("Error checking admin status:", error);
-              setIsAdmin(!!(data && data.length > 0));
+              const isUserAdmin = !!(data && data.length > 0);
+              console.log("Admin check for user:", s.user.email, "Result:", isUserAdmin);
+              setIsAdmin(isUserAdmin);
             });
         }, 0);
       } else setIsAdmin(false);
@@ -36,7 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin")
           .then(({ data, error }) => {
             if (error) console.error("Error checking admin status:", error);
-            setIsAdmin(!!(data && data.length > 0));
+            const isUserAdmin = !!(data && data.length > 0);
+            console.log("Admin check for user (initial session):", s.user.email, "Result:", isUserAdmin);
+            setIsAdmin(isUserAdmin);
           });
       }
       setLoading(false);
