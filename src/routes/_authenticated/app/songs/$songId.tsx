@@ -45,7 +45,7 @@ function SongView() {
       const { data } = await supabase.from("songs").select("*, albums(id,title)").eq("id", songId).maybeSingle();
       if (data) {
         setSong(data);
-        setCurrentKey(data.original_key);
+        setTransposeDelta(0); // Reset transpose when changing song
         if (user) {
           supabase.from("access_history").insert({ user_id: user.id, song_id: songId });
           const { data: f } = await supabase.from("favorites").select("id").eq("user_id", user.id).eq("song_id", songId).maybeSingle();
