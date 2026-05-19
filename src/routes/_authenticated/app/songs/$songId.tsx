@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,7 +17,8 @@ export const Route = createFileRoute("/_authenticated/app/songs/$songId")({
 
 function SongView() {
   const { songId } = Route.useParams();
-  const { setlist: setlistId } = Route.useSearch();
+  const search = Route.useSearch();
+  const setlistId = search?.setlist;
   const { user } = useAuth();
   const navigate = useNavigate();
   const [song, setSong] = useState<any>(null);
@@ -256,14 +257,20 @@ function SongView() {
         <p className="mt-2 text-sm text-muted-foreground">Tom original: <span className="font-mono text-foreground">{song.original_key}</span></p>
       </div>
 
-      <div className="sticky top-14 md:top-3 z-20 mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/90 backdrop-blur-xl p-3">
+      <div className="sticky top-14 md:top-3 z-20 mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card/90 backdrop-blur-xl p-4 shadow-lg shadow-black/20">
         <Toolbar
           currentKey={currentKey} setCurrentKey={setCurrentKey}
           fontSize={fontSize} setFontSize={setFontSize}
           scrolling={scrolling} setScrolling={setScrolling}
           scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
         />
-        <button onClick={() => setPresenting(true)} className="ml-auto inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-primary-foreground">
+        <button 
+          onClick={() => {
+            setPresenting(true);
+            window.scrollTo(0, 0);
+          }} 
+          className="ml-auto inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-all hover:bg-orange-600"
+        >
           <Maximize2 className="h-3.5 w-3.5" /> Apresentação
         </button>
       </div>
