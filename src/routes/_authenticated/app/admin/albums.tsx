@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Upload } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/albums")({ component: AdminAlbums });
+export const Route = createFileRoute("/_authenticated/app/admin/albums")({ component: AdminAlbums });
 
 function AdminAlbums() {
   const [items, setItems] = useState<any[]>([]);

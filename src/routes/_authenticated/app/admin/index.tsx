@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Music2, Album, BarChart3 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/")({ component: Dashboard });
+export const Route = createFileRoute("/_authenticated/app/admin/")({ component: Dashboard });
 
 function Dashboard() {
   const [stats, setStats] = useState({ users: 0, songs: 0, albums: 0, accesses: 0 });
