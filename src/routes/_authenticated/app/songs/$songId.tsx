@@ -242,7 +242,7 @@ function SongView() {
 
   if (presenting) {
     return (
-      <div ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      <div {...handlers} ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
 
           <div className="flex items-center gap-3">
