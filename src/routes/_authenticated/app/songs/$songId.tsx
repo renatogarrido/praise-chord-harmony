@@ -114,8 +114,6 @@ function SongView() {
     }
   }, [fav, user, songId]);
 
-  if (loading) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
-  if (!song) return <div className="px-6 py-12 text-center text-muted-foreground">Cifra não encontrada</div>;
 
   const renderedLines = useMemo(() => {
     if (!song?.lyrics) return [];
@@ -140,13 +138,13 @@ function SongView() {
             if (t.type !== "lyric") return null;
             const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
             return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.3}px` : 0 }}>
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.5}px` : 0 }}>
                 {lyricToken.chord && (
-                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
+                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 dark:text-orange-400 bg-orange-100/90 dark:bg-orange-500/20 px-1.5 py-0.5 rounded border-b-2 border-orange-500 shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
                     {transposeChord(lyricToken.chord, transposeDelta)}
                   </span>
                 )}
-                <span className="text-foreground/90">{lyricToken.text || "\u00A0"}</span>
+                <span className="text-foreground/90 font-medium">{lyricToken.text || "\u00A0"}</span>
               </span>
             );
           })}
@@ -205,6 +203,9 @@ function SongView() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [presenting, nextSong, prevSong, scrolling]);
 
+
+  if (loading) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
+  if (!song) return <div className="px-6 py-12 text-center text-muted-foreground">Cifra não encontrada</div>;
 
   if (presenting) {
     return (
@@ -291,6 +292,10 @@ function SongView() {
           onClick={() => {
             setPresenting(true);
             window.scrollTo({ top: 0, behavior: "smooth" });
+            // Try to enter fullscreen automatically
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            }
           }} 
           className="ml-auto inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-all hover:bg-orange-600"
         >

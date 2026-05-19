@@ -21,8 +21,10 @@ export function transposeNote(note: string, steps: number, useFlats = false): st
 const CHORD_RE = /^([A-G](?:#|b)?)(maj7|maj9|min7|m7|m9|m|dim|aug|sus2|sus4|add9|7sus4|7|9|11|13|6|sus|°)?(\([^)]*\))?(?:\/([A-G](?:#|b)?))?$/;
 
 export function transposeChord(chord: string, steps: number, useFlats = false): string {
-  const m = chord.match(CHORD_RE);
-  if (!m) return chord;
+  if (!chord || steps === 0) return chord;
+  const cleanChord = chord.trim();
+  const m = cleanChord.match(CHORD_RE);
+  if (!m) return cleanChord;
   const [, root, qual = '', paren = '', bass] = m;
   const newRoot = transposeNote(root, steps, useFlats);
   const newBass = bass ? '/' + transposeNote(bass, steps, useFlats) : '';
