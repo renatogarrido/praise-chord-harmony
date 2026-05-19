@@ -39,6 +39,9 @@ function SetlistDetail() {
     await supabase.from("setlist_songs").update({ position: j }).eq("id", a.id);
     await supabase.from("setlist_songs").update({ position: idx }).eq("id", b.id);
     load();
+  const remove = async (id: string) => {
+    await supabase.from("setlist_songs").delete().eq("id", id);
+    load();
   };
 
   const copyShareLink = () => {
