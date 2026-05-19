@@ -51,8 +51,12 @@ function SongView() {
         setSong(data);
         setTransposeDelta(0); // Reset transpose when changing song
         if (user) {
-          supabase.from("access_history").insert({ user_id: user.id, song_id: songId }).then(({ error }) => {
-            if (error) console.error("Error inserting access history:", error);
+          // Track access history using upsert to avoid duplicate rows for the same song/user
+          supabase.from("access_history").upsert(
+            { user_id: user.id, song_id: songId, accessed_at: new Date().toISOString() },
+            { onConflict: 'user_id, song_id' }
+          ).then(({ error }) => {
+            if (error) console.error("Error updating access history:", error);
           });
           const { data: f } = await supabase.from("favorites").select("id").eq("user_id", user.id).eq("song_id", songId).maybeSingle();
           setFav(!!f);
