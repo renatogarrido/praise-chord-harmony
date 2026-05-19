@@ -29,8 +29,14 @@ function SetlistDetail() {
   const add = async () => {
     if (!adding) return;
     const pos = items.length;
-    await supabase.from("setlist_songs").insert({ setlist_id: setlistId, song_id: adding, position: pos });
-    setAdding(""); load();
+    const { error } = await supabase.from("setlist_songs").insert({ setlist_id: setlistId, song_id: adding, position: pos });
+    if (error) {
+      toast.error("Erro ao adicionar música: " + error.message);
+    } else {
+      setAdding(""); 
+      load();
+      toast.success("Música adicionada ao repertório");
+    }
   };
 
   const move = async (idx: number, dir: -1 | 1) => {
