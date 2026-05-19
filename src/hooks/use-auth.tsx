@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAdmin = async (userId: string) => {
       try {
+        console.log("Checking admin status for user:", userId);
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
@@ -28,11 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (error) {
           console.error("Error checking admin status:", error);
+          // If we can't check, we might try a direct RPC or another table if available
           return false;
         }
         
         const isUserAdmin = data?.role === "admin";
-        console.log("Admin check for user", userId, ":", isUserAdmin, data);
+        console.log("Admin check result for", userId, ":", isUserAdmin, data);
         return isUserAdmin;
       } catch (err) {
         console.error("Unexpected error in admin check:", err);
@@ -40,21 +42,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const initializeAuth = async () => {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      setSession(s);
+      if (s?.user) {
+        const isUserAdmin = await checkAdmin(s.user.id);
+        setIsAdmin(isUserAdmin);
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_e, s) => {
+      console.log("Auth state changed:", _e, s?.user?.id);
       setSession(s);
       if (s?.user) {
         const isUserAdmin = await checkAdmin(s.user.id);
         setIsAdmin(isUserAdmin);
       } else {
         setIsAdmin(false);
-      }
-    });
-
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) {
-        const isUserAdmin = await checkAdmin(s.user.id);
-        setIsAdmin(isUserAdmin);
       }
       setLoading(false);
     });
