@@ -114,8 +114,6 @@ function SongView() {
     }
   }, [fav, user, songId]);
 
-  if (loading) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
-  if (!song) return <div className="px-6 py-12 text-center text-muted-foreground">Cifra não encontrada</div>;
 
   const renderedLines = useMemo(() => {
     if (!song?.lyrics) return [];
@@ -205,6 +203,9 @@ function SongView() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [presenting, nextSong, prevSong, scrolling]);
 
+
+  if (loading) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
+  if (!song) return <div className="px-6 py-12 text-center text-muted-foreground">Cifra não encontrada</div>;
 
   if (presenting) {
     return (
