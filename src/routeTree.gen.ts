@@ -14,20 +14,20 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as PublicSetlistTokenRouteImport } from './routes/public/setlist.$token'
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated/app/history'
 import { Route as AuthenticatedAppFavoritesRouteImport } from './routes/_authenticated/app/favorites'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
-import { Route as AuthenticatedAdminSongsRouteImport } from './routes/_authenticated/admin/songs'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
-import { Route as AuthenticatedAdminAlbumsRouteImport } from './routes/_authenticated/admin/albums'
 import { Route as AuthenticatedAppSongsIndexRouteImport } from './routes/_authenticated/app/songs/index'
 import { Route as AuthenticatedAppSetlistsIndexRouteImport } from './routes/_authenticated/app/setlists/index'
 import { Route as AuthenticatedAppAlbumsIndexRouteImport } from './routes/_authenticated/app/albums/index'
+import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app/admin/index'
 import { Route as AuthenticatedAppSongsSongIdRouteImport } from './routes/_authenticated/app/songs/$songId'
 import { Route as AuthenticatedAppSetlistsSetlistIdRouteImport } from './routes/_authenticated/app/setlists/$setlistId'
 import { Route as AuthenticatedAppAlbumsAlbumIdRouteImport } from './routes/_authenticated/app/albums/$albumId'
+import { Route as AuthenticatedAppAdminUsersRouteImport } from './routes/_authenticated/app/admin/users'
+import { Route as AuthenticatedAppAdminSongsRouteImport } from './routes/_authenticated/app/admin/songs'
+import { Route as AuthenticatedAppAdminSettingsRouteImport } from './routes/_authenticated/app/admin/settings'
+import { Route as AuthenticatedAppAdminAlbumsRouteImport } from './routes/_authenticated/app/admin/albums'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -53,11 +53,6 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
 const PublicSetlistTokenRoute = PublicSetlistTokenRouteImport.update({
   id: '/public/setlist/$token',
   path: '/public/setlist/$token',
@@ -73,28 +68,6 @@ const AuthenticatedAppFavoritesRoute =
     id: '/app/favorites',
     path: '/app/favorites',
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminSongsRoute = AuthenticatedAdminSongsRouteImport.update({
-  id: '/songs',
-  path: '/songs',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminSettingsRoute =
-  AuthenticatedAdminSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAlbumsRoute =
-  AuthenticatedAdminAlbumsRouteImport.update({
-    id: '/albums',
-    path: '/albums',
-    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAppSongsIndexRoute =
   AuthenticatedAppSongsIndexRouteImport.update({
@@ -112,6 +85,12 @@ const AuthenticatedAppAlbumsIndexRoute =
   AuthenticatedAppAlbumsIndexRouteImport.update({
     id: '/app/albums/',
     path: '/app/albums/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppAdminIndexRoute =
+  AuthenticatedAppAdminIndexRouteImport.update({
+    id: '/app/admin/',
+    path: '/app/admin/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAppSongsSongIdRoute =
@@ -132,23 +111,47 @@ const AuthenticatedAppAlbumsAlbumIdRoute =
     path: '/app/albums/$albumId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAppAdminUsersRoute =
+  AuthenticatedAppAdminUsersRouteImport.update({
+    id: '/app/admin/users',
+    path: '/app/admin/users',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppAdminSongsRoute =
+  AuthenticatedAppAdminSongsRouteImport.update({
+    id: '/app/admin/songs',
+    path: '/app/admin/songs',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppAdminSettingsRoute =
+  AuthenticatedAppAdminSettingsRouteImport.update({
+    id: '/app/admin/settings',
+    path: '/app/admin/settings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppAdminAlbumsRoute =
+  AuthenticatedAppAdminAlbumsRouteImport.update({
+    id: '/app/admin/albums',
+    path: '/app/admin/albums',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/admin/albums': typeof AuthenticatedAdminAlbumsRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/songs': typeof AuthenticatedAdminSongsRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
+  '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
+  '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
+  '/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
+  '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/albums/': typeof AuthenticatedAppAlbumsIndexRoute
   '/app/setlists/': typeof AuthenticatedAppSetlistsIndexRoute
   '/app/songs/': typeof AuthenticatedAppSongsIndexRoute
@@ -157,17 +160,18 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/admin/albums': typeof AuthenticatedAdminAlbumsRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/songs': typeof AuthenticatedAdminSongsRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
+  '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
+  '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
+  '/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
+  '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/albums': typeof AuthenticatedAppAlbumsIndexRoute
   '/app/setlists': typeof AuthenticatedAppSetlistsIndexRoute
   '/app/songs': typeof AuthenticatedAppSongsIndexRoute
@@ -178,18 +182,18 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/admin/albums': typeof AuthenticatedAdminAlbumsRoute
-  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/_authenticated/admin/songs': typeof AuthenticatedAdminSongsRoute
-  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/_authenticated/app/history': typeof AuthenticatedAppHistoryRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
+  '/_authenticated/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
+  '/_authenticated/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
+  '/_authenticated/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/_authenticated/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/_authenticated/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/_authenticated/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
+  '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/albums/': typeof AuthenticatedAppAlbumsIndexRoute
   '/_authenticated/app/setlists/': typeof AuthenticatedAppSetlistsIndexRoute
   '/_authenticated/app/songs/': typeof AuthenticatedAppSongsIndexRoute
@@ -201,17 +205,17 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/admin'
-    | '/admin/albums'
-    | '/admin/settings'
-    | '/admin/songs'
-    | '/admin/users'
     | '/app/favorites'
     | '/app/history'
     | '/public/setlist/$token'
-    | '/admin/'
+    | '/app/admin/albums'
+    | '/app/admin/settings'
+    | '/app/admin/songs'
+    | '/app/admin/users'
     | '/app/albums/$albumId'
     | '/app/setlists/$setlistId'
     | '/app/songs/$songId'
+    | '/app/admin/'
     | '/app/albums/'
     | '/app/setlists/'
     | '/app/songs/'
@@ -220,17 +224,18 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/admin/albums'
-    | '/admin/settings'
-    | '/admin/songs'
-    | '/admin/users'
+    | '/admin'
     | '/app/favorites'
     | '/app/history'
     | '/public/setlist/$token'
-    | '/admin'
+    | '/app/admin/albums'
+    | '/app/admin/settings'
+    | '/app/admin/songs'
+    | '/app/admin/users'
     | '/app/albums/$albumId'
     | '/app/setlists/$setlistId'
     | '/app/songs/$songId'
+    | '/app/admin'
     | '/app/albums'
     | '/app/setlists'
     | '/app/songs'
@@ -241,17 +246,17 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/admin'
-    | '/_authenticated/admin/albums'
-    | '/_authenticated/admin/settings'
-    | '/_authenticated/admin/songs'
-    | '/_authenticated/admin/users'
     | '/_authenticated/app/favorites'
     | '/_authenticated/app/history'
     | '/public/setlist/$token'
-    | '/_authenticated/admin/'
+    | '/_authenticated/app/admin/albums'
+    | '/_authenticated/app/admin/settings'
+    | '/_authenticated/app/admin/songs'
+    | '/_authenticated/app/admin/users'
     | '/_authenticated/app/albums/$albumId'
     | '/_authenticated/app/setlists/$setlistId'
     | '/_authenticated/app/songs/$songId'
+    | '/_authenticated/app/admin/'
     | '/_authenticated/app/albums/'
     | '/_authenticated/app/setlists/'
     | '/_authenticated/app/songs/'
@@ -302,13 +307,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/public/setlist/$token': {
       id: '/public/setlist/$token'
       path: '/public/setlist/$token'
@@ -330,34 +328,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppFavoritesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/songs': {
-      id: '/_authenticated/admin/songs'
-      path: '/songs'
-      fullPath: '/admin/songs'
-      preLoaderRoute: typeof AuthenticatedAdminSongsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/albums': {
-      id: '/_authenticated/admin/albums'
-      path: '/albums'
-      fullPath: '/admin/albums'
-      preLoaderRoute: typeof AuthenticatedAdminAlbumsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/app/songs/': {
       id: '/_authenticated/app/songs/'
       path: '/app/songs'
@@ -377,6 +347,13 @@ declare module '@tanstack/react-router' {
       path: '/app/albums'
       fullPath: '/app/albums/'
       preLoaderRoute: typeof AuthenticatedAppAlbumsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/admin/': {
+      id: '/_authenticated/app/admin/'
+      path: '/app/admin'
+      fullPath: '/app/admin/'
+      preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/songs/$songId': {
@@ -400,48 +377,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAlbumsAlbumIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/admin/users': {
+      id: '/_authenticated/app/admin/users'
+      path: '/app/admin/users'
+      fullPath: '/app/admin/users'
+      preLoaderRoute: typeof AuthenticatedAppAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/admin/songs': {
+      id: '/_authenticated/app/admin/songs'
+      path: '/app/admin/songs'
+      fullPath: '/app/admin/songs'
+      preLoaderRoute: typeof AuthenticatedAppAdminSongsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/admin/settings': {
+      id: '/_authenticated/app/admin/settings'
+      path: '/app/admin/settings'
+      fullPath: '/app/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAppAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/admin/albums': {
+      id: '/_authenticated/app/admin/albums'
+      path: '/app/admin/albums'
+      fullPath: '/app/admin/albums'
+      preLoaderRoute: typeof AuthenticatedAppAdminAlbumsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAlbumsRoute: typeof AuthenticatedAdminAlbumsRoute
-  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
-  AuthenticatedAdminSongsRoute: typeof AuthenticatedAdminSongsRoute
-  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAlbumsRoute: AuthenticatedAdminAlbumsRoute,
-  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
-  AuthenticatedAdminSongsRoute: AuthenticatedAdminSongsRoute,
-  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
-
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAppFavoritesRoute: typeof AuthenticatedAppFavoritesRoute
   AuthenticatedAppHistoryRoute: typeof AuthenticatedAppHistoryRoute
+  AuthenticatedAppAdminAlbumsRoute: typeof AuthenticatedAppAdminAlbumsRoute
+  AuthenticatedAppAdminSettingsRoute: typeof AuthenticatedAppAdminSettingsRoute
+  AuthenticatedAppAdminSongsRoute: typeof AuthenticatedAppAdminSongsRoute
+  AuthenticatedAppAdminUsersRoute: typeof AuthenticatedAppAdminUsersRoute
   AuthenticatedAppAlbumsAlbumIdRoute: typeof AuthenticatedAppAlbumsAlbumIdRoute
   AuthenticatedAppSetlistsSetlistIdRoute: typeof AuthenticatedAppSetlistsSetlistIdRoute
   AuthenticatedAppSongsSongIdRoute: typeof AuthenticatedAppSongsSongIdRoute
+  AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
   AuthenticatedAppAlbumsIndexRoute: typeof AuthenticatedAppAlbumsIndexRoute
   AuthenticatedAppSetlistsIndexRoute: typeof AuthenticatedAppSetlistsIndexRoute
   AuthenticatedAppSongsIndexRoute: typeof AuthenticatedAppSongsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAppFavoritesRoute: AuthenticatedAppFavoritesRoute,
   AuthenticatedAppHistoryRoute: AuthenticatedAppHistoryRoute,
+  AuthenticatedAppAdminAlbumsRoute: AuthenticatedAppAdminAlbumsRoute,
+  AuthenticatedAppAdminSettingsRoute: AuthenticatedAppAdminSettingsRoute,
+  AuthenticatedAppAdminSongsRoute: AuthenticatedAppAdminSongsRoute,
+  AuthenticatedAppAdminUsersRoute: AuthenticatedAppAdminUsersRoute,
   AuthenticatedAppAlbumsAlbumIdRoute: AuthenticatedAppAlbumsAlbumIdRoute,
   AuthenticatedAppSetlistsSetlistIdRoute:
     AuthenticatedAppSetlistsSetlistIdRoute,
   AuthenticatedAppSongsSongIdRoute: AuthenticatedAppSongsSongIdRoute,
+  AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
   AuthenticatedAppAlbumsIndexRoute: AuthenticatedAppAlbumsIndexRoute,
   AuthenticatedAppSetlistsIndexRoute: AuthenticatedAppSetlistsIndexRoute,
   AuthenticatedAppSongsIndexRoute: AuthenticatedAppSongsIndexRoute,
@@ -461,3 +457,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
