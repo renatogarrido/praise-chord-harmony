@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, ShieldOff, UserPlus, X, Loader2 } from "lucide-react";
+import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -42,7 +43,35 @@ function AdminUsers() {
     roles?.forEach((r) => { const a = roleMap.get(r.user_id) || []; a.push(r.role); roleMap.set(r.user_id, a); });
     setUsers((profiles ?? []).map((p) => ({ ...p, roles: roleMap.get(p.id) ?? [] })));
   };
+
   useEffect(() => { load(); }, []);
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.")) return;
+    
+    try {
+      // In a real scenario, you'd want an Edge Function to delete from auth.users too
+      // For now, we delete from the profiles/user_roles table (Supabase usually handles profile deletion via trigger/cascade if set up)
+      const { error } = await supabase.from("profiles").delete().eq("id", userId);
+      if (error) throw error;
+      toast.success("Usuário removido!");
+      load();
+    } catch (error: any) {
+      toast.error("Erro ao remover usuário: " + error.message);
+    }
+  };
+
+  const handleEditUser = async (user: any) => {
+    setFormData({
+      email: user.email || "",
+      password: "", // Don't show password
+      fullName: user.full_name || "",
+      churchName: user.church_name || "",
+      role: user.roles.includes("admin") ? "admin" : "user",
+    });
+    setEditingId(user.id);
+    setIsDialogOpen(true);
+  };
 
   const toggleAdmin = async (userId: string, isAdmin: boolean) => {
     if (isAdmin) {
@@ -53,23 +82,50 @@ function AdminUsers() {
     toast.success("Atualizado!"); load();
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-user-admin", {
-        body: formData,
-      });
+      if (editingId) {
+        // Update existing user
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            full_name: formData.fullName,
+            church_name: formData.churchName,
+          })
+          .eq("id", editingId);
 
-      if (error) throw error;
+        if (profileError) throw profileError;
 
-      toast.success("Usuário criado com sucesso!");
+        // Update role
+        const isAdmin = formData.role === "admin";
+        const currentRoles = users.find(u => u.id === editingId)?.roles || [];
+        const currentlyIsAdmin = currentRoles.includes("admin");
+
+        if (isAdmin && !currentlyIsAdmin) {
+          await supabase.from("user_roles").insert({ user_id: editingId, role: "admin" });
+        } else if (!isAdmin && currentlyIsAdmin) {
+          await supabase.from("user_roles").delete().eq("user_id", editingId).eq("role", "admin");
+        }
+
+        toast.success("Usuário atualizado com sucesso!");
+      } else {
+        // Create new user
+        const { data, error } = await supabase.functions.invoke("create-user-admin", {
+          body: formData,
+        });
+        if (error) throw error;
+        toast.success("Usuário criado com sucesso!");
+      }
+
       setIsDialogOpen(false);
       setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+      setEditingId(null);
       load();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Erro ao criar usuário");
+      toast.error(error.message || "Erro ao salvar usuário");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +141,13 @@ function AdminUsers() {
           <p className="mt-2 text-sm text-muted-foreground">Total: {users.length}</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setEditingId(null);
+            setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
               <UserPlus className="h-4 w-4" />
@@ -94,9 +156,9 @@ function AdminUsers() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateUser} className="space-y-4 pt-4">
+            <form onSubmit={handleSaveUser} className="space-y-4 pt-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nome Completo</Label>
                 <Input
@@ -116,19 +178,22 @@ function AdminUsers() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={!!editingId}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="******"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                />
-              </div>
+              {!editingId && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="******"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="churchName">Igreja</Label>
                 <Input
@@ -158,7 +223,7 @@ function AdminUsers() {
                   Cancelar
                 </Button>
                 <Button type="submit" className="bg-gold hover:bg-gold/90 text-white" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cadastrar"}
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : editingId ? "Salvar" : "Cadastrar"}
                 </Button>
               </div>
             </form>
@@ -177,8 +242,14 @@ function AdminUsers() {
                 <p className="text-xs text-muted-foreground">desde {new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
               </div>
               {isAdmin && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold">Admin</span>}
-              <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent">
-                {isAdmin ? <><ShieldOff className="h-3 w-3" /> Remover</> : <><Shield className="h-3 w-3" /> Tornar admin</>}
+              <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
+                {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+              </button>
+              <button onClick={() => handleEditUser(u)} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Editar Usuário">
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button onClick={() => deleteUser(u.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Excluir Usuário">
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           );
