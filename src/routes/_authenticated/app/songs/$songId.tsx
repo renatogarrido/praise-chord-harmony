@@ -292,6 +292,10 @@ function SongView() {
           onClick={() => {
             setPresenting(true);
             window.scrollTo({ top: 0, behavior: "smooth" });
+            // Try to enter fullscreen automatically
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            }
           }} 
           className="ml-auto inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-all hover:bg-orange-600"
         >
