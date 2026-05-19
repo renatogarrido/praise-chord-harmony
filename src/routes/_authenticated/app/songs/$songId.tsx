@@ -22,6 +22,7 @@ function SongView() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [song, setSong] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [transposeDelta, setTransposeDelta] = useState(0);
   const [fontSize, setFontSize] = useState(18);
   const [fav, setFav] = useState(false);
@@ -42,6 +43,7 @@ function SongView() {
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       const { data } = await supabase.from("songs").select("*, albums(id,title)").eq("id", songId).maybeSingle();
       if (data) {
         setSong(data);
@@ -61,6 +63,7 @@ function SongView() {
           .order("position");
         setSetlistSongs(ss || []);
       }
+      setLoading(false);
     })();
   }, [songId, user, setlistId]);
 
@@ -111,7 +114,8 @@ function SongView() {
     }
   }, [fav, user, songId]);
 
-  if (!song) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
+  if (loading) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
+  if (!song) return <div className="px-6 py-12 text-center text-muted-foreground">Cifra não encontrada</div>;
 
   const renderedLines = useMemo(() => {
     if (!song?.lyrics) return [];
@@ -120,7 +124,7 @@ function SongView() {
       if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
       if (tokens[0]?.type === "section") return (
         <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-          {tokens[0].type === 'section' ? tokens[0].label : ""}
+          {tokens[0].label}
         </div>
       );
       if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{tokens[0].text}</div>;
@@ -202,7 +206,7 @@ function SongView() {
 
           <div className="flex items-center gap-3">
             <h1 className="font-serif text-xl font-bold">{song.title}</h1>
-            <span className="font-mono text-xs px-2 py-0.5 rounded bg-orange-500 text-white font-bold">{currentKey}</span>
+            {currentKey && <span className="font-mono text-xs px-2 py-0.5 rounded bg-orange-500 text-white font-bold">{currentKey}</span>}
             {setlistId && setlistSongs.length > 0 && (
               <span className="text-[10px] bg-accent px-2 py-0.5 rounded-full uppercase tracking-widest text-muted-foreground ml-2 font-medium">
                 {currentIndex + 1} / {setlistSongs.length}
