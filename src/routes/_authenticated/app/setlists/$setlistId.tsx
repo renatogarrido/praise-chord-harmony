@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2, Share2, Copy } from "lucide-react";
+import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2, Share2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/setlists/$setlistId")({ component: SetlistDetail });
