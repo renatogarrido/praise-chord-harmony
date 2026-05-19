@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { parseLine, transposeChord, ALL_KEYS, semitonesBetween } from "@/lib/chords";
+import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex } from "@/lib/chords";
 import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -81,13 +81,13 @@ function SongView() {
   // Autoscroll
   useEffect(() => {
     if (!scrolling) { if (rafRef.current) cancelAnimationFrame(rafRef.current); return; }
-    const el = presenting ? document.documentElement : scrollRef.current;
+    const el = presenting ? presentationRef.current : scrollRef.current;
     if (!el) return;
     let last = performance.now();
     const tick = (now: number) => {
       const dt = (now - last) / 16.67;
       last = now;
-      if (presenting) window.scrollBy(0, scrollSpeed * dt * 0.6);
+      if (presenting) el.scrollTop += scrollSpeed * dt * 0.6;
       else el.scrollTop += scrollSpeed * dt * 0.6;
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -111,7 +111,7 @@ function SongView() {
 
   const steps = semitonesBetween(song.original_key || currentKey, currentKey);
 
-  const renderedLines = song.lyrics.split("\n").map((line: string, idx: number) => {
+  const renderedLines = (song.lyrics || "").split(/\r?\n/).map((line: string, idx: number) => {
     const tokens = parseLine(line);
     if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
     if (tokens[0]?.type === "section") return (
@@ -125,7 +125,7 @@ function SongView() {
         {tokens.map((t: any, i: number) => t.type === "lyric" ? (
           <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
             {t.chord && (
-              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/5 px-1 rounded transform -translate-y-1">
+              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20 shadow-sm transform -translate-y-[1.4em] scale-90 origin-left whitespace-nowrap z-10">
                 {transposeChord(t.chord, steps)}
               </span>
             )}
@@ -142,48 +142,52 @@ function SongView() {
     </div>
   );
 
+  const nextSong = useCallback(() => {
+    if (setlistId && currentIndex < setlistSongs.length - 1) {
+      setScrolling(false);
+      navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex + 1].song_id }, search: { setlist: setlistId } });
+      window.scrollTo(0, 0);
+    }
+  }, [currentIndex, setlistSongs, setlistId, navigate]);
+
+  const prevSong = useCallback(() => {
+    if (setlistId && currentIndex > 0) {
+      setScrolling(false);
+      navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex - 1].song_id }, search: { setlist: setlistId } });
+      window.scrollTo(0, 0);
+    }
+  }, [currentIndex, setlistSongs, setlistId, navigate]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!presenting) return;
+
+      if (e.code === "ArrowRight") {
+        e.preventDefault();
+        nextSong();
+      }
+      if (e.code === "ArrowLeft") {
+        e.preventDefault();
+        prevSong();
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        setScrolling(s => !s);
+      }
+      if (e.code === "Escape") {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+        setPresenting(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [presenting, nextSong, prevSong, scrolling]);
+
+
   if (presenting) {
-    const nextSong = () => {
-      if (currentIndex < setlistSongs.length - 1) {
-        setScrolling(false);
-        navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex + 1].song_id }, search: { setlist: setlistId } });
-        window.scrollTo(0, 0);
-      }
-    };
-    const prevSong = () => {
-      if (currentIndex > 0) {
-        setScrolling(false);
-        navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex - 1].song_id }, search: { setlist: setlistId } });
-        window.scrollTo(0, 0);
-      }
-    };
-
-    // Keyboard navigation
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.code === "ArrowRight") {
-          e.preventDefault();
-          nextSong();
-        }
-        if (e.code === "ArrowLeft") {
-          e.preventDefault();
-          prevSong();
-        }
-        if (e.code === "Space") {
-          e.preventDefault();
-          setScrolling(s => !s);
-        }
-        if (e.code === "Escape") {
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          }
-          setPresenting(false);
-        }
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [currentIndex, setlistSongs, scrolling, setlistId]); // Added setlistId dependency for navigation safety
-
     return (
       <div ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
@@ -267,7 +271,7 @@ function SongView() {
         <button 
           onClick={() => {
             setPresenting(true);
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }} 
           className="ml-auto inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-all hover:bg-orange-600"
         >
@@ -291,10 +295,8 @@ function SongView() {
 
 function Toolbar({ currentKey, setCurrentKey, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
   const shift = (d: number) => {
-    const i = ALL_KEYS.indexOf(currentKey);
+    const i = noteIndex(currentKey);
     if (i === -1) {
-      // Handle keys with flats or sharps that might not be in ALL_KEYS directly
-      // Fallback: search for index or reset to C
       setCurrentKey(ALL_KEYS[0]);
       return;
     }
