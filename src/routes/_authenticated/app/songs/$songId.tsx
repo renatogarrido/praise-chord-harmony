@@ -138,13 +138,13 @@ function SongView() {
             if (t.type !== "lyric") return null;
             const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
             return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.3}px` : 0 }}>
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.5}px` : 0 }}>
                 {lyricToken.chord && (
-                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
+                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-100/80 dark:bg-orange-950/40 px-1.5 py-0.5 rounded-sm border border-orange-300 dark:border-orange-800 shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
                     {transposeChord(lyricToken.chord, transposeDelta)}
                   </span>
                 )}
-                <span className="text-foreground/90">{lyricToken.text || "\u00A0"}</span>
+                <span className="text-foreground/90 font-medium">{lyricToken.text || "\u00A0"}</span>
               </span>
             );
           })}
