@@ -22,16 +22,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       if (s?.user) {
         setTimeout(() => {
-          supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin").maybeSingle()
-            .then(({ data }) => setIsAdmin(!!data));
+          supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin")
+            .then(({ data, error }) => {
+              if (error) console.error("Error checking admin status:", error);
+              setIsAdmin(!!(data && data.length > 0));
+            });
         }, 0);
       } else setIsAdmin(false);
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       if (s?.user) {
-        supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin").maybeSingle()
-          .then(({ data }) => setIsAdmin(!!data));
+        supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin")
+          .then(({ data, error }) => {
+            if (error) console.error("Error checking admin status:", error);
+            setIsAdmin(!!(data && data.length > 0));
+          });
       }
       setLoading(false);
     });
