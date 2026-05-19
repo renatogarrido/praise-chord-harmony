@@ -120,22 +120,25 @@ function SongView() {
       if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
       if (tokens[0]?.type === "section") return (
         <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-          {(tokens[0] as any).label}
+          {tokens[0].type === 'section' ? tokens[0].label : ""}
         </div>
       );
-      if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{(tokens[0] as any).text}</div>;
+      if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{tokens[0].text}</div>;
       return (
         <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
-          {tokens.map((t: any, i: number) => t.type === "lyric" ? (
-            <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
-              {t.chord && (
-                <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
-                  {transposeChord(t.chord, transposeDelta)}
-                </span>
-              )}
-              <span className="text-foreground/90">{t.text || "\u00A0"}</span>
-            </span>
-          ) : null)}
+          {tokens.map((t, i) => {
+            if (t.type !== "lyric") return null;
+            return (
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
+                {t.chord && (
+                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
+                    {transposeChord(t.chord, transposeDelta)}
+                  </span>
+                )}
+                <span className="text-foreground/90">{t.text || "\u00A0"}</span>
+              </span>
+            );
+          })}
         </div>
       );
     });
@@ -298,7 +301,16 @@ function SongView() {
   );
 }
 
-function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
+function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: { 
+  currentKey: string; 
+  setTransposeDelta: React.Dispatch<React.SetStateAction<number>>; 
+  fontSize: number; 
+  setFontSize: React.Dispatch<React.SetStateAction<number>>; 
+  scrolling: boolean; 
+  setScrolling: React.Dispatch<React.SetStateAction<boolean>>; 
+  scrollSpeed: number; 
+  setScrollSpeed: React.Dispatch<React.SetStateAction<number>>; 
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
