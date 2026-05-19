@@ -69,7 +69,7 @@ function SongView() {
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      presentationRef.current?.requestFullscreen().catch(err => {
+      document.documentElement.requestFullscreen().catch(err => {
         console.error(`Error attempting to enable full-screen mode: ${err.message}`);
       });
     } else {
