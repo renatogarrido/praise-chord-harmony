@@ -21,20 +21,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAdmin = async (userId: string) => {
       try {
         console.log("Checking admin status for user:", userId);
-        const { data, error } = await supabase
+        
+        // Try reading from user_roles first
+        const { data: roleData, error: roleError } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
           .maybeSingle();
         
-        if (error) {
-          console.error("Error checking admin status:", error);
-          // If we can't check, we might try a direct RPC or another table if available
-          return false;
+        if (roleError) {
+          console.error("Error checking user_roles:", roleError);
         }
+
+        // Fallback: Try reading from profiles table (we added a role column there too)
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle();
         
-        const isUserAdmin = data?.role === "admin";
-        console.log("Admin check result for", userId, ":", isUserAdmin, data);
+        if (profileError) {
+          console.error("Error checking profile role:", profileError);
+        }
+
+        const isUserAdmin = (roleData?.role === "admin") || (profileData?.role === "admin");
+        console.log("Admin check result for", userId, ":", isUserAdmin, { roleData, profileData });
         return isUserAdmin;
       } catch (err) {
         console.error("Unexpected error in admin check:", err);
