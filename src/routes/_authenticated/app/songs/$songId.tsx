@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex } from "@/lib/chords";
@@ -22,7 +22,7 @@ function SongView() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [song, setSong] = useState<any>(null);
-  const [currentKey, setCurrentKey] = useState("C");
+  const [transposeDelta, setTransposeDelta] = useState(0);
   const [fontSize, setFontSize] = useState(18);
   const [fav, setFav] = useState(false);
   const [presenting, setPresenting] = useState(false);
@@ -36,12 +36,16 @@ function SongView() {
   const [setlistSongs, setSetlistSongs] = useState<any[]>([]);
   const currentIndex = setlistSongs.findIndex(s => s.song_id === songId);
 
+  const currentKey = song?.original_key 
+    ? transposeChord(song.original_key, transposeDelta) 
+    : "C";
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("songs").select("*, albums(id,title)").eq("id", songId).maybeSingle();
       if (data) {
         setSong(data);
-        setCurrentKey(data.original_key);
+        setTransposeDelta(0); // Reset transpose when changing song
         if (user) {
           supabase.from("access_history").insert({ user_id: user.id, song_id: songId });
           const { data: f } = await supabase.from("favorites").select("id").eq("user_id", user.id).eq("song_id", songId).maybeSingle();
@@ -109,34 +113,35 @@ function SongView() {
 
   if (!song) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
 
-  const steps = semitonesBetween(song.original_key || currentKey, currentKey);
+  const renderedLines = useMemo(() => {
+    if (!song?.lyrics) return [];
+    return song.lyrics.split(/\r?\n/).map((line: string, idx: number) => {
+      const tokens = parseLine(line);
+      if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
+      if (tokens[0]?.type === "section") return (
+        <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
+          {(tokens[0] as any).label}
+        </div>
+      );
+      if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{(tokens[0] as any).text}</div>;
+      return (
+        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
+          {tokens.map((t: any, i: number) => t.type === "lyric" ? (
+            <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
+              {t.chord && (
+                <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
+                  {transposeChord(t.chord, transposeDelta)}
+                </span>
+              )}
+              <span className="text-foreground/90">{t.text || "\u00A0"}</span>
+            </span>
+          ) : null)}
+        </div>
+      );
+    });
+  }, [song?.lyrics, transposeDelta, fontSize]);
 
-  const renderedLines = (song.lyrics || "").split(/\r?\n/).map((line: string, idx: number) => {
-    const tokens = parseLine(line);
-    if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
-    if (tokens[0]?.type === "section") return (
-      <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-        {(tokens[0] as any).label}
-      </div>
-    );
-    if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{(tokens[0] as any).text}</div>;
-    return (
-      <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
-        {tokens.map((t: any, i: number) => t.type === "lyric" ? (
-          <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
-            {t.chord && (
-              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20 shadow-sm transform -translate-y-[1.4em] scale-90 origin-left whitespace-nowrap z-10">
-                {transposeChord(t.chord, steps)}
-              </span>
-            )}
-            <span className="text-foreground/90">{t.text || "\u00A0"}</span>
-          </span>
-        ) : null)}
-      </div>
-    );
-  });
-
-  const Body = (
+  const ChordSheet = (
     <div className="chord-sheet" style={{ fontSize: `${fontSize}px` }}>
       {renderedLines}
     </div>
@@ -203,7 +208,7 @@ function SongView() {
           </div>
           <div className="flex items-center gap-2">
             <Toolbar
-              currentKey={currentKey} setCurrentKey={setCurrentKey}
+              currentKey={currentKey} setTransposeDelta={setTransposeDelta}
               fontSize={fontSize} setFontSize={setFontSize}
               scrolling={scrolling} setScrolling={setScrolling}
               scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
@@ -216,7 +221,7 @@ function SongView() {
         </div>
         
         <div className="px-6 md:px-16 py-12 max-w-4xl mx-auto">
-          {Body}
+          {ChordSheet}
           <div className="mt-12 text-center text-[10px] text-muted-foreground/30 uppercase tracking-[0.2em]">
             Atalhos: Espaço (Scroll) | Setas (Navegação)
           </div>
@@ -263,7 +268,7 @@ function SongView() {
 
       <div className="sticky top-14 md:top-3 z-20 mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card/90 backdrop-blur-xl p-4 shadow-lg shadow-black/20">
         <Toolbar
-          currentKey={currentKey} setCurrentKey={setCurrentKey}
+          currentKey={currentKey} setTransposeDelta={setTransposeDelta}
           fontSize={fontSize} setFontSize={setFontSize}
           scrolling={scrolling} setScrolling={setScrolling}
           scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
@@ -280,7 +285,7 @@ function SongView() {
       </div>
 
       <div ref={scrollRef} className="rounded-2xl border border-border bg-card p-6 md:p-10 max-h-[70vh] overflow-y-auto">
-        {Body}
+        {ChordSheet}
       </div>
 
       {song.notes && (
@@ -293,22 +298,13 @@ function SongView() {
   );
 }
 
-function Toolbar({ currentKey, setCurrentKey, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
-  const shift = (d: number) => {
-    const i = noteIndex(currentKey);
-    if (i === -1) {
-      setCurrentKey(ALL_KEYS[0]);
-      return;
-    }
-    const nextIdx = ((i + d) % 12 + 12) % 12;
-    setCurrentKey(ALL_KEYS[nextIdx]);
-  };
+function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
-        <button onClick={() => shift(-1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Diminuir Tom">−</button>
-        <span className="font-mono text-xs px-3 py-1.5 bg-gold-soft text-gold min-w-[3.5rem] text-center font-bold">{currentKey}</span>
-        <button onClick={() => shift(+1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Aumentar Tom">+</button>
+        <button onClick={() => setTransposeDelta((d: number) => d - 1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Diminuir Tom">−</button>
+        <span className="font-mono text-xs px-3 py-1.5 bg-orange-500/10 text-orange-500 min-w-[3.5rem] text-center font-bold">{currentKey}</span>
+        <button onClick={() => setTransposeDelta((d: number) => d + 1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Aumentar Tom">+</button>
       </div>
       <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
         <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="px-3 py-1.5 hover:bg-accent active:scale-95 transition-transform"><Minus className="h-3.5 w-3.5" /></button>

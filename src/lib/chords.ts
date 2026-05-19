@@ -10,7 +10,7 @@ export function noteIndex(note: string): number {
   return j >= 0 ? j : -1;
 }
 
-function transposeNote(note: string, steps: number, useFlats = false): string {
+export function transposeNote(note: string, steps: number, useFlats = false): string {
   const idx = noteIndex(note);
   if (idx < 0) return note;
   const newIdx = ((idx + steps) % 12 + 12) % 12;
