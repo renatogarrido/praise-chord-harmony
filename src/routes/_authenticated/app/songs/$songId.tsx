@@ -191,7 +191,12 @@ function SongView() {
           </div>
         </div>
         
-        <div className="px-6 md:px-16 py-12 max-w-4xl mx-auto">{Body}</div>
+        <div className="px-6 md:px-16 py-12 max-w-4xl mx-auto">
+          {Body}
+          <div className="mt-12 text-center text-[10px] text-muted-foreground/30 uppercase tracking-[0.2em]">
+            Atalhos: Espaço (Scroll) | Setas (Navegação)
+          </div>
+        </div>
 
         {setlistId && (
           <div className="fixed bottom-0 left-0 right-0 p-6 flex justify-between pointer-events-none">
