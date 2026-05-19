@@ -12,11 +12,11 @@ const userLinks = [
 ];
 
 const adminLinks = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/admin/albums", label: "Álbuns", icon: Album },
-  { to: "/admin/songs", label: "Cifras", icon: Music2 },
-  { to: "/admin/users", label: "Usuários", icon: Users },
-  { to: "/admin/settings", label: "Personalização", icon: Settings },
+  { to: "/app/admin", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/admin/albums", label: "Álbuns", icon: Album },
+  { to: "/app/admin/songs", label: "Cifras", icon: Music2 },
+  { to: "/app/admin/users", label: "Usuários", icon: Users },
+  { to: "/app/admin/settings", label: "Personalização", icon: Settings },
 ];
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -50,7 +50,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <Section label="Administração">
             {adminLinks.map((l) => (
               <NavLink key={l.to} to={l.to} icon={l.icon}
-                active={l.to === "/admin" ? pathname === "/admin" : pathname.startsWith(l.to)}
+                active={l.to === "/app/admin" ? pathname === "/app/admin" : pathname.startsWith(l.to)}
                 onClick={onNavigate}>
                 {l.label}
               </NavLink>
