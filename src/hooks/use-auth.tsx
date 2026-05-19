@@ -24,16 +24,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
-          .eq("role", "admin")
-          .single();
+          .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error("Error checking admin status:", error);
           return false;
         }
         
-        const isUserAdmin = !!data;
-        console.log("Admin check result:", isUserAdmin);
+        const isUserAdmin = data?.role === "admin";
+        console.log("Admin check for user", userId, ":", isUserAdmin, data);
         return isUserAdmin;
       } catch (err) {
         console.error("Unexpected error in admin check:", err);
