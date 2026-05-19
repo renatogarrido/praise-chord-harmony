@@ -142,12 +142,11 @@ function SongView() {
       if (isChordLine(line)) {
         const transposed = transposeChordLine(line, transposeDelta);
         return (
-          <div key={idx} className="font-bold text-orange-500 whitespace-pre mb-0" style={{ minHeight: '1.2em', filter: 'drop-shadow(0px 0px 1px rgba(249, 115, 22, 0.2))' }}>
+          <div key={idx} className="font-bold text-[#F97316] whitespace-pre mb-0" style={{ minHeight: '1.2em', filter: 'drop-shadow(0px 0px 1px rgba(249, 115, 22, 0.2))' }}>
             {transposed}
           </div>
         );
       }
-
 
       // Handle Mixed lines or ChordPro format [C]Lyric
       const tokens = parseLine(line);
@@ -161,7 +160,7 @@ function SongView() {
             return (
               <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.4}px` : 0 }}>
                 {transposed && (
-                  <span className="chord absolute top-0 left-0 font-bold text-white bg-orange-600 px-1.5 py-0.5 rounded shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
+                  <span className="chord absolute top-0 left-0 font-bold text-[#F97316] bg-transparent px-0 py-0.5 rounded shadow-none transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
                     {transposed}
                   </span>
                 )}
@@ -172,7 +171,6 @@ function SongView() {
         </div>
       );
     });
-
   }, [song?.lyrics, transposeDelta, fontSize]);
 
   const ChordSheet = (
