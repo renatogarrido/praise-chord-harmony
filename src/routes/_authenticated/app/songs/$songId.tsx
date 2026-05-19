@@ -268,7 +268,7 @@ function SongView() {
 
       <div className="sticky top-14 md:top-3 z-20 mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card/90 backdrop-blur-xl p-4 shadow-lg shadow-black/20">
         <Toolbar
-          currentKey={currentKey} setCurrentKey={setCurrentKey}
+          currentKey={currentKey} setTransposeDelta={setTransposeDelta}
           fontSize={fontSize} setFontSize={setFontSize}
           scrolling={scrolling} setScrolling={setScrolling}
           scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
@@ -285,7 +285,7 @@ function SongView() {
       </div>
 
       <div ref={scrollRef} className="rounded-2xl border border-border bg-card p-6 md:p-10 max-h-[70vh] overflow-y-auto">
-        {Body}
+        {ChordSheet}
       </div>
 
       {song.notes && (
