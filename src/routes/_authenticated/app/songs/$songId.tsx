@@ -51,7 +51,9 @@ function SongView() {
         setSong(data);
         setTransposeDelta(0); // Reset transpose when changing song
         if (user) {
-          supabase.from("access_history").insert({ user_id: user.id, song_id: songId });
+          supabase.from("access_history").insert({ user_id: user.id, song_id: songId }).then(({ error }) => {
+            if (error) console.error("Error inserting access history:", error);
+          });
           const { data: f } = await supabase.from("favorites").select("id").eq("user_id", user.id).eq("song_id", songId).maybeSingle();
           setFav(!!f);
         }
