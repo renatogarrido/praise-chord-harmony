@@ -81,13 +81,13 @@ function SongView() {
   // Autoscroll
   useEffect(() => {
     if (!scrolling) { if (rafRef.current) cancelAnimationFrame(rafRef.current); return; }
-    const el = presenting ? document.documentElement : scrollRef.current;
+    const el = presenting ? presentationRef.current : scrollRef.current;
     if (!el) return;
     let last = performance.now();
     const tick = (now: number) => {
       const dt = (now - last) / 16.67;
       last = now;
-      if (presenting) window.scrollBy(0, scrollSpeed * dt * 0.6);
+      if (presenting) el.scrollTop += scrollSpeed * dt * 0.6;
       else el.scrollTop += scrollSpeed * dt * 0.6;
       rafRef.current = requestAnimationFrame(tick);
     };
