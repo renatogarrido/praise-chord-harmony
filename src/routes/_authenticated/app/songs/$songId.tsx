@@ -22,7 +22,7 @@ function SongView() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [song, setSong] = useState<any>(null);
-  const [currentKey, setCurrentKey] = useState("C");
+  const [transposeDelta, setTransposeDelta] = useState(0);
   const [fontSize, setFontSize] = useState(18);
   const [fav, setFav] = useState(false);
   const [presenting, setPresenting] = useState(false);
@@ -35,6 +35,10 @@ function SongView() {
 
   const [setlistSongs, setSetlistSongs] = useState<any[]>([]);
   const currentIndex = setlistSongs.findIndex(s => s.song_id === songId);
+
+  const currentKey = song?.original_key 
+    ? transposeChord(song.original_key, transposeDelta) 
+    : "C";
 
   useEffect(() => {
     (async () => {
