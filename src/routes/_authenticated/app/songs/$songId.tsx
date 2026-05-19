@@ -108,19 +108,27 @@ function SongView() {
 
   if (!song) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
 
-  const steps = semitonesBetween(song.original_key, currentKey);
+  const steps = semitonesBetween(song.original_key || currentKey, currentKey);
 
   const renderedLines = song.lyrics.split("\n").map((line: string, idx: number) => {
     const tokens = parseLine(line);
-    if (tokens[0]?.type === "break") return <div key={idx} className="h-4" />;
-    if (tokens[0]?.type === "section") return <div key={idx} className="section">{(tokens[0] as any).label}</div>;
-    if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm">{(tokens[0] as any).text}</div>;
+    if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
+    if (tokens[0]?.type === "section") return (
+      <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
+        {(tokens[0] as any).label}
+      </div>
+    );
+    if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{(tokens[0] as any).text}</div>;
     return (
-      <div key={idx} className="flex flex-wrap items-end" style={{ minHeight: `${fontSize * 2.2}px` }}>
+      <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
         {tokens.map((t: any, i: number) => t.type === "lyric" ? (
-          <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.1}px` : 0 }}>
-            {t.chord && <span className="chord absolute top-0 left-0">{transposeChord(t.chord, steps)}</span>}
-            <span>{t.text || "\u00A0"}</span>
+          <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
+            {t.chord && (
+              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/5 px-1 rounded transform -translate-y-1">
+                {transposeChord(t.chord, steps)}
+              </span>
+            )}
+            <span className="text-foreground/90">{t.text || "\u00A0"}</span>
           </span>
         ) : null)}
       </div>
@@ -152,27 +160,38 @@ function SongView() {
     // Keyboard navigation
     useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.code === "ArrowRight") nextSong();
-        if (e.code === "ArrowLeft") prevSong();
+        if (e.code === "ArrowRight") {
+          e.preventDefault();
+          nextSong();
+        }
+        if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          prevSong();
+        }
         if (e.code === "Space") {
           e.preventDefault();
           setScrolling(s => !s);
         }
-        if (e.code === "Escape" && !document.fullscreenElement) setPresenting(false);
+        if (e.code === "Escape") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+          setPresenting(false);
+        }
       };
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [currentIndex, setlistSongs, scrolling]);
+    }, [currentIndex, setlistSongs, scrolling, setlistId]); // Added setlistId dependency for navigation safety
 
     return (
       <div ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
 
           <div className="flex items-center gap-3">
-            <h1 className="font-serif text-xl">{song.title}</h1>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-gold-soft text-gold">{currentKey}</span>
-            {setlistId && (
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground ml-2">
+            <h1 className="font-serif text-xl font-bold">{song.title}</h1>
+            <span className="font-mono text-xs px-2 py-0.5 rounded bg-orange-500 text-white font-bold">{currentKey}</span>
+            {setlistId && setlistSongs.length > 0 && (
+              <span className="text-[10px] bg-accent px-2 py-0.5 rounded-full uppercase tracking-widest text-muted-foreground ml-2 font-medium">
                 {currentIndex + 1} / {setlistSongs.length}
               </span>
             )}
@@ -266,30 +285,40 @@ function SongView() {
 function Toolbar({ currentKey, setCurrentKey, fontSize, setFontSize, scrolling, setScrolling, scrollSpeed, setScrollSpeed }: any) {
   const shift = (d: number) => {
     const i = ALL_KEYS.indexOf(currentKey);
-    setCurrentKey(ALL_KEYS[((i + d) % 12 + 12) % 12]);
+    if (i === -1) {
+      // Handle keys with flats or sharps that might not be in ALL_KEYS directly
+      // Fallback: search for index or reset to C
+      setCurrentKey(ALL_KEYS[0]);
+      return;
+    }
+    const nextIdx = ((i + d) % 12 + 12) % 12;
+    setCurrentKey(ALL_KEYS[nextIdx]);
   };
   return (
-    <>
-      <div className="flex items-center rounded-full border border-border overflow-hidden">
-        <button onClick={() => shift(-1)} className="px-3 py-1.5 hover:bg-accent text-sm">−</button>
-        <span className="font-mono text-xs px-3 py-1.5 bg-gold-soft text-gold min-w-[3rem] text-center">{currentKey}</span>
-        <button onClick={() => shift(+1)} className="px-3 py-1.5 hover:bg-accent text-sm">+</button>
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
+        <button onClick={() => shift(-1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Diminuir Tom">−</button>
+        <span className="font-mono text-xs px-3 py-1.5 bg-gold-soft text-gold min-w-[3.5rem] text-center font-bold">{currentKey}</span>
+        <button onClick={() => shift(+1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Aumentar Tom">+</button>
       </div>
-      <div className="flex items-center rounded-full border border-border overflow-hidden">
-        <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="px-3 py-1.5 hover:bg-accent"><Minus className="h-3.5 w-3.5" /></button>
-        <Type className="h-3.5 w-3.5 mx-2 text-muted-foreground" />
-        <button onClick={() => setFontSize(Math.min(40, fontSize + 2))} className="px-3 py-1.5 hover:bg-accent"><Plus className="h-3.5 w-3.5" /></button>
+      <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
+        <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="px-3 py-1.5 hover:bg-accent active:scale-95 transition-transform"><Minus className="h-3.5 w-3.5" /></button>
+        <div className="px-2 flex items-center justify-center border-x border-border/50">
+          <Type className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+        <button onClick={() => setFontSize(Math.min(40, fontSize + 2))} className="px-3 py-1.5 hover:bg-accent active:scale-95 transition-transform"><Plus className="h-3.5 w-3.5" /></button>
       </div>
-      <button onClick={() => setScrolling(!scrolling)} className={`inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent ${scrolling ? "bg-gold-soft text-gold border-gold/30" : ""}`}>
-        {scrolling ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />} Auto {scrollSpeed.toFixed(1)}x
+      <button onClick={() => setScrolling(!scrolling)} className={`inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-accent transition-all ${scrolling ? "bg-gold text-primary-foreground border-gold" : "bg-background/50"}`}>
+        {scrolling ? <Pause className="h-3 w-3 fill-current" /> : <Play className="h-3 w-3 fill-current" />} 
+        <span className="hidden sm:inline">Auto</span> {scrollSpeed.toFixed(1)}x
       </button>
       {scrolling && (
-        <div className="flex items-center gap-2 px-2">
+        <div className="flex items-center gap-2 px-2 bg-background/50 rounded-full border border-border py-1">
           <button onClick={() => setScrollSpeed(Math.max(0.1, scrollSpeed - 0.1))} className="text-muted-foreground hover:text-gold"><Minus className="h-3 w-3" /></button>
-          <input type="range" min={0.1} max={5} step={0.1} value={scrollSpeed} onChange={(e) => setScrollSpeed(+e.target.value)} className="w-20 md:w-24 accent-[var(--gold)]" />
+          <input type="range" min={0.1} max={5} step={0.1} value={scrollSpeed} onChange={(e) => setScrollSpeed(+e.target.value)} className="w-16 md:w-24 accent-[var(--gold)]" />
           <button onClick={() => setScrollSpeed(Math.min(5, scrollSpeed + 0.1))} className="text-muted-foreground hover:text-gold"><Plus className="h-3 w-3" /></button>
         </div>
       )}
-    </>
+    </div>
   );
 }
