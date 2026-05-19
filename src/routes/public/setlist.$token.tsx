@@ -23,25 +23,19 @@ function PublicSetlistView() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: sl, error: slErr } = await supabase
-        .from("setlists")
-        .select("*")
-        .eq("share_token", token)
-        .maybeSingle();
+      const { data, error: rpcErr } = await supabase.rpc("get_public_setlist", { p_token: token });
 
-      if (slErr || !sl) {
+      if (rpcErr || !data) {
         setError("Repertório não encontrado ou link expirado.");
         setLoading(false);
         return;
       }
 
-      const { data: ss, error: ssErr } = await supabase
-        .from("setlist_songs")
-        .select("*, songs(*)")
-        .eq("setlist_id", sl.id)
-        .order("position");
+      const payload = data as any;
+      const sl = payload.setlist;
+      const ss = (payload.songs || []) as any[];
 
-      if (ssErr || !ss || ss.length === 0) {
+      if (!sl || ss.length === 0) {
         setError("Este repertório ainda não possui músicas.");
         setLoading(false);
         return;

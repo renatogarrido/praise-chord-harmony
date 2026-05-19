@@ -20,35 +20,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAdmin = async (userId: string) => {
       try {
-        console.log("Checking admin status for user:", userId);
-        
-        // Try reading from user_roles first
-        const { data: roleData, error: roleError } = await supabase
+        const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
           .maybeSingle();
-        
-        if (roleError) {
-          console.error("Error checking user_roles:", roleError);
-        }
 
-        // Fallback: Try reading from profiles table (we added a role column there too)
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", userId)
           .maybeSingle();
-        
-        if (profileError) {
-          console.error("Error checking profile role:", profileError);
-        }
 
-        const isUserAdmin = (roleData?.role === "admin") || (profileData?.role === "admin");
-        console.log("Admin check result for", userId, ":", isUserAdmin, { roleData, profileData });
-        return isUserAdmin;
-      } catch (err) {
-        console.error("Unexpected error in admin check:", err);
+        return (roleData?.role === "admin") || (profileData?.role === "admin");
+      } catch {
         return false;
       }
     };
@@ -66,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_e, s) => {
-      console.log("Auth state changed:", _e, s?.user?.id);
       setSession(s);
       if (s?.user) {
         const isUserAdmin = await checkAdmin(s.user.id);
