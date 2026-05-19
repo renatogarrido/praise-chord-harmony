@@ -142,48 +142,57 @@ function SongView() {
     </div>
   );
 
+  const nextSong = useCallback(() => {
+    if (setlistId && currentIndex < setlistSongs.length - 1) {
+      setScrolling(false);
+      navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex + 1].song_id }, search: { setlist: setlistId } });
+      window.scrollTo(0, 0);
+    }
+  }, [currentIndex, setlistSongs, setlistId, navigate]);
+
+  const prevSong = useCallback(() => {
+    if (setlistId && currentIndex > 0) {
+      setScrolling(false);
+      navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex - 1].song_id }, search: { setlist: setlistId } });
+      window.scrollTo(0, 0);
+    }
+  }, [currentIndex, setlistSongs, setlistId, navigate]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!presenting) return;
+
+      if (e.code === "ArrowRight") {
+        e.preventDefault();
+        nextSong();
+      }
+      if (e.code === "ArrowLeft") {
+        e.preventDefault();
+        prevSong();
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        setScrolling(s => !s);
+      }
+      if (e.code === "Escape") {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+        setPresenting(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [presenting, nextSong, prevSong, scrolling]);
+
+  const Body = (
+    <div className="chord-sheet" style={{ fontSize: `${fontSize}px` }}>
+      {renderedLines}
+    </div>
+  );
+
   if (presenting) {
-    const nextSong = () => {
-      if (currentIndex < setlistSongs.length - 1) {
-        setScrolling(false);
-        navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex + 1].song_id }, search: { setlist: setlistId } });
-        window.scrollTo(0, 0);
-      }
-    };
-    const prevSong = () => {
-      if (currentIndex > 0) {
-        setScrolling(false);
-        navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex - 1].song_id }, search: { setlist: setlistId } });
-        window.scrollTo(0, 0);
-      }
-    };
-
-    // Keyboard navigation
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.code === "ArrowRight") {
-          e.preventDefault();
-          nextSong();
-        }
-        if (e.code === "ArrowLeft") {
-          e.preventDefault();
-          prevSong();
-        }
-        if (e.code === "Space") {
-          e.preventDefault();
-          setScrolling(s => !s);
-        }
-        if (e.code === "Escape") {
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          }
-          setPresenting(false);
-        }
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [currentIndex, setlistSongs, scrolling, setlistId]); // Added setlistId dependency for navigation safety
-
     return (
       <div ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
