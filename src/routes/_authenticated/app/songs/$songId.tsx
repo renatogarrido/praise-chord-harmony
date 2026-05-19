@@ -136,12 +136,14 @@ function SongView() {
   if (presenting) {
     const nextSong = () => {
       if (currentIndex < setlistSongs.length - 1) {
+        setScrolling(false);
         navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex + 1].song_id }, search: { setlist: setlistId } });
         window.scrollTo(0, 0);
       }
     };
     const prevSong = () => {
       if (currentIndex > 0) {
+        setScrolling(false);
         navigate({ to: "/app/songs/$songId", params: { songId: setlistSongs[currentIndex - 1].song_id }, search: { setlist: setlistId } });
         window.scrollTo(0, 0);
       }
@@ -277,7 +279,11 @@ function Toolbar({ currentKey, setCurrentKey, fontSize, setFontSize, scrolling, 
         {scrolling ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />} Auto {scrollSpeed.toFixed(1)}x
       </button>
       {scrolling && (
-        <input type="range" min={0.3} max={4} step={0.1} value={scrollSpeed} onChange={(e) => setScrollSpeed(+e.target.value)} className="w-24 accent-[var(--gold)]" />
+        <div className="flex items-center gap-2 px-2">
+          <button onClick={() => setScrollSpeed(Math.max(0.1, scrollSpeed - 0.1))} className="text-muted-foreground hover:text-gold"><Minus className="h-3 w-3" /></button>
+          <input type="range" min={0.1} max={5} step={0.1} value={scrollSpeed} onChange={(e) => setScrollSpeed(+e.target.value)} className="w-20 md:w-24 accent-[var(--gold)]" />
+          <button onClick={() => setScrollSpeed(Math.min(5, scrollSpeed + 0.1))} className="text-muted-foreground hover:text-gold"><Plus className="h-3 w-3" /></button>
+        </div>
       )}
     </>
   );
