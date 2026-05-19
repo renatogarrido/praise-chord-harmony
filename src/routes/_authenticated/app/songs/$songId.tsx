@@ -133,14 +133,14 @@ function SongView() {
         return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{token.text}</div>;
       }
       return (
-        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
+        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.4}px` }}>
           {tokens.map((t, i) => {
             if (t.type !== "lyric") return null;
             const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
             return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.5}px` : 0 }}>
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.6}px` : 0 }}>
                 {lyricToken.chord && (
-                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 dark:text-orange-400 bg-orange-100/90 dark:bg-orange-500/20 px-1.5 py-0.5 rounded border-b-2 border-orange-500 shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
+                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 dark:text-orange-400 bg-orange-100/80 dark:bg-orange-900/30 px-2 py-0.5 rounded-md border border-orange-300 dark:border-orange-500/40 shadow-sm transform -translate-y-[1.3em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none ring-1 ring-orange-500/20">
                     {transposeChord(lyricToken.chord, transposeDelta)}
                   </span>
                 )}
@@ -328,11 +328,14 @@ function Toolbar({ currentKey, setTransposeDelta, fontSize, setFontSize, scrolli
   setScrollSpeed: React.Dispatch<React.SetStateAction<number>>; 
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
-        <button onClick={() => setTransposeDelta((d: number) => d - 1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Diminuir Tom">−</button>
-        <span className="font-mono text-xs px-3 py-1.5 bg-orange-500/10 text-orange-500 min-w-[3.5rem] text-center font-bold">{currentKey}</span>
-        <button onClick={() => setTransposeDelta((d: number) => d + 1)} className="px-3 py-1.5 hover:bg-accent text-sm active:scale-95 transition-transform" title="Aumentar Tom">+</button>
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center rounded-full border border-orange-200 dark:border-orange-500/30 overflow-hidden bg-orange-50/50 dark:bg-orange-900/10 p-0.5">
+        <button onClick={() => setTransposeDelta((d: number) => d - 1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 transition-colors" title="Diminuir Tom">−</button>
+        <div className="flex flex-col items-center justify-center px-2 min-w-[3rem]">
+          <span className="text-[9px] uppercase tracking-tighter text-orange-400 dark:text-orange-600 font-bold leading-none mb-0.5">Tom</span>
+          <span className="font-mono text-xs text-orange-600 dark:text-orange-400 font-bold leading-none">{currentKey}</span>
+        </div>
+        <button onClick={() => setTransposeDelta((d: number) => d + 1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 transition-colors" title="Aumentar Tom">+</button>
       </div>
       <div className="flex items-center rounded-full border border-border overflow-hidden bg-background/50">
         <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="px-3 py-1.5 hover:bg-accent active:scale-95 transition-transform"><Minus className="h-3.5 w-3.5" /></button>

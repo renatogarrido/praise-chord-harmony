@@ -17,18 +17,23 @@ export function transposeNote(note: string, steps: number, useFlats = false): st
   return useFlats ? FLAT_KEYS[newIdx] : SHARP_KEYS[newIdx];
 }
 
-// Match chord like: C, Cm, C#m7, Dbmaj7, F/G, Asus4, Bm7(b5), G/B
-const CHORD_RE = /^([A-G](?:#|b)?)(maj7|maj9|min7|m7|m9|m|dim|aug|sus2|sus4|add9|7sus4|7|9|11|13|6|sus|°)?(\([^)]*\))?(?:\/([A-G](?:#|b)?))?$/;
-
+// Match chord like: C, Cm, C#m7, Dbmaj7, F/G, Asus4, Bm7(b5), G/B, etc.
+// Simplified approach: find the root (and optional bass) and transpose them, keep the rest.
 export function transposeChord(chord: string, steps: number, useFlats = false): string {
   if (!chord || steps === 0) return chord;
   const cleanChord = chord.trim();
-  const m = cleanChord.match(CHORD_RE);
-  if (!m) return cleanChord;
-  const [, root, qual = '', paren = '', bass] = m;
-  const newRoot = transposeNote(root, steps, useFlats);
-  const newBass = bass ? '/' + transposeNote(bass, steps, useFlats) : '';
-  return newRoot + qual + paren + newBass;
+  
+  // Handle bass notes like C/E
+  const parts = cleanChord.split('/');
+  const transposedParts = parts.map(part => {
+    // A part starts with A-G, optionally followed by # or b
+    const match = part.match(/^([A-G][#b]?)(.*)$/);
+    if (!match) return part;
+    const [, root, suffix] = match;
+    return transposeNote(root, steps, useFlats) + suffix;
+  });
+  
+  return transposedParts.join('/');
 }
 
 export function semitonesBetween(fromKey: string, toKey: string): number {
