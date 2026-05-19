@@ -133,14 +133,14 @@ function SongView() {
         return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{token.text}</div>;
       }
       return (
-        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
+        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.4}px` }}>
           {tokens.map((t, i) => {
             if (t.type !== "lyric") return null;
             const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
             return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.5}px` : 0 }}>
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.6}px` : 0 }}>
                 {lyricToken.chord && (
-                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 dark:text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-500/30 shadow-sm transform -translate-y-[1.2em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
+                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 dark:text-orange-400 bg-orange-100/80 dark:bg-orange-900/30 px-2 py-0.5 rounded-md border border-orange-300 dark:border-orange-500/40 shadow-sm transform -translate-y-[1.3em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none ring-1 ring-orange-500/20">
                     {transposeChord(lyricToken.chord, transposeDelta)}
                   </span>
                 )}
