@@ -26,12 +26,7 @@ function HistoryPage() {
       if (error) {
         console.error("Error fetching history:", error);
       } else {
-        const seen = new Set<string>();
-        const filteredItems = (data ?? []).filter((h: any) => {
-          if (!h.songs || seen.has(h.song_id)) return false;
-          seen.add(h.song_id);
-          return true;
-        });
+        const filteredItems = (data ?? []).filter((h: any) => !!h.songs);
         setItems(filteredItems);
       }
       setLoading(false);
