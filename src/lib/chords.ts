@@ -74,14 +74,19 @@ export function isChordLine(line: string): boolean {
 }
 
 export function transposeChordLine(line: string, steps: number): string {
-  // We want to preserve the positions/spaces
-  // regex to find things that look like chords
-  return line.replace(/([A-G][#b]?(?:m|maj|min|aug|dim|sus|add|7|9|11|13|b5|#5|6|°|ø)*(?:\/[A-G][#b]?)?)/gi, (match) => {
-    // Final check to see if it's actually a chord (to avoid transposing words that partially match)
-    // We only transpose if it's followed by a space or end of string, and preceded by space or start of string
-    return transposeChord(match, steps);
-  });
+  // We want to preserve the exact spacing
+  return line.split(/(\s+)/).map(part => {
+    if (!part || part.trim() === '') return part;
+    
+    // Check if this part is a chord
+    const isChord = /^[A-G][#b]?(m|maj|min|aug|dim|sus|add|7|9|11|13|b5|#5|6|°|ø)*(\/[A-G][#b]?)?$/i.test(part);
+    if (isChord) {
+      return transposeChord(part, steps);
+    }
+    return part;
+  }).join('');
 }
+
 
 
 // Parse a chord-pro-ish line where chords are wrapped in [ ] OR a plain "chord line" above lyric lines.
