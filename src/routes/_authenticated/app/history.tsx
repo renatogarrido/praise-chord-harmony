@@ -9,17 +9,35 @@ export const Route = createFileRoute("/_authenticated/app/history")({ component:
 function HistoryPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     if (!user) return;
-    supabase.from("access_history").select("song_id, accessed_at, songs(id,title,original_key,albums(title))")
-      .eq("user_id", user.id).order("accessed_at", { ascending: false }).limit(50)
-      .then(({ data }) => {
+    
+    const fetchHistory = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("access_history")
+        .select("song_id, accessed_at, songs(id,title,original_key,albums(title))")
+        .eq("user_id", user.id)
+        .order("accessed_at", { ascending: false })
+        .limit(50);
+        
+      if (error) {
+        console.error("Error fetching history:", error);
+      } else {
         const seen = new Set<string>();
-        setItems((data ?? []).filter((h: any) => {
+        const filteredItems = (data ?? []).filter((h: any) => {
           if (!h.songs || seen.has(h.song_id)) return false;
-          seen.add(h.song_id); return true;
-        }));
-      });
+          seen.add(h.song_id);
+          return true;
+        });
+        setItems(filteredItems);
+      }
+      setLoading(false);
+    };
+
+    fetchHistory();
   }, [user]);
 
   return (
