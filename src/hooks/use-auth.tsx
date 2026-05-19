@@ -18,33 +18,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+    const checkAdmin = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error checking admin status:", error);
+          return false;
+        }
+        
+        const isUserAdmin = !!data;
+        console.log("Admin check result:", isUserAdmin);
+        return isUserAdmin;
+      } catch (err) {
+        console.error("Unexpected error in admin check:", err);
+        return false;
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_e, s) => {
       setSession(s);
       if (s?.user) {
-        setTimeout(() => {
-          supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin")
-            .then(({ data, error }) => {
-              if (error) console.error("Error checking admin status:", error);
-              const isUserAdmin = !!(data && data.length > 0);
-              console.log("Admin check for user:", s.user.email, "Result:", isUserAdmin);
-              setIsAdmin(isUserAdmin);
-            });
-        }, 0);
-      } else setIsAdmin(false);
+        const isUserAdmin = await checkAdmin(s.user.id);
+        setIsAdmin(isUserAdmin);
+      } else {
+        setIsAdmin(false);
+      }
     });
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       if (s?.user) {
-        supabase.from("user_roles").select("role").eq("user_id", s.user.id).eq("role", "admin")
-          .then(({ data, error }) => {
-            if (error) console.error("Error checking admin status:", error);
-            const isUserAdmin = !!(data && data.length > 0);
-            console.log("Admin check for user (initial session):", s.user.email, "Result:", isUserAdmin);
-            setIsAdmin(isUserAdmin);
-          });
+        const isUserAdmin = await checkAdmin(s.user.id);
+        setIsAdmin(isUserAdmin);
       }
       setLoading(false);
     });
+
     return () => subscription.unsubscribe();
   }, []);
 
