@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import { ALL_KEYS } from "@/lib/chords";
 
-export const Route = createFileRoute("/_authenticated/admin/songs")({ component: AdminSongs });
+export const Route = createFileRoute("/_authenticated/app/admin/songs")({ component: AdminSongs });
 
 function AdminSongs() {
   const [items, setItems] = useState<any[]>([]);

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/admin/users")({ component: AdminUsers });
+export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
 function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
