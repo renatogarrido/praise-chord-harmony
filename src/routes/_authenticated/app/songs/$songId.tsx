@@ -113,34 +113,35 @@ function SongView() {
 
   if (!song) return <div className="px-6 py-12"><div className="h-64 bg-card rounded-xl animate-pulse" /></div>;
 
-  const steps = semitonesBetween(song.original_key || currentKey, currentKey);
+  const renderedLines = useMemo(() => {
+    if (!song?.lyrics) return [];
+    return song.lyrics.split(/\r?\n/).map((line: string, idx: number) => {
+      const tokens = parseLine(line);
+      if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
+      if (tokens[0]?.type === "section") return (
+        <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
+          {(tokens[0] as any).label}
+        </div>
+      );
+      if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{(tokens[0] as any).text}</div>;
+      return (
+        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
+          {tokens.map((t: any, i: number) => t.type === "lyric" ? (
+            <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
+              {t.chord && (
+                <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
+                  {transposeChord(t.chord, transposeDelta)}
+                </span>
+              )}
+              <span className="text-foreground/90">{t.text || "\u00A0"}</span>
+            </span>
+          ) : null)}
+        </div>
+      );
+    });
+  }, [song?.lyrics, transposeDelta, fontSize]);
 
-  const renderedLines = (song.lyrics || "").split(/\r?\n/).map((line: string, idx: number) => {
-    const tokens = parseLine(line);
-    if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
-    if (tokens[0]?.type === "section") return (
-      <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-        {(tokens[0] as any).label}
-      </div>
-    );
-    if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{(tokens[0] as any).text}</div>;
-    return (
-      <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
-        {tokens.map((t: any, i: number) => t.type === "lyric" ? (
-          <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
-            {t.chord && (
-              <span className="chord absolute top-0 left-0 font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20 shadow-sm transform -translate-y-[1.4em] scale-90 origin-left whitespace-nowrap z-10">
-                {transposeChord(t.chord, steps)}
-              </span>
-            )}
-            <span className="text-foreground/90">{t.text || "\u00A0"}</span>
-          </span>
-        ) : null)}
-      </div>
-    );
-  });
-
-  const Body = (
+  const ChordSheet = (
     <div className="chord-sheet" style={{ fontSize: `${fontSize}px` }}>
       {renderedLines}
     </div>
