@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Music2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/app/songs")({ component: SongsPage });
+export const Route = createFileRoute("/_authenticated/app/songs/")({ component: SongsPage });
 
 function SongsPage() {
   const [songs, setSongs] = useState<any[]>([]);
