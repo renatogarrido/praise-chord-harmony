@@ -123,26 +123,30 @@ function SongView() {
       const tokens = parseLine(line);
       if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
       if (tokens[0]?.type === "section") {
-        const label = (tokens[0] as any).label;
+        const token = tokens[0] as { type: 'section'; label: string };
         return (
           <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-            {label}
+            {token.label}
           </div>
         );
       }
-      if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{tokens[0].text}</div>;
+      if (tokens[0]?.type === "comment") {
+        const token = tokens[0] as { type: 'comment'; text: string };
+        return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{token.text}</div>;
+      }
       return (
         <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
           {tokens.map((t, i) => {
             if (t.type !== "lyric") return null;
+            const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
             return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: t.chord ? `${fontSize * 1.3}px` : 0 }}>
-                {t.chord && (
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.3}px` : 0 }}>
+                {lyricToken.chord && (
                   <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30 shadow-md transform -translate-y-[1.4em] scale-95 origin-left whitespace-nowrap z-10 transition-colors">
-                    {transposeChord(t.chord, transposeDelta)}
+                    {transposeChord(lyricToken.chord, transposeDelta)}
                   </span>
                 )}
-                <span className="text-foreground/90">{t.text || "\u00A0"}</span>
+                <span className="text-foreground/90">{lyricToken.text || "\u00A0"}</span>
               </span>
             );
           })}
