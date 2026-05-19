@@ -298,17 +298,17 @@ function SongView() {
   return (
     <div className="px-4 md:px-12 py-6 md:py-10 max-w-5xl mx-auto space-y-8">
       {/* Header Section with Glassmorphism */}
-      <div className="relative overflow-hidden rounded-3xl bg-card border border-border/50 p-6 md:p-10 shadow-2xl shadow-black/20">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-gold/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-card to-secondary/30 border border-border/50 p-6 md:p-12 shadow-xl">
+        <div className="absolute top-0 right-0 -mt-12 -mr-12 h-64 w-64 rounded-full bg-primary/10 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 -mb-12 -ml-12 h-64 w-64 rounded-full bg-gold/10 blur-[100px]" />
         
-        <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-4">
+        <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="space-y-6">
             <button 
               onClick={() => navigate({ to: ".." as any })} 
-              className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-gold transition-colors"
+              className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors"
             >
-              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Voltar
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Voltar para lista
             </button>
             
             <div className="space-y-2">
