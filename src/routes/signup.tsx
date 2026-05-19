@@ -11,6 +11,7 @@ function SignupPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
   const [name, setName] = useState("");
+  const [churchName, setChurchName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,10 @@ function SignupPage() {
       email, password,
       options: {
         emailRedirectTo: `${window.location.origin}/app/albums`,
-        data: { full_name: name },
+        data: { 
+          full_name: name,
+          church_name: churchName 
+        },
       },
     });
     setLoading(false);
@@ -46,6 +50,12 @@ function SignupPage() {
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Nome</label>
               <input required value={name} onChange={(e) => setName(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-gold/50 focus:outline-none" />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Igreja</label>
+              <input required value={churchName} onChange={(e) => setChurchName(e.target.value)}
+                placeholder="Ex: Renascer em Cristo"
                 className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-gold/50 focus:outline-none" />
             </div>
             <div>
