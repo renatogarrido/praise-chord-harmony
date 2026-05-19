@@ -122,11 +122,14 @@ function SongView() {
     return song.lyrics.split(/\r?\n/).map((line: string, idx: number) => {
       const tokens = parseLine(line);
       if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
-      if (tokens[0]?.type === "section") return (
-        <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-          {tokens[0].label}
-        </div>
-      );
+      if (tokens[0]?.type === "section") {
+        const label = (tokens[0] as any).label;
+        return (
+          <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
+            {label}
+          </div>
+        );
+      }
       if (tokens[0]?.type === "comment") return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{tokens[0].text}</div>;
       return (
         <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.2}px` }}>
