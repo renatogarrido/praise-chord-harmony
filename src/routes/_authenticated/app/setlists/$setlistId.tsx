@@ -11,7 +11,6 @@ function SetlistDetail() {
   const [setlist, setSetlist] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [allSongs, setAllSongs] = useState<any[]>([]);
-  const [adding, setAdding] = useState("");
   const [songFilter, setSongFilter] = useState("");
 
   const load = useCallback(async () => {
@@ -26,18 +25,6 @@ function SetlistDetail() {
     supabase.from("songs").select("id,title").order("title").then(({ data }) => setAllSongs(data ?? []));
   }, [load]);
 
-  const add = async () => {
-    if (!adding) return;
-    const pos = items.length;
-    const { error } = await supabase.from("setlist_songs").insert({ setlist_id: setlistId, song_id: adding, position: pos });
-    if (error) {
-      toast.error("Erro ao adicionar música: " + error.message);
-    } else {
-      setAdding(""); 
-      load();
-      toast.success("Música adicionada ao repertório");
-    }
-  };
 
   const move = async (idx: number, dir: -1 | 1) => {
     const j = idx + dir;
