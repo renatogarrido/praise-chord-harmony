@@ -140,7 +140,7 @@ function SongView() {
             return (
               <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.5}px` : 0 }}>
                 {lyricToken.chord && (
-                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 bg-orange-100/80 dark:bg-orange-950/40 px-1.5 py-0.5 rounded-sm border border-orange-300 dark:border-orange-800 shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
+                  <span className="chord absolute top-0 left-0 font-bold text-orange-600 dark:text-orange-400 bg-orange-100/90 dark:bg-orange-500/20 px-1.5 py-0.5 rounded border-b-2 border-orange-500 shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
                     {transposeChord(lyricToken.chord, transposeDelta)}
                   </span>
                 )}
