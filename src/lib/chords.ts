@@ -62,14 +62,14 @@ export function isChordLine(line: string): boolean {
   for (const word of words) {
     // A word is likely a chord if it matches the pattern
     // and isn't a common Portuguese word that could be mistaken (like "A", "E", "D")
-    // unless it's in a line with other clear chords
-    const isChord = /^[A-G][#b]?(m|maj|min|aug|dim|sus|add|7|9|11|13|b5|#5|6|°|ø)*(\/[A-G][#b]?)?$/i.test(word);
+    // but we trust the line if multiple chords are found
+    const isChord = /^[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\/[A-G][#b]?)?$/i.test(word);
     if (isChord) {
       chordCount++;
     }
   }
   
-  // If most words are chords, it's a chord line
+  // If at least half the words are chords, it's a chord line
   return chordCount / words.length >= 0.5;
 }
 
@@ -79,13 +79,14 @@ export function transposeChordLine(line: string, steps: number): string {
     if (!part || part.trim() === '') return part;
     
     // Check if this part is a chord
-    const isChord = /^[A-G][#b]?(m|maj|min|aug|dim|sus|add|7|9|11|13|b5|#5|6|°|ø)*(\/[A-G][#b]?)?$/i.test(part);
+    const isChord = /^[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\/[A-G][#b]?)?$/i.test(part);
     if (isChord) {
       return transposeChord(part, steps);
     }
     return part;
   }).join('');
 }
+
 
 
 
