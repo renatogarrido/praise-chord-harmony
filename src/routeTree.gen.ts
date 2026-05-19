@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as PublicSetlistTokenRouteImport } from './routes/public/setlist.$token'
 import { Route as AuthenticatedAppSongsRouteImport } from './routes/_authenticated/app/songs'
 import { Route as AuthenticatedAppSetlistsRouteImport } from './routes/_authenticated/app/setlists'
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated/app/history'
@@ -56,6 +57,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const PublicSetlistTokenRoute = PublicSetlistTokenRouteImport.update({
+  id: '/public/setlist/$token',
+  path: '/public/setlist/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppSongsRoute = AuthenticatedAppSongsRouteImport.update({
   id: '/app/songs',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/setlists': typeof AuthenticatedAppSetlistsRouteWithChildren
   '/app/songs': typeof AuthenticatedAppSongsRouteWithChildren
+  '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/setlists': typeof AuthenticatedAppSetlistsRouteWithChildren
   '/app/songs': typeof AuthenticatedAppSongsRouteWithChildren
+  '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/_authenticated/app/history': typeof AuthenticatedAppHistoryRoute
   '/_authenticated/app/setlists': typeof AuthenticatedAppSetlistsRouteWithChildren
   '/_authenticated/app/songs': typeof AuthenticatedAppSongsRouteWithChildren
+  '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/_authenticated/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/setlists'
     | '/app/songs'
+    | '/public/setlist/$token'
     | '/admin/'
     | '/app/albums/$albumId'
     | '/app/setlists/$setlistId'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/setlists'
     | '/app/songs'
+    | '/public/setlist/$token'
     | '/admin'
     | '/app/albums/$albumId'
     | '/app/setlists/$setlistId'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/history'
     | '/_authenticated/app/setlists'
     | '/_authenticated/app/songs'
+    | '/public/setlist/$token'
     | '/_authenticated/admin/'
     | '/_authenticated/app/albums/$albumId'
     | '/_authenticated/app/setlists/$setlistId'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  PublicSetlistTokenRoute: typeof PublicSetlistTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/public/setlist/$token': {
+      id: '/public/setlist/$token'
+      path: '/public/setlist/$token'
+      fullPath: '/public/setlist/$token'
+      preLoaderRoute: typeof PublicSetlistTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/songs': {
       id: '/_authenticated/app/songs'
@@ -469,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  PublicSetlistTokenRoute: PublicSetlistTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

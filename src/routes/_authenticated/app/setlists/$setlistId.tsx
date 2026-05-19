@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2 } from "lucide-react";
+import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2, Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/setlists/$setlistId")({ component: SetlistDetail });
@@ -46,6 +46,12 @@ function SetlistDetail() {
     load();
   };
 
+  const copyShareLink = () => {
+    const url = `${window.location.origin}/public/setlist/${setlist.share_token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link de compartilhamento copiado!");
+  };
+
   if (!setlist) return <div className="p-12"><div className="h-32 bg-card rounded-xl animate-pulse" /></div>;
 
   return (
@@ -54,10 +60,17 @@ function SetlistDetail() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Repertório</p>
-          <h1 className="font-serif text-4xl">{setlist.name}</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="font-serif text-4xl">{setlist.name}</h1>
+            <button onClick={copyShareLink} className="p-2 rounded-full border border-border hover:bg-accent text-muted-foreground hover:text-gold transition-colors" title="Copiar link público">
+              <Share2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         {items.length > 0 && (
-          <Link to="/app/songs/$songId" params={{ songId: items[0].songs.id }}
+          <Link to="/app/songs/$songId" 
+            params={{ songId: items[0].songs.id }}
+            search={{ setlist: setlistId }}
             className="inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-primary-foreground"><Maximize2 className="h-3.5 w-3.5" /> Apresentar</Link>
         )}
       </div>
@@ -76,7 +89,7 @@ function SetlistDetail() {
         ) : items.map((it, i) => (
           <div key={it.id} className="flex items-center gap-3 px-4 py-3">
             <span className="font-mono text-xs text-muted-foreground/60 w-6 text-right">{i + 1}</span>
-            <Link to="/app/songs/$songId" params={{ songId: it.songs.id }} className="flex-1 min-w-0 hover:text-gold">{it.songs.title}</Link>
+            <Link to="/app/songs/$songId" params={{ songId: it.songs.id }} search={{ setlist: setlistId }} className="flex-1 min-w-0 hover:text-gold">{it.songs.title}</Link>
             <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-gold-soft text-gold">{it.songs.original_key}</span>
             <button onClick={() => move(i, -1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowUp className="h-3.5 w-3.5" /></button>
             <button onClick={() => move(i, +1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowDown className="h-3.5 w-3.5" /></button>
