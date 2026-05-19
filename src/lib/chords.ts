@@ -20,13 +20,16 @@ export function transposeNote(note: string, steps: number, useFlats = false): st
 // Match chord like: C, Cm, C#m7, Dbmaj7, F/G, Asus4, Bm7(b5), G/B, etc.
 // Simplified approach: find the root (and optional bass) and transpose them, keep the rest.
 export function transposeChord(chord: string, steps: number, useFlats = false): string {
-  if (!chord || steps === 0) return chord;
+  if (!chord) return chord;
+  if (steps === 0) return chord.trim();
+  
   const cleanChord = chord.trim();
   
   // Handle bass notes like C/E
   const parts = cleanChord.split('/');
   const transposedParts = parts.map(part => {
     // A part starts with A-G, optionally followed by # or b
+    // We use a non-greedy suffix match to avoid issues with complex chords
     const match = part.match(/^([A-G][#b]?)(.*)$/);
     if (!match) return part;
     const [, root, suffix] = match;
