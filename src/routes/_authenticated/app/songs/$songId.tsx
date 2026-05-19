@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex } from "@/lib/chords";
+import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex, isChordLine, transposeChordLine } from "@/lib/chords";
+
 import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,41 +119,59 @@ function SongView() {
   const renderedLines = useMemo(() => {
     if (!song?.lyrics) return [];
     return song.lyrics.split(/\r?\n/).map((line: string, idx: number) => {
-      const tokens = parseLine(line);
-      if (tokens[0]?.type === "break") return <div key={idx} className="h-6" />;
-      if (tokens[0]?.type === "section") {
-        const token = tokens[0] as { type: 'section'; label: string };
+      // Handle empty lines
+      if (!line.trim()) return <div key={idx} className="h-6" />;
+
+      // Handle Section Markers [Intro], {Chorus}
+      const section = line.trim().match(/^\[([^\]]+)\]\s*$/) || line.trim().match(/^\{([^}]+)\}$/);
+      if (section) {
         return (
-          <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-2 inline-block text-xs font-bold uppercase tracking-widest">
-            {token.label}
+          <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-3 mt-4 inline-block text-xs font-bold uppercase tracking-widest">
+            {section[1]}
           </div>
         );
       }
-      if (tokens[0]?.type === "comment") {
-        const token = tokens[0] as { type: 'comment'; text: string };
-        return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{token.text}</div>;
+
+      // Handle Comments # some comment
+      if (line.trim().startsWith('#')) {
+        return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{line.trim().slice(1).trim()}</div>;
       }
+
+      // Handle Chord Lines (lines that only contain chords)
+      if (isChordLine(line)) {
+        const transposed = transposeChordLine(line, transposeDelta);
+        return (
+          <div key={idx} className="font-bold text-orange-500 whitespace-pre mb-0" style={{ minHeight: '1.2em', filter: 'drop-shadow(0px 0px 1px rgba(249, 115, 22, 0.2))' }}>
+            {transposed}
+          </div>
+        );
+      }
+
+
+      // Handle Mixed lines or ChordPro format [C]Lyric
+      const tokens = parseLine(line);
       return (
-        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 2.4}px` }}>
+        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 1.8}px` }}>
           {tokens.map((t, i) => {
             if (t.type !== "lyric") return null;
             const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
             const transposed = lyricToken.chord ? transposeChord(lyricToken.chord, transposeDelta) : undefined;
             
             return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.6}px` : 0 }}>
+              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.4}px` : 0 }}>
                 {transposed && (
-                  <span className="chord absolute top-0 left-0 font-bold text-white bg-orange-600 px-2 py-0.5 rounded shadow-md transform -translate-y-[1.3em] scale-110 origin-left whitespace-nowrap z-10 transition-all select-none border border-orange-700">
+                  <span className="chord absolute top-0 left-0 font-bold text-white bg-orange-600 px-1.5 py-0.5 rounded shadow-sm transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
                     {transposed}
                   </span>
                 )}
-                <span className="text-foreground/90 font-medium">{lyricToken.text || "\u00A0"}</span>
+                <span className="text-foreground font-medium">{lyricToken.text || (lyricToken.chord ? "" : "\u00A0")}</span>
               </span>
             );
           })}
         </div>
       );
     });
+
   }, [song?.lyrics, transposeDelta, fontSize]);
 
   const ChordSheet = (
