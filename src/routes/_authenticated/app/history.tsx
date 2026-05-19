@@ -46,7 +46,11 @@ function HistoryPage() {
         <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Acessadas recentemente</p>
         <h1 className="font-serif text-4xl md:text-5xl">Recentes</h1>
       </header>
-      {items.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+        </div>
+      ) : items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-16 text-center">
           <Clock className="mx-auto h-10 w-10 text-muted-foreground/40" />
           <p className="mt-4 text-sm text-muted-foreground">Seu histórico aparecerá aqui.</p>
