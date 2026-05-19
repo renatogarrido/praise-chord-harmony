@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { parseLine, transposeChord, ALL_KEYS, semitonesBetween } from "@/lib/chords";
-import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ 
@@ -28,7 +28,9 @@ function SongView() {
   const [scrolling, setScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(1);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const rafRef = useRef<number | null>(null);
+  const presentationRef = useRef<HTMLDivElement>(null);
 
   const [setlistSongs, setSetlistSongs] = useState<any[]>([]);
   const currentIndex = setlistSongs.findIndex(s => s.song_id === songId);
@@ -56,6 +58,24 @@ function SongView() {
       }
     })();
   }, [songId, user, setlistId]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      presentationRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
 
   // Autoscroll
   useEffect(() => {
@@ -127,9 +147,25 @@ function SongView() {
       }
     };
 
+    // Keyboard navigation
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.code === "ArrowRight") nextSong();
+        if (e.code === "ArrowLeft") prevSong();
+        if (e.code === "Space") {
+          e.preventDefault();
+          setScrolling(s => !s);
+        }
+        if (e.code === "Escape" && !document.fullscreenElement) setPresenting(false);
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [currentIndex, setlistSongs, scrolling]);
+
     return (
-      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      <div ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
+
           <div className="flex items-center gap-3">
             <h1 className="font-serif text-xl">{song.title}</h1>
             <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-gold-soft text-gold">{currentKey}</span>
@@ -146,7 +182,10 @@ function SongView() {
               scrolling={scrolling} setScrolling={setScrolling}
               scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}
             />
-            <button onClick={() => setPresenting(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-accent">Sair</button>
+            <button onClick={toggleFullscreen} className="rounded-lg border border-border p-1.5 hover:bg-accent text-muted-foreground" title="Tela Cheia">
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+            <button onClick={() => { if (document.fullscreenElement) document.exitFullscreen(); setPresenting(false); }} className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-accent">Sair</button>
           </div>
         </div>
         
