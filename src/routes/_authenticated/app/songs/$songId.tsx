@@ -6,6 +6,7 @@ import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex, isCho
 
 import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSwipeable } from "react-swipeable";
 
 export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ 
   component: SongView,
@@ -196,10 +197,21 @@ function SongView() {
     }
   }, [currentIndex, setlistSongs, setlistId, navigate]);
 
-  // Keyboard navigation
+  // Swiping and Keyboard navigation
+  const handlers = useSwipeable({
+    onSwipedLeft: () => nextSong(),
+    onSwipedRight: () => prevSong(),
+    trackMouse: false,
+    preventScrollOnSwipe: true
+  });
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!presenting) return;
+      if (!presenting) {
+        if (e.code === "ArrowRight") nextSong();
+        if (e.code === "ArrowLeft") prevSong();
+        return;
+      }
 
       if (e.code === "ArrowRight") {
         e.preventDefault();
@@ -230,7 +242,7 @@ function SongView() {
 
   if (presenting) {
     return (
-      <div ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      <div {...handlers} ref={presentationRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl px-6 py-3">
 
           <div className="flex items-center gap-3">
@@ -324,9 +336,52 @@ function SongView() {
         </button>
       </div>
 
-      <div ref={scrollRef} className="rounded-2xl border border-border bg-card p-6 md:p-10 max-h-[70vh] overflow-y-auto">
+      <div {...handlers} ref={scrollRef} className="rounded-2xl border border-border bg-card p-6 md:p-10 max-h-[70vh] overflow-y-auto relative group">
         {ChordSheet}
+        
+        {setlistId && setlistSongs.length > 0 && (
+          <>
+            <button 
+              onClick={prevSong}
+              disabled={currentIndex <= 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity hidden md:flex items-center justify-center"
+              title="Cifra Anterior"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <button 
+              onClick={nextSong}
+              disabled={currentIndex >= setlistSongs.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity hidden md:flex items-center justify-center"
+              title="Próxima Cifra"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          </>
+        )}
       </div>
+
+      {setlistId && setlistSongs.length > 0 && (
+        <div className="mt-4 flex items-center justify-between md:hidden">
+          <button 
+            onClick={prevSong} 
+            disabled={currentIndex <= 0}
+            className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-muted-foreground disabled:opacity-30"
+          >
+            <ChevronLeft className="h-4 w-4" /> Anterior
+          </button>
+          <span className="text-[10px] font-bold text-gold uppercase tracking-[0.2em]">
+            {currentIndex + 1} / {setlistSongs.length}
+          </span>
+          <button 
+            onClick={nextSong} 
+            disabled={currentIndex >= setlistSongs.length - 1}
+            className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-gold disabled:opacity-30"
+          >
+            Próxima <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {song.notes && (
         <div className="mt-6 rounded-2xl border border-border bg-card p-5">
