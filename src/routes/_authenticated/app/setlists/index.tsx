@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ListMusic, Plus, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/app/setlists")({ component: SetlistsPage });
+export const Route = createFileRoute("/_authenticated/app/setlists/")({ component: SetlistsPage });
 
 function SetlistsPage() {
   const { user } = useAuth();

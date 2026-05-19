@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, Music2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-export const Route = createFileRoute("/_authenticated/app/albums")({ component: AlbumsPage });
+export const Route = createFileRoute("/_authenticated/app/albums/")({ component: AlbumsPage });
 
 type Album = { id: string; title: string; year: number | null; description: string | null; cover_url: string | null; song_count?: number };
 
