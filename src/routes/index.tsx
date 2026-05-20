@@ -82,7 +82,7 @@ function Landing() {
       </main>
 
       <footer className="border-t border-border/50 px-6 py-8 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-        © {new Date().getFullYear()} {app_name} — Renascer Praise
+        © {new Date().getFullYear()} {app_name} — Core Code Web
       </footer>
     </div>
   );
