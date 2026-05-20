@@ -12,27 +12,66 @@ function AdminSongs() {
   const [albums, setAlbums] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
 
-  const load = () => supabase.from("songs").select("*, albums(title)").order("title").then(({ data }) => setItems(data ?? []));
+  const load = () => {
+    return supabase
+      .from("songs")
+      .select("*, albums(title)")
+      .order("title")
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error loading songs:", error);
+          toast.error("Erro ao carregar cifras");
+          return;
+        }
+        setItems(data ?? []);
+      });
+  };
+
   useEffect(() => {
     load();
-    supabase.from("albums").select("id,title").order("title").then(({ data }) => setAlbums(data ?? []));
+    supabase
+      .from("albums")
+      .select("id,title")
+      .order("title")
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error loading albums:", error);
+          return;
+        }
+        setAlbums(data ?? []);
+      });
   }, []);
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const payload = {
-      title: String(fd.get("title")),
-      album_id: String(fd.get("album_id") || "") || null,
-      original_key: String(fd.get("original_key") || "C"),
-      lyrics: String(fd.get("lyrics") || ""),
-      notes: String(fd.get("notes") || "") || null,
-    };
-    const { error } = editing?.id
-      ? await supabase.from("songs").update(payload).eq("id", editing.id)
-      : await supabase.from("songs").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Salvo!"); setEditing(null); load();
+    const submitButton = (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement);
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      const fd = new FormData(e.currentTarget);
+      const payload = {
+        title: String(fd.get("title")),
+        album_id: String(fd.get("album_id") || "") || null,
+        original_key: String(fd.get("original_key") || "C"),
+        lyrics: String(fd.get("lyrics") || ""),
+        notes: String(fd.get("notes") || "") || null,
+      };
+
+      const { error } = editing?.id
+        ? await supabase.from("songs").update(payload).eq("id", editing.id)
+        : await supabase.from("songs").insert(payload);
+
+      if (error) {
+        console.error("Error saving song:", error);
+        return toast.error("Erro ao salvar: " + error.message);
+      }
+
+      toast.success("Salvo!");
+      setEditing(null);
+      load();
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
   };
 
   const del = async (id: string) => {
