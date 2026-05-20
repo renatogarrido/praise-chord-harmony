@@ -10,32 +10,67 @@ function AdminAlbums() {
   const [items, setItems] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
 
-  const load = () => supabase.from("albums").select("*").order("sort_order").order("year", { ascending: false }).then(({ data }) => setItems(data ?? []));
+  const load = () => {
+    return supabase
+      .from("albums")
+      .select("*")
+      .order("sort_order")
+      .order("year", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error loading albums:", error);
+          toast.error("Erro ao carregar álbuns");
+          return;
+        }
+        setItems(data ?? []);
+      });
+  };
+
   useEffect(() => { load(); }, []);
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const file = fd.get("cover") as File | null;
-    let cover_url = editing?.cover_url ?? null;
-    if (file && file.size > 0) {
-      const path = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("album-covers").upload(path, file, { upsert: true });
-      if (error) return toast.error(error.message);
-      cover_url = supabase.storage.from("album-covers").getPublicUrl(path).data.publicUrl;
+    const submitButton = (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement);
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      const fd = new FormData(e.currentTarget);
+      const file = fd.get("cover") as File | null;
+      let cover_url = editing?.cover_url ?? null;
+      
+      if (file && file.size > 0) {
+        const path = `${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("album-covers").upload(path, file, { upsert: true });
+        if (error) {
+          console.error("Storage upload error:", error);
+          return toast.error("Erro ao enviar imagem: " + error.message);
+        }
+        cover_url = supabase.storage.from("album-covers").getPublicUrl(path).data.publicUrl;
+      }
+
+      const payload = {
+        title: String(fd.get("title")),
+        year: fd.get("year") ? Number(fd.get("year")) : null,
+        description: String(fd.get("description") || "") || null,
+        sort_order: Number(fd.get("sort_order") || 0),
+        cover_url,
+      };
+
+      const { error } = editing?.id
+        ? await supabase.from("albums").update(payload).eq("id", editing.id)
+        : await supabase.from("albums").insert(payload);
+
+      if (error) {
+        console.error("Error saving album:", error);
+        return toast.error("Erro ao salvar: " + error.message);
+      }
+
+      toast.success("Salvo!");
+      setEditing(null);
+      load();
+    } finally {
+      if (submitButton) submitButton.disabled = false;
     }
-    const payload = {
-      title: String(fd.get("title")),
-      year: fd.get("year") ? Number(fd.get("year")) : null,
-      description: String(fd.get("description") || "") || null,
-      sort_order: Number(fd.get("sort_order") || 0),
-      cover_url,
-    };
-    const { error } = editing?.id
-      ? await supabase.from("albums").update(payload).eq("id", editing.id)
-      : await supabase.from("albums").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Salvo!"); setEditing(null); load();
   };
 
   const del = async (id: string) => {
