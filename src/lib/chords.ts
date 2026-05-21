@@ -149,13 +149,8 @@ export function transposeAllChordsInText(text: string, steps: number): string {
   return text.replace(/\[([^\]]+)\]/g, (_, chord) => `[${transposeChord(chord, steps)}]`);
 }
 
-/**
- * Returns the text exactly as provided, preserving lines.
- * This ensures chords stay on their own lines above lyrics.
- */
 export function convertToChordPro(text: string): string {
   if (!text) return "";
-  // We no longer convert to ChordPro [C]. 
-  // We preserve the plain text format with chords on their own lines.
-  return text.trim();
+  // Retorna o texto exatamente como extraído, sem adicionar colchetes.
+  return text;
 }

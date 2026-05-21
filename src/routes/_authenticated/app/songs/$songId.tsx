@@ -126,37 +126,22 @@ function SongView() {
   const renderedLines = useMemo(() => {
     if (!song?.lyrics) return [];
     return song.lyrics.split(/\r?\n/).map((line: string, idx: number) => {
-      // Handle empty lines
-      if (!line.trim()) return <div key={idx} className="h-6" />;
+      // Linhas vazias
+      if (!line.trim()) return <div key={idx} className="h-4" />;
 
-      // Handle Section Markers [Intro], {Chorus}
-      const section = line.trim().match(/^\[([^\]]+)\]\s*$/) || line.trim().match(/^\{([^}]+)\}$/);
-      if (section) {
-        return (
-          <div key={idx} className="section bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-md mb-3 mt-4 inline-block text-xs font-bold uppercase tracking-widest">
-            {section[1]}
-          </div>
-        );
-      }
-
-      // Handle Comments # some comment
-      if (line.trim().startsWith('#')) {
-        return <div key={idx} className="text-muted-foreground italic text-sm mb-1 opacity-70">{line.trim().slice(1).trim()}</div>;
-      }
-
-      // Handle Chord Lines (lines that only contain chords)
+      // Se for uma linha de acordes, destacamos em laranja e mantemos o alinhamento
       if (isChordLine(line)) {
         const transposed = transposeChordLine(line, transposeDelta);
         return (
-          <div key={idx} className="font-bold text-[#F97316] whitespace-pre mb-0 leading-none py-1" style={{ minHeight: '1.2em' }}>
+          <div key={idx} className="font-mono font-bold text-[#F97316] whitespace-pre leading-none py-0.5" style={{ fontSize: `${fontSize * 0.9}px` }}>
             {transposed}
           </div>
         );
       }
 
-      // Handle Lyric lines
+      // Linhas de letra (e introduções que não foram detectadas como apenas acordes)
       return (
-        <div key={idx} className="flex flex-wrap items-end leading-none mb-2 text-foreground font-medium whitespace-pre" style={{ minHeight: '1.2em' }}>
+        <div key={idx} className="font-mono flex flex-wrap items-end leading-none mb-3 text-foreground font-medium whitespace-pre" style={{ fontSize: `${fontSize}px` }}>
           {line}
         </div>
       );
