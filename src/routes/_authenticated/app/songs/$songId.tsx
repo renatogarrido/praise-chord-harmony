@@ -162,8 +162,6 @@ function SongView() {
       );
     });
   }, [song?.lyrics, transposeDelta, fontSize]);
-    });
-  }, [song?.lyrics, transposeDelta, fontSize]);
 
   const ChordSheet = (
     <div className="chord-sheet" style={{ fontSize: `${fontSize}px` }}>
