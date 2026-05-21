@@ -1,9 +1,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Initialize PDF.js worker
-// Using a specific worker version to ensure compatibility
-const PDFJS_VERSION = '4.0.379';
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
+// Use a worker that is bundled or available via a very reliable CDN
+// Trying a different CDN and ensuring the version matches exactly what was installed
+const PDFJS_VERSION = '5.7.284'; 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
 
 export async function extractTextFromPdf(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
