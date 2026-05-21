@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Wand2, FileText, Upload } from "lucide-react";
+import { Plus, Trash2, Wand2, FileText, Upload, Loader2 } from "lucide-react";
 import { ALL_KEYS, convertToChordPro } from "@/lib/chords";
+import { extractTextFromPdf } from "@/lib/pdf-utils";
 
 export const Route = createFileRoute("/_authenticated/app/admin/songs")({ component: AdminSongs });
 
