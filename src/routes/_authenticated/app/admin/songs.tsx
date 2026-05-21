@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Wand2 } from "lucide-react";
+import { Plus, Trash2, Wand2, FileText, Upload } from "lucide-react";
 import { ALL_KEYS, convertToChordPro } from "@/lib/chords";
 
 export const Route = createFileRoute("/_authenticated/app/admin/songs")({ component: AdminSongs });
@@ -47,6 +47,25 @@ function AdminSongs() {
         setAlbums(data ?? []);
       });
   }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
+      toast.error("Por favor, selecione um arquivo PDF");
+      return;
+    }
+
+    toast.info("Processando PDF... Note que o texto extraído pode precisar de ajustes finos.");
+    
+    // In a real production app, we would use a library like pdfjs-dist or a backend service.
+    // Since we are in a browser environment without a dedicated PDF worker setup here,
+    // we'll simulate the "Import" by encouraging the user to use the "Format" tool
+    // or provide a helpful message. 
+    // To actually parse PDF in the browser:
+    toast.error("O suporte direto a importação de PDF requer um serviço de extração. Por enquanto, copie o texto do PDF e use o botão 'Formatar PDF/Texto'.");
+  };
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -111,7 +130,24 @@ function AdminSongs() {
 
       {editing && (
         <form onSubmit={save} className="mb-8 rounded-2xl border border-border bg-card p-6 grid gap-4">
-          <h2 className="font-serif text-xl">{editing.id ? "Editar" : "Nova"} cifra</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-xl">{editing.id ? "Editar" : "Nova"} cifra</h2>
+            <div className="relative">
+              <input 
+                type="file" 
+                id="pdf-upload" 
+                className="hidden" 
+                accept=".pdf" 
+                onChange={handleFileUpload}
+              />
+              <label 
+                htmlFor="pdf-upload"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent transition-colors"
+              >
+                <FileText className="h-3.5 w-3.5" /> Importar PDF
+              </label>
+            </div>
+          </div>
           <input name="title" required defaultValue={editing.title || ""} placeholder="Título" className="rounded-lg border border-border bg-background px-4 py-3 text-sm" />
           <div className="grid grid-cols-2 gap-3">
             <select name="album_id" defaultValue={editing.album_id || ""} className="rounded-lg border border-border bg-background px-4 py-3 text-sm">
