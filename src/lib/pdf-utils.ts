@@ -25,7 +25,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
     const linesMap: { [y: number]: any[] } = {};
     items.forEach(item => {
       const y = item.transform[5];
-      const closeY = Object.keys(linesMap).find(existingY => Math.abs(Number(existingY) - y) < 4);
+      const closeY = Object.keys(linesMap).find(existingY => Math.abs(Number(existingY) - y) < 5);
       
       if (closeY) {
         linesMap[Number(closeY)].push(item);
@@ -40,7 +40,8 @@ export async function extractTextFromPdf(file: File): Promise<string> {
       const lineItems = linesMap[y].sort((a, b) => a.transform[4] - b.transform[4]);
       
       let lineText = "";
-      const charWidth = 6.0; 
+      // Usando um multiplicador fixo para manter o alinhamento visual do PDF no texto
+      const charWidth = 6.2; 
       
       for (const item of lineItems) {
         const itemX = item.transform[4];
