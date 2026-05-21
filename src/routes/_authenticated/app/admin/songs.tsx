@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Wand2, FileText, Upload } from "lucide-react";
+import { Plus, Trash2, Wand2, FileText, Upload, Loader2 } from "lucide-react";
 import { ALL_KEYS, convertToChordPro } from "@/lib/chords";
+import { extractTextFromPdf } from "@/lib/pdf-utils";
 
 export const Route = createFileRoute("/_authenticated/app/admin/songs")({ component: AdminSongs });
 
@@ -57,14 +58,34 @@ function AdminSongs() {
       return;
     }
 
-    toast.info("Processando PDF... Note que o texto extraído pode precisar de ajustes finos.");
+    const toastId = toast.loading("Processando PDF... Extraindo texto.");
     
-    // In a real production app, we would use a library like pdfjs-dist or a backend service.
-    // Since we are in a browser environment without a dedicated PDF worker setup here,
-    // we'll simulate the "Import" by encouraging the user to use the "Format" tool
-    // or provide a helpful message. 
-    // To actually parse PDF in the browser:
-    toast.error("O suporte direto a importação de PDF requer um serviço de extração. Por enquanto, copie o texto do PDF e use o botão 'Formatar PDF/Texto'.");
+    try {
+      const text = await extractTextFromPdf(file);
+      
+      // Auto-fill title if empty
+      const titleInput = document.querySelector('input[name="title"]') as HTMLInputElement;
+      if (titleInput && !titleInput.value) {
+        // Try to guess title from first line
+        const lines = text.split('\n');
+        if (lines[0] && lines[0].length < 50) {
+          titleInput.value = lines[0].trim();
+        }
+      }
+
+      // Convert extracted text to ChordPro and set in textarea
+      const formatted = convertToChordPro(text);
+      const textarea = document.querySelector('textarea[name="lyrics"]') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.value = formatted;
+        // Trigger React's onChange if necessary, though here we are using form data on submit
+      }
+      
+      toast.success("PDF importado e formatado com sucesso!", { id: toastId });
+    } catch (error) {
+      console.error("Error processing PDF:", error);
+      toast.error("Falha ao extrair texto do PDF. Tente copiar e colar manualmente.", { id: toastId });
+    }
   };
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
