@@ -187,25 +187,21 @@ export function convertToChordPro(text: string): string {
           continue;
         }
 
-        // HEURISTIC: If the chord line is significantly longer than the lyric line,
-        // it might be due to trailing spaces in the PDF copy.
-        // We'll use the relative position if possible.
         let chordProLine = nextLine;
         
-        // Process from right to left to avoid index shifting
+        // Sort chords by index DESCENDING to avoid offset issues
         const sortedChords = [...chords].sort((a, b) => b.index - a.index);
         
         for (const { chord, index } of sortedChords) {
           // Calculate insertion index
-          // If next line is very short, we might need to pad it
+          // We adjust index based on potential differences in character width 
+          // (PDF extraction vs lyric line length)
           let targetIndex = index;
           
-          // Heuristic: if index is way beyond line length, maybe it's meant to be at the end
           if (targetIndex > chordProLine.length) {
             chordProLine = chordProLine.padEnd(targetIndex, ' ');
           }
 
-          // Insert [Chord]
           chordProLine = 
             chordProLine.slice(0, targetIndex) + 
             `[${chord}]` + 
@@ -215,23 +211,45 @@ export function convertToChordPro(text: string): string {
         result.push(chordProLine);
         i++; // Skip next line
       } else {
-        // Just wrap chords in brackets for standalone chord lines
-        const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
-        let match;
-        let lastIdx = 0;
-        let formattedLine = "";
-        
-        while ((match = chordRegex.exec(currentLine)) !== null) {
-          formattedLine += currentLine.slice(lastIdx, match.index) + `[${match[0]}]`;
-          lastIdx = chordRegex.lastIndex;
+        // Check for chords in parentheses like (A - Bm - G)
+        const introMatch = currentLine.match(/\(([^)]+)\)/);
+        if (introMatch && (currentLine.toLowerCase().includes('intro') || currentLine.toLowerCase().includes('introdução'))) {
+          const chordPart = introMatch[1];
+          const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
+          let formattedIntro = currentLine;
+          let match;
+          const matches = [];
+          
+          while ((match = chordRegex.exec(chordPart)) !== null) {
+            matches.push({ chord: match[0], start: match.index });
+          }
+          
+          // Replace from right to left
+          for (let m = matches.length - 1; m >= 0; m--) {
+            const { chord, start } = matches[m];
+            const realStart = currentLine.indexOf('(') + 1 + start;
+            formattedIntro = formattedIntro.slice(0, realStart) + `[${chord}]` + formattedIntro.slice(realStart + chord.length);
+          }
+          result.push(formattedIntro);
+        } else {
+          // Just wrap chords in brackets for standalone chord lines
+          const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
+          let match;
+          let lastIdx = 0;
+          let formattedLine = "";
+          
+          while ((match = chordRegex.exec(currentLine)) !== null) {
+            formattedLine += currentLine.slice(lastIdx, match.index) + `[${match[0]}]`;
+            lastIdx = chordRegex.lastIndex;
+          }
+          formattedLine += currentLine.slice(lastIdx);
+          result.push(formattedLine);
         }
-        formattedLine += currentLine.slice(lastIdx);
-        result.push(formattedLine);
       }
     } else {
       result.push(currentLine);
     }
   }
 
-  return result.join("\n");
+  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
