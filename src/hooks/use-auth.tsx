@@ -1,6 +1,7 @@
-import { useEffect, useState, createContext, useContext, type ReactNode } from "react";
+import { useEffect, useState, createContext, useContext, type ReactNode, useRef, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type AuthCtx = {
   session: Session | null;
@@ -12,10 +13,23 @@ type AuthCtx = {
 
 const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, loading: true, signOut: async () => {} });
 
+const INACTIVITY_LIMIT = 2 * 60 * 60 * 1000; // 2 hours in ms
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const lastActivityRef = useRef<number>(Date.now());
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const signOut = useCallback(async () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    await supabase.auth.signOut();
+  }, []);
+
+  const resetInactivityTimer = useCallback(() => {
+    lastActivityRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
     const checkAdmin = async (userId: string) => {
@@ -64,8 +78,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!session?.user || isAdmin) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+    events.forEach(e => window.addEventListener(e, resetInactivityTimer));
+
+    timerRef.current = setInterval(() => {
+      const now = Date.now();
+      if (now - lastActivityRef.current > INACTIVITY_LIMIT) {
+        signOut();
+        toast.info("Sessão encerrada por inatividade.");
+      }
+    }, 60000); // Check every minute
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetInactivityTimer));
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [session, isAdmin, signOut, resetInactivityTimer]);
+
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, loading, signOut: async () => { await supabase.auth.signOut(); } }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, loading, signOut }}>
       {children}
     </Ctx.Provider>
   );
