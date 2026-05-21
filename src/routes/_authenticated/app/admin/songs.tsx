@@ -59,16 +59,21 @@ function AdminSongs() {
     }
 
     const toastId = toast.loading("Processando PDF... Extraindo texto.");
+    console.log("Starting PDF extraction for:", file.name);
     
     try {
       const text = await extractTextFromPdf(file);
+      console.log("Text extracted successfully, length:", text.length);
       
+      if (!text || text.trim().length === 0) {
+        throw new Error("O PDF parece estar vazio ou contém apenas imagens.");
+      }
+
       // Auto-fill title if empty
       const titleInput = document.querySelector('input[name="title"]') as HTMLInputElement;
       if (titleInput && !titleInput.value) {
-        // Try to guess title from first line
-        const lines = text.split('\n');
-        if (lines[0] && lines[0].length < 50) {
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        if (lines[0] && lines[0].length < 60) {
           titleInput.value = lines[0].trim();
         }
       }
@@ -78,13 +83,15 @@ function AdminSongs() {
       const textarea = document.querySelector('textarea[name="lyrics"]') as HTMLTextAreaElement;
       if (textarea) {
         textarea.value = formatted;
-        // Trigger React's onChange if necessary, though here we are using form data on submit
+        // Also update editing state to ensure it's captured
+        setEditing((prev: any) => ({ ...prev, lyrics: formatted }));
       }
       
       toast.success("PDF importado e formatado com sucesso!", { id: toastId });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing PDF:", error);
-      toast.error("Falha ao extrair texto do PDF. Tente copiar e colar manualmente.", { id: toastId });
+      const message = error.message || "Falha ao extrair texto do PDF.";
+      toast.error(`${message} Tente copiar e colar manualmente.`, { id: toastId });
     }
   };
 
