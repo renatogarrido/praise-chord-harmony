@@ -9,29 +9,35 @@ export const Route = createFileRoute("/_authenticated/app/admin/albums")({ compo
 function AdminAlbums() {
   const [items, setItems] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const load = () => {
-    return supabase
-      .from("albums")
-      .select("*")
-      .order("sort_order")
-      .order("year", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Error loading albums:", error);
-          toast.error("Erro ao carregar álbuns");
-          return;
-        }
-        setItems(data ?? []);
-      });
+  const load = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("albums")
+        .select("*")
+        .order("sort_order")
+        .order("year", { ascending: false });
+        
+      if (error) {
+        console.error("Error loading albums:", error);
+        toast.error("Erro ao carregar álbuns");
+        return;
+      }
+      setItems(data ?? []);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const submitButton = (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement);
-    if (submitButton) submitButton.disabled = true;
+    if (isSaving) return;
+    setIsSaving(true);
 
     try {
       const fd = new FormData(e.currentTarget);
@@ -39,22 +45,30 @@ function AdminAlbums() {
       let cover_url = editing?.cover_url ?? null;
       
       if (file && file.size > 0) {
-        const path = `${Date.now()}-${file.name}`;
-        const { error } = await supabase.storage.from("album-covers").upload(path, file, { upsert: true });
-        if (error) {
-          console.error("Storage upload error:", error);
-          return toast.error("Erro ao enviar imagem: " + error.message);
+        const path = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+        const { error: uploadError } = await supabase.storage.from("album-covers").upload(path, file, { upsert: true });
+        if (uploadError) {
+          console.error("Storage upload error:", uploadError);
+          toast.error("Erro ao enviar imagem");
+          setIsSaving(false);
+          return;
         }
         cover_url = supabase.storage.from("album-covers").getPublicUrl(path).data.publicUrl;
       }
 
       const payload = {
-        title: String(fd.get("title")),
+        title: String(fd.get("title")).trim(),
         year: fd.get("year") ? Number(fd.get("year")) : null,
         description: String(fd.get("description") || "") || null,
         sort_order: Number(fd.get("sort_order") || 0),
         cover_url,
       };
+
+      if (!payload.title) {
+        toast.error("Título é obrigatório");
+        setIsSaving(false);
+        return;
+      }
 
       const { error } = editing?.id
         ? await supabase.from("albums").update(payload).eq("id", editing.id)
@@ -65,18 +79,26 @@ function AdminAlbums() {
         return toast.error("Erro ao salvar: " + error.message);
       }
 
-      toast.success("Salvo!");
+      toast.success("Álbum salvo com sucesso!");
       setEditing(null);
       load();
+    } catch (err: any) {
+      console.error("Critical error saving album:", err);
+      toast.error("Erro inesperado ao salvar");
     } finally {
-      if (submitButton) submitButton.disabled = false;
+      setIsSaving(false);
     }
   };
 
   const del = async (id: string) => {
-    if (!confirm("Excluir álbum?")) return;
-    await supabase.from("albums").delete().eq("id", id);
-    load();
+    if (!confirm("Excluir álbum? Esta ação não pode ser desfeita.")) return;
+    const { error } = await supabase.from("albums").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir álbum (verifique se existem cifras vinculadas)");
+    } else {
+      toast.success("Álbum excluído");
+      load();
+    }
   };
 
   return (
@@ -104,13 +126,24 @@ function AdminAlbums() {
             <input type="file" name="cover" accept="image/*" className="text-xs" />
           </label>
           <div className="flex gap-2">
-            <button type="submit" className="rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground">Salvar</button>
-            <button type="button" onClick={() => setEditing(null)} className="rounded-full border border-border px-5 py-2 text-xs">Cancelar</button>
+            <button 
+              type="submit" 
+              disabled={isSaving}
+              className="rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Salvando..." : "Salvar"}
+            </button>
+            <button type="button" onClick={() => setEditing(null)} disabled={isSaving} className="rounded-full border border-border px-5 py-2 text-xs">Cancelar</button>
           </div>
         </form>
       )}
 
-      <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+      <div className="rounded-2xl border border-border bg-card divide-y divide-border relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-2xl">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
+          </div>
+        )}
         {items.map((a) => (
           <div key={a.id} className="flex items-center gap-4 p-4">
             <div className="size-12 rounded-lg bg-background overflow-hidden flex-shrink-0">
