@@ -10,9 +10,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   
   // Loading the PDF with explicit error handling
   const loadingTask = pdfjsLib.getDocument({ 
-    data: arrayBuffer,
-    useWorkerFetch: false, // Disable if there are issues with fetching worker
-    isEvalSupported: false // Safer for some environments
+    data: arrayBuffer
   });
   
   const pdf = await loadingTask.promise;
