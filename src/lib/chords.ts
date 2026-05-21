@@ -136,3 +136,55 @@ export function transposeAllChordsInText(text: string, steps: number): string {
   if (!steps) return text;
   return text.replace(/\[([^\]]+)\]/g, (_, chord) => `[${transposeChord(chord, steps)}]`);
 }
+
+/**
+ * Attempts to convert plain text with chords on top lines into ChordPro format.
+ * Example:
+ *   G          C
+ *   Amazing grace
+ * Becomes:
+ *   [G]Amazing [C]grace
+ */
+export function convertToChordPro(text: string): string {
+  const lines = text.split(/\r?\n/);
+  const result: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const currentLine = lines[i];
+    const nextLine = lines[i + 1];
+
+    // If current line is a chord line and next line exists and is NOT a chord line
+    if (isChordLine(currentLine) && nextLine !== undefined && !isChordLine(nextLine) && nextLine.trim() !== "" && !nextLine.trim().match(/^\[([^\]]+)\]\s*$/) && !nextLine.trim().match(/^\{([^}]+)\}$/)) {
+      let chordProLine = "";
+      let lastLyricPos = 0;
+
+      // Find all chords and their positions in the chord line
+      const chordMatches: { chord: string; index: number }[] = [];
+      const chordRegex = /\S+/g;
+      let match;
+      while ((match = chordRegex.exec(currentLine)) !== null) {
+        chordMatches.push({ chord: match[0], index: match.index });
+      }
+
+      // Sort matches by index just in case
+      chordMatches.sort((a, b) => a.index - b.index);
+
+      // Insert chords into the lyric line at the correct positions
+      for (const { chord, index } of chordMatches) {
+        // Add lyric text before this chord
+        const lyricSegment = nextLine.substring(lastLyricPos, index);
+        chordProLine += lyricSegment + `[${chord}]`;
+        lastLyricPos = index;
+      }
+
+      // Add remaining lyric text
+      chordProLine += nextLine.substring(lastLyricPos);
+      result.push(chordProLine);
+      i++; // Skip the next line as we've merged it
+    } else {
+      result.push(currentLine);
+    }
+  }
+
+  return result.join("\n");
+}

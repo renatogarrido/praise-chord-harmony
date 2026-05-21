@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
-import { ALL_KEYS } from "@/lib/chords";
+import { Plus, Trash2, Wand2 } from "lucide-react";
+import { ALL_KEYS, convertToChordPro } from "@/lib/chords";
 
 export const Route = createFileRoute("/_authenticated/app/admin/songs")({ component: AdminSongs });
 
@@ -123,8 +123,25 @@ function AdminSongs() {
             </select>
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Letra & cifra (use [Acorde]texto)</label>
-            <textarea name="lyrics" rows={14} defaultValue={editing.lyrics || ""} placeholder={`{Intro}\n[G] [C9] [Em7] [D]\n\n{Verse}\n[G]Não há impossível para o Teu [C9]agir\n[Em7]A tempestade acalma com o Teu fa[D]lar`} className="mt-1 w-full font-mono rounded-lg border border-border bg-background px-4 py-3 text-sm" />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Letra & cifra (use [Acorde]texto)</label>
+              <button 
+                type="button"
+                onClick={() => {
+                  const textarea = document.querySelector('textarea[name="lyrics"]') as HTMLTextAreaElement;
+                  if (textarea) {
+                    const converted = convertToChordPro(textarea.value);
+                    textarea.value = converted;
+                    toast.success("Formatado para o padrão do sistema!");
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gold hover:text-gold/80 transition-colors"
+                title="Converte cifras que estão em cima do texto para o formato do sistema"
+              >
+                <Wand2 className="h-3 w-3" /> Formatar PDF/Texto
+              </button>
+            </div>
+            <textarea name="lyrics" rows={14} defaultValue={editing.lyrics || ""} placeholder={`{Intro}\n[G] [C9] [Em7] [D]\n\n{Verse}\n[G]Não há impossível para o Teu [C9]agir\n[Em7]A tempestade acalma com o Teu fa[D]lar`} className="w-full font-mono rounded-lg border border-border bg-background px-4 py-3 text-sm" />
           </div>
           <textarea name="notes" rows={2} defaultValue={editing.notes || ""} placeholder="Observações musicais (opcional)" className="rounded-lg border border-border bg-background px-4 py-3 text-sm" />
           <div className="flex gap-2">
