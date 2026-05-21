@@ -148,34 +148,20 @@ function SongView() {
       if (isChordLine(line)) {
         const transposed = transposeChordLine(line, transposeDelta);
         return (
-          <div key={idx} className="font-bold text-[#F97316] whitespace-pre mb-0" style={{ minHeight: '1.2em', filter: 'drop-shadow(0px 0px 1px rgba(249, 115, 22, 0.2))' }}>
+          <div key={idx} className="font-bold text-[#F97316] whitespace-pre mb-0 leading-none py-1" style={{ minHeight: '1.2em' }}>
             {transposed}
           </div>
         );
       }
 
-      // Handle Mixed lines or ChordPro format [C]Lyric
-      const tokens = parseLine(line);
+      // Handle Lyric lines
       return (
-        <div key={idx} className="flex flex-wrap items-end leading-relaxed mb-1" style={{ minHeight: `${fontSize * 1.8}px` }}>
-          {tokens.map((t, i) => {
-            if (t.type !== "lyric") return null;
-            const lyricToken = t as { type: 'lyric'; chord?: string; text: string };
-            const transposed = lyricToken.chord ? transposeChord(lyricToken.chord, transposeDelta) : undefined;
-            
-            return (
-              <span key={i} className="relative inline-block whitespace-pre" style={{ paddingTop: lyricToken.chord ? `${fontSize * 1.4}px` : 0 }}>
-                {transposed && (
-                  <span className="chord absolute top-0 left-0 font-bold text-[#F97316] bg-transparent px-0 py-0.5 rounded shadow-none transform -translate-y-[1.1em] scale-100 origin-left whitespace-nowrap z-10 transition-all select-none">
-                    {transposed}
-                  </span>
-                )}
-                <span className="text-foreground font-medium">{lyricToken.text || (lyricToken.chord ? "" : "\u00A0")}</span>
-              </span>
-            );
-          })}
+        <div key={idx} className="flex flex-wrap items-end leading-none mb-2 text-foreground font-medium whitespace-pre" style={{ minHeight: '1.2em' }}>
+          {line}
         </div>
       );
+    });
+  }, [song?.lyrics, transposeDelta, fontSize]);
     });
   }, [song?.lyrics, transposeDelta, fontSize]);
 
