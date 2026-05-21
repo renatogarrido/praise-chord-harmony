@@ -8,7 +8,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dis
 export async function extractTextFromPdf(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   
-  // Loading the PDF with explicit error handling
   const loadingTask = pdfjsLib.getDocument({ 
     data: arrayBuffer
   });
@@ -19,57 +18,52 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
+    const viewport = page.getViewport({ scale: 1 });
     
-    // Sort items by vertical position (y) then horizontal (x)
-    // pdf.js gives items in the order they appear in the stream, not necessarily visual order
     const items = textContent.items as any[];
     
-    // Group by lines (approximately the same Y coordinate)
-    const lines: { [y: number]: any[] } = {};
+    // Group by lines (Y coordinate)
+    const linesMap: { [y: number]: any[] } = {};
     items.forEach(item => {
-      // Use a tolerance for Y coordinate to group items on the same line
-      const y = Math.round(item.transform[5]);
-      if (!lines[y]) {
-        // Try to find a close Y coordinate within 5 units
-        const closeY = Object.keys(lines).find(existingY => Math.abs(Number(existingY) - y) < 5);
-        if (closeY) {
-          lines[Number(closeY)].push(item);
-          return;
-        }
-        lines[y] = [item];
+      // PDF.js Y is bottom-to-top, let's keep it but group with tolerance
+      const y = item.transform[5];
+      const closeY = Object.keys(linesMap).find(existingY => Math.abs(Number(existingY) - y) < 4);
+      
+      if (closeY) {
+        linesMap[Number(closeY)].push(item);
       } else {
-        lines[y].push(item);
+        linesMap[y] = [item];
       }
     });
 
     // Sort Y coordinates descending (top to bottom)
-    const sortedY = Object.keys(lines).map(Number).sort((a, b) => b - a);
+    const sortedY = Object.keys(linesMap).map(Number).sort((a, b) => b - a);
     
     for (const y of sortedY) {
-      const lineItems = lines[y].sort((a, b) => a.transform[4] - b.transform[4]);
+      const lineItems = linesMap[y].sort((a, b) => a.transform[4] - b.transform[4]);
       
-      // Try to maintain relative horizontal spacing
       let lineText = "";
-      let lastX = -1;
+      let currentX = 0;
+      
+      // We'll use a virtual grid to maintain alignment
+      // Page width in PDF units is viewport.width
+      // Let's assume a reasonable character width for mono-spacing (approx 5-7 units)
+      const charWidth = 5.8; 
       
       for (const item of lineItems) {
-        const x = item.transform[4];
-        if (lastX !== -1) {
-          // Add spaces based on horizontal distance
-          // Average character width is roughly 6-10 units in PDF space
-          const diff = x - (lastX + (item.width || 0));
-          if (diff > 5) {
-            const spaces = Math.floor(diff / 6);
-            lineText += " ".repeat(Math.max(1, spaces));
-          }
+        const itemX = item.transform[4];
+        const targetCharPos = Math.round(itemX / charWidth);
+        
+        if (targetCharPos > lineText.length) {
+          lineText = lineText.padEnd(targetCharPos, ' ');
         }
+        
         lineText += item.str;
-        lastX = x + (item.width || 0);
       }
       fullText += lineText + "\n";
     }
-    fullText += "\n"; // Page break
+    fullText += "\n"; 
   }
 
-  return fullText.trim();
+  return fullText;
 }
