@@ -43,21 +43,21 @@ export async function extractTextFromPdf(file: File): Promise<string> {
       const lineItems = linesMap[y].sort((a, b) => a.transform[4] - b.transform[4]);
       
       let lineText = "";
-      let currentX = 0;
       
       // We'll use a virtual grid to maintain alignment
-      // Page width in PDF units is viewport.width
-      // Let's assume a reasonable character width for mono-spacing (approx 5-7 units)
-      const charWidth = 5.8; 
+      // Use a slightly larger charWidth for better spacing with proportional fonts
+      const charWidth = 6.0; 
       
       for (const item of lineItems) {
         const itemX = item.transform[4];
-        const targetCharPos = Math.round(itemX / charWidth);
+        // Ensure we handle negative or very small X values
+        const targetCharPos = Math.max(0, Math.round(itemX / charWidth));
         
         if (targetCharPos > lineText.length) {
           lineText = lineText.padEnd(targetCharPos, ' ');
         }
         
+        // If items overlap, we concatenate them
         lineText += item.str;
       }
       fullText += lineText + "\n";
