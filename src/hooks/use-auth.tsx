@@ -53,13 +53,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const initializeAuth = async () => {
-      const { data: { session: s } } = await supabase.auth.getSession();
-      setSession(s);
-      if (s?.user) {
-        const isUserAdmin = await checkAdmin(s.user.id);
-        setIsAdmin(isUserAdmin);
+      try {
+        const { data: { session: s }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        setSession(s);
+        if (s?.user) {
+          const isUserAdmin = await checkAdmin(s.user.id);
+          setIsAdmin(isUserAdmin);
+        }
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initializeAuth();

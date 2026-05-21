@@ -1,12 +1,19 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Initialize PDF.js worker
-// Using the CDN for the worker to avoid complex build configuration for the worker file
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// Using a specific worker version to ensure compatibility
+const PDFJS_VERSION = '4.0.379';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
 
 export async function extractTextFromPdf(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  
+  // Loading the PDF with explicit error handling
+  const loadingTask = pdfjsLib.getDocument({ 
+    data: arrayBuffer
+  });
+  
+  const pdf = await loadingTask.promise;
   let fullText = "";
 
   for (let i = 1; i <= pdf.numPages; i++) {
