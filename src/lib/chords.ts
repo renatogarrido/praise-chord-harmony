@@ -55,36 +55,41 @@ export function isChordLine(line: string): boolean {
   // Ignore lines that look like sections [Intro], {Chorus}
   if (trimmed.match(/^\[([^\]]+)\]\s*$/) || trimmed.match(/^\{([^}]+)\}$/)) return false;
   
+  // A chord line typically contains letters A-G with chord suffixes, and a lot of whitespace
+  // Regex for a chord: Root(A-G) + optional accidental(#/b) + optional suffix + optional bass note
+  const chordRegex = /^[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?$/i;
+  
   const words = trimmed.split(/\s+/);
   if (words.length === 0) return false;
   
   let chordCount = 0;
   for (const word of words) {
-    // A word is likely a chord if it matches the pattern
-    // and isn't a common Portuguese word that could be mistaken (like "A", "E", "D")
-    // but we trust the line if multiple chords are found
-    const isChord = /^[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\/[A-G][#b]?)?$/i.test(word);
-    if (isChord) {
+    // Clean word of common PDF artifacts like small dots or dashes
+    const cleanWord = word.replace(/[.·-]$/, '');
+    if (chordRegex.test(cleanWord)) {
       chordCount++;
     }
   }
   
-  // If at least half the words are chords, it's a chord line
-  return chordCount / words.length >= 0.5;
+  // If at least 60% of "words" are chords, or it's a very short line with at least one chord
+  return (chordCount / words.length >= 0.6) || (words.length <= 3 && chordCount >= 1 && line.length > 0 && line.length < 40);
 }
 
 export function transposeChordLine(line: string, steps: number): string {
   // We want to preserve the exact spacing
-  return line.split(/(\s+)/).map(part => {
-    if (!part || part.trim() === '') return part;
-    
-    // Check if this part is a chord
-    const isChord = /^[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\/[A-G][#b]?)?$/i.test(part);
-    if (isChord) {
-      return transposeChord(part, steps);
-    }
-    return part;
-  }).join('');
+  const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
+  
+  let result = "";
+  let lastIndex = 0;
+  let match;
+
+  while ((match = chordRegex.exec(line)) !== null) {
+    result += line.slice(lastIndex, match.index);
+    result += transposeChord(match[0], steps);
+    lastIndex = chordRegex.lastIndex;
+  }
+  result += line.slice(lastIndex);
+  return result;
 }
 
 
@@ -146,7 +151,9 @@ export function transposeAllChordsInText(text: string, steps: number): string {
  *   [G]Amazing [C]grace
  */
 export function convertToChordPro(text: string): string {
-  const lines = text.split(/\r?\n/);
+  // First, convert tabs to spaces to maintain alignment (assuming 8 spaces per tab is common in exports)
+  const normalizedText = text.replace(/\t/g, "        ");
+  const lines = normalizedText.split(/\r?\n/);
   const result: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -166,18 +173,21 @@ export function convertToChordPro(text: string): string {
         chordMatches.push({ chord: match[0], index: match.index });
       }
 
-      // Sort matches by index just in case
+      // Sort matches by index
       chordMatches.sort((a, b) => a.index - b.index);
 
-      // Insert chords into the lyric line at the correct positions
+      // Insert chords into the lyric line
       for (const { chord, index } of chordMatches) {
+        // If the index is beyond the lyric line length, append it at the end
+        const targetIndex = Math.min(index, nextLine.length);
+        
         // Add lyric text before this chord
-        const lyricSegment = nextLine.substring(lastLyricPos, index);
+        const lyricSegment = nextLine.substring(lastLyricPos, targetIndex);
         chordProLine += lyricSegment + `[${chord}]`;
-        lastLyricPos = index;
+        lastLyricPos = targetIndex;
       }
 
-      // Add remaining lyric text
+      // Add remaining lyric text from next line
       chordProLine += nextLine.substring(lastLyricPos);
       result.push(chordProLine);
       i++; // Skip the next line as we've merged it
