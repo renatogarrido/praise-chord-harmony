@@ -55,24 +55,31 @@ export function isChordLine(line: string): boolean {
   // Ignore lines that look like sections [Intro], {Chorus}
   if (trimmed.match(/^\[([^\]]+)\]\s*$/) || trimmed.match(/^\{([^}]+)\}$/)) return false;
   
-  // A chord line typically contains letters A-G with chord suffixes, and a lot of whitespace
-  // Regex for a chord: Root(A-G) + optional accidental(#/b) + optional suffix + optional bass note
+  // A chord line typically contains letters A-G with chord suffixes
+  // We use a slightly more permissive regex for detection
   const chordRegex = /^[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?$/i;
   
-  const words = trimmed.split(/\s+/);
+  const words = trimmed.split(/[\s\t|\-–—]+/).filter(w => w.length > 0);
   if (words.length === 0) return false;
   
   let chordCount = 0;
+  let wordCount = 0;
+  
   for (const word of words) {
-    // Clean word of common PDF artifacts like small dots or dashes
-    const cleanWord = word.replace(/[.·-]$/, '');
+    // Clean word of common artifacts
+    const cleanWord = word.replace(/[.·,;]$/, '');
     if (chordRegex.test(cleanWord)) {
       chordCount++;
+    } else if (word.match(/[a-z]{3,}/i)) {
+      // If it has 3+ letters and isn't a chord, it's probably a real word
+      wordCount++;
     }
   }
   
-  // If at least 60% of "words" are chords, or it's a very short line with at least one chord
-  return (chordCount / words.length >= 0.6) || (words.length <= 3 && chordCount >= 1 && line.length > 0 && line.length < 40);
+  // It's a chord line if:
+  // 1. Chords outnumber real words
+  // 2. Or it's short and has at least one chord and NO real words
+  return (chordCount > wordCount) || (chordCount >= 1 && wordCount === 0 && trimmed.length < 60);
 }
 
 export function transposeChordLine(line: string, steps: number): string {
