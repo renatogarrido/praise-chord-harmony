@@ -11,20 +11,26 @@ function AdminSongs() {
   const [items, setItems] = useState<any[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const load = () => {
-    return supabase
-      .from("songs")
-      .select("*, albums(title)")
-      .order("title")
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Error loading songs:", error);
-          toast.error("Erro ao carregar cifras");
-          return;
-        }
-        setItems(data ?? []);
-      });
+  const load = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("songs")
+        .select("*, albums(title)")
+        .order("title");
+        
+      if (error) {
+        console.error("Error loading songs:", error);
+        toast.error("Erro ao carregar cifras");
+        return;
+      }
+      setItems(data ?? []);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -44,18 +50,23 @@ function AdminSongs() {
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const submitButton = (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement);
-    if (submitButton) submitButton.disabled = true;
+    if (isSaving) return;
+    setIsSaving(true);
 
     try {
       const fd = new FormData(e.currentTarget);
       const payload = {
-        title: String(fd.get("title")),
+        title: String(fd.get("title")).trim(),
         album_id: String(fd.get("album_id") || "") || null,
         original_key: String(fd.get("original_key") || "C"),
         lyrics: String(fd.get("lyrics") || ""),
         notes: String(fd.get("notes") || "") || null,
       };
+
+      if (!payload.title) {
+        toast.error("Título é obrigatório");
+        return;
+      }
 
       const { error } = editing?.id
         ? await supabase.from("songs").update(payload).eq("id", editing.id)
@@ -66,18 +77,26 @@ function AdminSongs() {
         return toast.error("Erro ao salvar: " + error.message);
       }
 
-      toast.success("Salvo!");
+      toast.success("Cifra salva com sucesso!");
       setEditing(null);
       load();
+    } catch (err: any) {
+      console.error("Critical error saving:", err);
+      toast.error("Ocorreu um erro inesperado ao salvar");
     } finally {
-      if (submitButton) submitButton.disabled = false;
+      setIsSaving(false);
     }
   };
 
   const del = async (id: string) => {
     if (!confirm("Excluir cifra?")) return;
-    await supabase.from("songs").delete().eq("id", id);
-    load();
+    const { error } = await supabase.from("songs").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir cifra");
+    } else {
+      toast.success("Cifra excluída");
+      load();
+    }
   };
 
   return (
@@ -109,13 +128,24 @@ function AdminSongs() {
           </div>
           <textarea name="notes" rows={2} defaultValue={editing.notes || ""} placeholder="Observações musicais (opcional)" className="rounded-lg border border-border bg-background px-4 py-3 text-sm" />
           <div className="flex gap-2">
-            <button type="submit" className="rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground">Salvar</button>
-            <button type="button" onClick={() => setEditing(null)} className="rounded-full border border-border px-5 py-2 text-xs">Cancelar</button>
+            <button 
+              type="submit" 
+              disabled={isSaving}
+              className="rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Salvando..." : "Salvar"}
+            </button>
+            <button type="button" onClick={() => setEditing(null)} disabled={isSaving} className="rounded-full border border-border px-5 py-2 text-xs">Cancelar</button>
           </div>
         </form>
       )}
 
-      <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+      <div className="rounded-2xl border border-border bg-card divide-y divide-border relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-2xl">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
+          </div>
+        )}
         {items.map((s) => (
           <div key={s.id} className="flex items-center gap-4 p-4">
             <div className="flex-1 min-w-0">
