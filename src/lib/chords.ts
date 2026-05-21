@@ -144,15 +144,11 @@ export function transposeAllChordsInText(text: string, steps: number): string {
 
 /**
  * Attempts to convert plain text with chords on top lines into ChordPro format.
- * Example:
- *   G          C
- *   Amazing grace
- * Becomes:
- *   [G]Amazing [C]grace
+ * Focuses on maintaining EXACT alignment from PDF exports.
  */
 export function convertToChordPro(text: string): string {
-  // First, convert tabs to spaces to maintain alignment (assuming 8 spaces per tab is common in exports)
-  const normalizedText = text.replace(/\t/g, "        ");
+  // Use a smaller tab width as modern PDFs often use tighter spacing
+  const normalizedText = text.replace(/\t/g, "    ");
   const lines = normalizedText.split(/\r?\n/);
   const result: string[] = [];
 
@@ -160,37 +156,62 @@ export function convertToChordPro(text: string): string {
     const currentLine = lines[i];
     const nextLine = lines[i + 1];
 
-    // If current line is a chord line and next line exists and is NOT a chord line
-    if (isChordLine(currentLine) && nextLine !== undefined && !isChordLine(nextLine) && nextLine.trim() !== "" && !nextLine.trim().match(/^\[([^\]]+)\]\s*$/) && !nextLine.trim().match(/^\{([^}]+)\}$/)) {
+    // If current line is a chord line and next line is a lyric line
+    if (isChordLine(currentLine) && 
+        nextLine !== undefined && 
+        !isChordLine(nextLine) && 
+        nextLine.trim() !== "" && 
+        !nextLine.trim().match(/^\[([^\]]+)\]\s*$/) && 
+        !nextLine.trim().match(/^\{([^}]+)\}$/)) {
+      
       let chordProLine = "";
       let lastLyricPos = 0;
 
-      // Find all chords and their positions in the chord line
+      // Extract chords with their exact starting positions
+      // We use a regex that matches the whole chord including suffixes
+      const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
       const chordMatches: { chord: string; index: number }[] = [];
-      const chordRegex = /\S+/g;
       let match;
+      
       while ((match = chordRegex.exec(currentLine)) !== null) {
         chordMatches.push({ chord: match[0], index: match.index });
       }
 
-      // Sort matches by index
-      chordMatches.sort((a, b) => a.index - b.index);
-
-      // Insert chords into the lyric line
-      for (const { chord, index } of chordMatches) {
-        // If the index is beyond the lyric line length, append it at the end
-        const targetIndex = Math.min(index, nextLine.length);
-        
-        // Add lyric text before this chord
-        const lyricSegment = nextLine.substring(lastLyricPos, targetIndex);
-        chordProLine += lyricSegment + `[${chord}]`;
-        lastLyricPos = targetIndex;
+      // If no chords found (regex mismatch but isChordLine passed), treat as plain text
+      if (chordMatches.length === 0) {
+        result.push(currentLine);
+        continue;
       }
 
-      // Add remaining lyric text from next line
+      // Sort matches by index to be safe
+      chordMatches.sort((a, b) => a.index - b.index);
+
+      // We need to account for the fact that PDFs often have leading spaces
+      // that might not align perfectly with the lyrics.
+      for (const { chord, index } of chordMatches) {
+        // Find the correct insertion point in the lyrics.
+        // We use the exact index from the chord line.
+        const targetIndex = index;
+        
+        // If the chord is positioned before the current lyric position, 
+        // it means multiple chords are stacked or very close.
+        const safeTargetIndex = Math.max(lastLyricPos, targetIndex);
+        
+        // If targetIndex is beyond current nextLine length, we need to pad with spaces
+        if (safeTargetIndex > nextLine.length) {
+          const padding = " ".repeat(safeTargetIndex - nextLine.length);
+          chordProLine += nextLine.substring(lastLyricPos) + padding + `[${chord}]`;
+          lastLyricPos = nextLine.length; // We've consumed all lyrics and added padding
+        } else {
+          chordProLine += nextLine.substring(lastLyricPos, safeTargetIndex) + `[${chord}]`;
+          lastLyricPos = safeTargetIndex;
+        }
+      }
+
+      // Add remaining lyric text
       chordProLine += nextLine.substring(lastLyricPos);
       result.push(chordProLine);
-      i++; // Skip the next line as we've merged it
+      i++; // Skip the next line
     } else {
       result.push(currentLine);
     }
