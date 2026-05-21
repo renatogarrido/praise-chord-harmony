@@ -150,82 +150,12 @@ export function transposeAllChordsInText(text: string, steps: number): string {
 }
 
 /**
- * Attempts to convert plain text with chords on top lines into ChordPro format.
- * Optimized for accuracy even with proportional font copy-pasting.
+ * Returns the text exactly as provided, preserving lines.
+ * This ensures chords stay on their own lines above lyrics.
  */
 export function convertToChordPro(text: string): string {
   if (!text) return "";
-  
-  // Normalize tabs
-  const normalizedText = text.replace(/\t/g, "    ");
-  const lines = normalizedText.split(/\r?\n/);
-  const result: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const currentLine = lines[i];
-    const nextLine = lines[i + 1];
-
-    if (isChordLine(currentLine)) {
-      // If there's a next line and it's NOT a chord line and not empty
-      if (nextLine !== undefined && 
-          !isChordLine(nextLine) && 
-          nextLine.trim() !== "" && 
-          !nextLine.trim().match(/^\[([^\]]+)\]\s*$/) && 
-          !nextLine.trim().match(/^\{([^}]+)\}$/)) {
-        
-        const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
-        const chords: { chord: string; index: number }[] = [];
-        let match;
-        
-        while ((match = chordRegex.exec(currentLine)) !== null) {
-          chords.push({ chord: match[0], index: match.index });
-        }
-
-        if (chords.length === 0) {
-          result.push(currentLine);
-          continue;
-        }
-
-        let chordProLine = nextLine;
-        
-        // Sort chords by index DESCENDING to avoid offset issues when inserting [ ]
-        const sortedChords = [...chords].sort((a, b) => b.index - a.index);
-        
-        for (const { chord, index } of sortedChords) {
-          // Adjust for potential misalignments between PDF space and text length
-          // If the chord is at the end of a long line, ensure the lyric line is long enough
-          let targetIndex = index;
-          
-          if (targetIndex > chordProLine.length) {
-            chordProLine = chordProLine.padEnd(targetIndex, ' ');
-          }
-
-          chordProLine = 
-            chordProLine.slice(0, targetIndex) + 
-            `[${chord}]` + 
-            chordProLine.slice(targetIndex);
-        }
-        
-        result.push(chordProLine);
-        i++; // Skip next line (the lyric line we just merged)
-      } else {
-        // Standalone chord line or Intro line
-        const chordRegex = /[A-G][#b]?(m|maj|min|M|aug|dim|sus|add|7|9|11|13|b5|#5|6|2|4|°|ø|\+)*(\([#b]?\d+\))?(\/[A-G][#b]?)?/gi;
-        let formattedLine = "";
-        let lastIdx = 0;
-        let match;
-        
-        while ((match = chordRegex.exec(currentLine)) !== null) {
-          formattedLine += currentLine.slice(lastIdx, match.index) + `[${match[0]}]`;
-          lastIdx = chordRegex.lastIndex;
-        }
-        formattedLine += currentLine.slice(lastIdx);
-        result.push(formattedLine);
-      }
-    } else {
-      result.push(currentLine);
-    }
-  }
-
-  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  // We no longer convert to ChordPro [C]. 
+  // We preserve the plain text format with chords on their own lines.
+  return text.trim();
 }
