@@ -133,7 +133,7 @@ function SongView() {
       if (isChordLine(line)) {
         const transposed = transposeChordLine(line, transposeDelta);
         return (
-          <div key={idx} className="font-mono font-bold text-[#F97316] whitespace-pre leading-none py-0.5" style={{ fontSize: `${fontSize * 0.9}px` }}>
+          <div key={idx} className="font-mono font-bold text-[#F97316] whitespace-pre leading-none py-1" style={{ fontSize: `${fontSize}px` }}>
             {transposed}
           </div>
         );
