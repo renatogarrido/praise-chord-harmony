@@ -151,6 +151,7 @@ export function transposeAllChordsInText(text: string, steps: number): string {
 
 export function convertToChordPro(text: string): string {
   if (!text) return "";
-  // Retorna o texto exatamente como extraído, sem adicionar colchetes.
+  // Retorna o texto exatamente como extraído, sem adicionar colchetes,
+  // preservando o alinhamento visual para que o sistema renderize como texto puro.
   return text;
 }

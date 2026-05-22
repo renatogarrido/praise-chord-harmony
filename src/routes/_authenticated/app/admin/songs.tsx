@@ -14,13 +14,14 @@ function AdminSongs() {
   const [editing, setEditing] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("songs")
-        .select("*, albums(title)")
+        .select("*, albums(id, title)")
         .order("title");
         
       if (error) {
@@ -188,7 +189,7 @@ function AdminSongs() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Letra & cifra (use [Acorde]texto)</label>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Letra & cifra (Cole o texto alinhado ou use [Acorde]texto)</label>
               <button 
                 type="button"
                 onClick={() => {
@@ -221,23 +222,78 @@ function AdminSongs() {
         </form>
       )}
 
-      <div className="rounded-2xl border border-border bg-card divide-y divide-border relative">
-        {isLoading && (
-          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-2xl">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
+      <div className="mb-6">
+        <div className="relative">
+          <input 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+            placeholder="Buscar cifras por nome..." 
+            className="w-full rounded-full border border-border bg-card pl-11 pr-4 py-3 text-sm focus:border-gold/50 focus:outline-none" 
+          />
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+            <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : 'hidden'}`} />
+            {!isLoading && <Plus className="h-4 w-4 rotate-45" />}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-8 relative">
+        {isLoading && items.length === 0 && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-gold" />
           </div>
         )}
-        {items.map((s) => (
-          <div key={s.id} className="flex items-center gap-4 p-4">
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{s.title}</p>
-              <p className="text-xs text-muted-foreground">{s.albums?.title ?? "Sem álbum"}</p>
+
+        {(() => {
+          const filteredItems = items.filter(s => 
+            s.title.toLowerCase().includes(search.toLowerCase())
+          );
+
+          // Group by album
+          const groups: { [key: string]: { title: string, songs: any[] } } = {};
+          
+          filteredItems.forEach(s => {
+            const albumId = s.album_id || "none";
+            const albumTitle = s.albums?.title || "Sem álbum";
+            
+            if (!groups[albumId]) {
+              groups[albumId] = { title: albumTitle, songs: [] };
+            }
+            groups[albumId].songs.push(s);
+          });
+
+          const sortedGroups = Object.entries(groups).sort((a, b) => {
+            if (a[0] === "none") return 1;
+            if (b[0] === "none") return -1;
+            return a[1].title.localeCompare(b[1].title);
+          });
+
+          if (filteredItems.length === 0 && !isLoading) {
+            return <div className="text-center py-20 text-muted-foreground">Nenhuma cifra encontrada.</div>;
+          }
+
+          return sortedGroups.map(([albumId, group]) => (
+            <div key={albumId} className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-gold flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-gold" />
+                {group.title}
+                <span className="ml-auto text-[10px] text-muted-foreground font-normal">{group.songs.length} cifras</span>
+              </h3>
+              <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+                {group.songs.map((s) => (
+                  <div key={s.id} className="flex items-center gap-4 p-4 hover:bg-accent/30 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{s.title}</p>
+                    </div>
+                    <span className="font-mono text-xs px-2 py-1 rounded bg-gold-soft text-gold">{s.original_key}</span>
+                    <button onClick={() => { setEditing(s); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-xs text-gold hover:underline">Editar</button>
+                    <button onClick={() => del(s.id)} className="rounded p-2 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                ))}
+              </div>
             </div>
-            <span className="font-mono text-xs px-2 py-1 rounded bg-gold-soft text-gold">{s.original_key}</span>
-            <button onClick={() => setEditing(s)} className="text-xs text-gold hover:underline">Editar</button>
-            <button onClick={() => del(s.id)} className="rounded p-2 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
-          </div>
-        ))}
+          ));
+        })()}
       </div>
     </div>
   );
