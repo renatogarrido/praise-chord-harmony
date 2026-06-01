@@ -13,7 +13,7 @@ type AuthCtx = {
 
 const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, loading: true, signOut: async () => {} });
 
-const INACTIVITY_LIMIT = 2 * 60 * 60 * 1000; // 2 hours in ms
+const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
