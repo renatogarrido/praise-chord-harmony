@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!session?.user || isAdmin) {
+    if (!session?.user) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
