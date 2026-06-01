@@ -57,13 +57,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: { session: s }, error } = await supabase.auth.getSession();
         if (error) throw error;
-        setSession(s);
-        if (s?.user) {
-          const isUserAdmin = await checkAdmin(s.user.id);
-          setIsAdmin(isUserAdmin);
+
+        if (!s) {
+          setSession(null);
+          setIsAdmin(false);
+          return;
         }
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          setSession(null);
+          setIsAdmin(false);
+          await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+          return;
+        }
+
+        setSession(s);
+        const isUserAdmin = await checkAdmin(user.id);
+        setIsAdmin(isUserAdmin);
       } catch (err) {
         console.error("Auth initialization error:", err);
+        setSession(null);
+        setIsAdmin(false);
       } finally {
         setLoading(false);
       }
@@ -71,12 +86,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "INITIAL_SESSION") return;
+
       setSession(s);
       setLoading(false);
       if (s?.user) {
         // Defer Supabase calls to evitar deadlock dentro do callback de auth
         setTimeout(async () => {
+          const { data: { user }, error } = await supabase.auth.getUser();
+          if (error || !user) {
+            setSession(null);
+            setIsAdmin(false);
+            await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+            return;
+          }
           const isUserAdmin = await checkAdmin(s.user.id);
           setIsAdmin(isUserAdmin);
         }, 0);

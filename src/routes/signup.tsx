@@ -9,14 +9,14 @@ export const Route = createFileRoute("/signup")({ component: SignupPage });
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [name, setName] = useState("");
   const [churchName, setChurchName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (session) navigate({ to: "/app/albums" }); }, [session, navigate]);
+  useEffect(() => { if (!authLoading && session) navigate({ to: "/app/albums" }); }, [authLoading, session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
