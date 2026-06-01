@@ -293,7 +293,7 @@ function SongView() {
                 </span>
                 {fav && <Heart className="h-4 w-4 text-gold fill-gold" />}
               </div>
-              <h1 className="font-serif text-4xl md:text-6xl leading-tight tracking-tight text-balance">
+              <h1 className="font-serif text-2xl md:text-4xl leading-tight tracking-tight text-balance">
                 {song.title}
               </h1>
               <p className="flex items-center gap-2 text-sm text-muted-foreground">
