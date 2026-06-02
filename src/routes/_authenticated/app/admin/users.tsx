@@ -161,19 +161,24 @@ function AdminUsers() {
           <p className="mt-2 text-sm text-muted-foreground">Total: {users.length}</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingId(null);
-            setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
-              <UserPlus className="h-4 w-4" />
-              Novo Usuário
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={exportCsv} disabled={!users.length}>
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingId(null);
+              setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                <UserPlus className="h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
