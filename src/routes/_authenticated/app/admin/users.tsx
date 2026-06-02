@@ -253,7 +253,8 @@ function AdminUsers() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </header>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
