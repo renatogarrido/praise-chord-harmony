@@ -8,6 +8,7 @@ export const Route = createFileRoute("/_authenticated/app/admin/")({ component: 
 function Dashboard() {
   const [stats, setStats] = useState({ users: 0, songs: 0, albums: 0, accesses: 0 });
   const [topSongs, setTopSongs] = useState<any[]>([]);
+  const [topUsers, setTopUsers] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -19,14 +20,25 @@ function Dashboard() {
       ]);
       setStats({ users: u.count ?? 0, songs: s.count ?? 0, albums: a.count ?? 0, accesses: h.count ?? 0 });
 
-      const { data } = await supabase.from("access_history").select("song_id, songs(title)").limit(500);
+      const { data } = await supabase
+        .from("access_history")
+        .select("song_id, user_id, songs(title), profiles(full_name)")
+        .limit(1000);
       const counts = new Map<string, { title: string; n: number }>();
+      const userCounts = new Map<string, { name: string; n: number }>();
       data?.forEach((r: any) => {
-        if (!r.songs) return;
-        const c = counts.get(r.song_id) ?? { title: r.songs.title, n: 0 };
-        c.n++; counts.set(r.song_id, c);
+        if (r.songs) {
+          const c = counts.get(r.song_id) ?? { title: r.songs.title, n: 0 };
+          c.n++; counts.set(r.song_id, c);
+        }
+        if (r.user_id) {
+          const name = r.profiles?.full_name ?? "Usuário";
+          const c = userCounts.get(r.user_id) ?? { name, n: 0 };
+          c.n++; userCounts.set(r.user_id, c);
+        }
       });
       setTopSongs([...counts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(([id, v]) => ({ id, ...v })));
+      setTopUsers([...userCounts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 10).map(([id, v]) => ({ id, ...v })));
     })();
   }, []);
 
@@ -54,24 +66,46 @@ function Dashboard() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
-        {topSongs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
-        ) : (
-          <div className="space-y-3">
-            {topSongs.map((s, i) => (
-              <div key={s.id} className="flex items-center gap-4">
-                <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
-                <span className="flex-1 truncate">{s.title}</span>
-                <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
-                  <div className="h-full bg-gold" style={{ width: `${(s.n / topSongs[0].n) * 100}%` }} />
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
+          {topSongs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
+          ) : (
+            <div className="space-y-3">
+              {topSongs.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-4">
+                  <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
+                  <span className="flex-1 truncate">{s.title}</span>
+                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
+                    <div className="h-full bg-gold" style={{ width: `${(s.n / topSongs[0].n) * 100}%` }} />
+                  </div>
+                  <span className="font-mono text-xs text-gold w-10 text-right">{s.n}</span>
                 </div>
-                <span className="font-mono text-xs text-gold w-10 text-right">{s.n}</span>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-serif text-xl mb-5">Top 10 usuários mais ativos</h2>
+          {topUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
+          ) : (
+            <div className="space-y-3">
+              {topUsers.map((u, i) => (
+                <div key={u.id} className="flex items-center gap-4">
+                  <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
+                  <span className="flex-1 truncate">{u.name}</span>
+                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
+                    <div className="h-full bg-gold" style={{ width: `${(u.n / topUsers[0].n) * 100}%` }} />
+                  </div>
+                  <span className="font-mono text-xs text-gold w-10 text-right">{u.n}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
