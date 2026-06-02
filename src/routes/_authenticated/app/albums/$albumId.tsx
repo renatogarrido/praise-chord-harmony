@@ -1,25 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, Music2, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/albums/$albumId")({ component: AlbumDetail });
 
+const STALE = 5 * 60 * 1000;
+
 function AlbumDetail() {
   const { albumId } = Route.useParams();
-  const [album, setAlbum] = useState<any>(null);
-  const [songs, setSongs] = useState<any[]>([]);
 
-  useEffect(() => {
-    (async () => {
-      const { data: a } = await supabase.from("albums").select("*").eq("id", albumId).maybeSingle();
-      setAlbum(a);
-      const { data: s } = await supabase.from("songs").select("id, title, original_key").eq("album_id", albumId).order("title");
-      setSongs(s ?? []);
-    })();
-  }, [albumId]);
+  const { data, isLoading } = useQuery({
+    queryKey: ["album-detail", albumId],
+    queryFn: async () => {
+      const [{ data: a }, { data: s }] = await Promise.all([
+        supabase.from("albums").select("*").eq("id", albumId).maybeSingle(),
+        supabase.from("songs").select("id, title, original_key").eq("album_id", albumId).order("title"),
+      ]);
+      return { album: a, songs: s ?? [] };
+    },
+    staleTime: STALE,
+    gcTime: 30 * 60 * 1000,
+  });
 
-  if (!album) return <div className="px-6 py-12 max-w-5xl mx-auto"><div className="h-64 rounded-xl bg-card animate-pulse" /></div>;
+  const album = data?.album;
+  const songs = data?.songs ?? [];
+
+  if (isLoading || !album) return <div className="px-6 py-12 max-w-5xl mx-auto"><div className="h-64 rounded-xl bg-card animate-pulse" /></div>;
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
@@ -53,7 +60,7 @@ function AlbumDetail() {
           <div className="p-12 text-center text-sm text-muted-foreground">Nenhuma cifra cadastrada neste álbum.</div>
         ) : (
           <div className="divide-y divide-border">
-            {songs.map((s, i) => (
+            {songs.map((s: any, i: number) => (
               <Link
                 key={s.id}
                 to="/app/songs/$songId" params={{ songId: s.id }}

@@ -1,22 +1,41 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Music2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/songs/")({ component: SongsPage });
 
+const STALE = 5 * 60 * 1000;
+
 function SongsPage() {
-  const [songs, setSongs] = useState<any[]>([]);
-  const [albums, setAlbums] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [albumId, setAlbumId] = useState<string>("");
 
-  useEffect(() => {
-    supabase.from("albums").select("id,title").order("title").then(({ data }) => setAlbums(data ?? []));
-    supabase.from("songs").select("id,title,original_key,album_id, albums(title)").order("title").then(({ data }) => setSongs(data ?? []));
-  }, []);
+  const { data: albums = [] } = useQuery({
+    queryKey: ["albums-min"],
+    queryFn: async () => {
+      const { data } = await supabase.from("albums").select("id,title").order("title");
+      return data ?? [];
+    },
+    staleTime: STALE,
+    gcTime: 30 * 60 * 1000,
+  });
 
-  const filtered = songs.filter((s) => {
+  const { data: songs = [] } = useQuery({
+    queryKey: ["songs-list"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("songs")
+        .select("id,title,original_key,album_id, albums(title)")
+        .order("title");
+      return data ?? [];
+    },
+    staleTime: STALE,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  const filtered = songs.filter((s: any) => {
     if (albumId && s.album_id !== albumId) return false;
     if (search && !s.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -38,7 +57,7 @@ function SongsPage() {
         <select value={albumId} onChange={(e) => setAlbumId(e.target.value)}
           className="rounded-full border border-border bg-card px-5 py-3 text-sm focus:border-gold/50 focus:outline-none">
           <option value="">Todos os álbuns</option>
-          {albums.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
+          {albums.map((a: any) => <option key={a.id} value={a.id}>{a.title}</option>)}
         </select>
       </div>
 
@@ -47,7 +66,7 @@ function SongsPage() {
           <div className="p-16 text-center"><Music2 className="mx-auto h-10 w-10 text-muted-foreground/40" /><p className="mt-4 text-sm text-muted-foreground">Nenhuma cifra encontrada.</p></div>
         ) : (
           <div className="divide-y divide-border">
-            {filtered.map((s) => (
+            {filtered.map((s: any) => (
               <Link key={s.id} to="/app/songs/$songId" params={{ songId: s.id }}
                 className="flex items-center justify-between px-5 md:px-6 py-4 hover:bg-accent transition-colors group">
                 <div className="min-w-0">
