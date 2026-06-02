@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2 } from "lucide-react";
-import { deleteUserAdmin } from "@/lib/admin-users.functions";
+import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download } from "lucide-react";
+import { deleteUserAdmin, listUsersAdmin } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -38,11 +38,33 @@ function AdminUsers() {
   });
 
   const load = async () => {
-    const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
-    const { data: roles } = await supabase.from("user_roles").select("*");
-    const roleMap = new Map<string, string[]>();
-    roles?.forEach((r) => { const a = roleMap.get(r.user_id) || []; a.push(r.role); roleMap.set(r.user_id, a); });
-    setUsers((profiles ?? []).map((p) => ({ ...p, roles: roleMap.get(p.id) ?? [] })));
+    try {
+      const { users } = await listUsersAdmin();
+      setUsers(users);
+    } catch (e: any) {
+      toast.error("Erro ao carregar usuários: " + (e?.message || ""));
+    }
+  };
+
+  const exportCsv = () => {
+    const headers = ["Nome", "Email", "Igreja", "Função", "Cadastro", "Último acesso"];
+    const rows = users.map((u) => [
+      u.full_name || "",
+      u.email || "",
+      u.church_name || "",
+      u.roles.includes("admin") ? "Admin" : "Usuário",
+      u.created_at ? new Date(u.created_at).toLocaleString("pt-BR") : "",
+      u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("pt-BR") : "",
+    ]);
+    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `usuarios-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => { load(); }, []);
@@ -139,19 +161,24 @@ function AdminUsers() {
           <p className="mt-2 text-sm text-muted-foreground">Total: {users.length}</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingId(null);
-            setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
-              <UserPlus className="h-4 w-4" />
-              Novo Usuário
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={exportCsv} disabled={!users.length}>
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingId(null);
+              setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                <UserPlus className="h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
@@ -226,7 +253,8 @@ function AdminUsers() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </header>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
@@ -237,6 +265,7 @@ function AdminUsers() {
               <div className="grid size-10 place-items-center rounded-full bg-gold-soft text-gold text-sm font-semibold">{(u.full_name?.[0] || "?").toUpperCase()}</div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{u.full_name || "—"}</p>
+                {u.email && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
                 <p className="text-xs text-muted-foreground">desde {new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
               </div>
               {isAdmin && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold">Admin</span>}
