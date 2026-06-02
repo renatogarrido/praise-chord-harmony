@@ -24,15 +24,16 @@ function AdminSettings() {
   };
 
   const save = async () => {
-    const { error } = await supabase.from("app_settings").update({
+    const { error } = await supabase.from("app_settings").upsert({
+      id: 1,
       app_name: s.app_name,
       primary_color: s.primary_color,
       logo_url: s.logo_url,
       bg_url: s.bg_url,
       default_theme: s.default_theme,
-    }).eq("id", 1);
+    });
     if (error) return toast.error(error.message);
-    toast.success("Configurações salvas! Recarregue para ver."); 
+    toast.success("Configurações salvas! Recarregue para ver.");
   };
 
   return (
