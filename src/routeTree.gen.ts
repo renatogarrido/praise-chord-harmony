@@ -22,6 +22,8 @@ import { Route as AuthenticatedAppSetlistsIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppAlbumsIndexRouteImport } from './routes/_authenticated/app/albums/index'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app/admin/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedAppSongsSongIdRouteImport } from './routes/_authenticated/app/songs/$songId'
 import { Route as AuthenticatedAppSetlistsSetlistIdRouteImport } from './routes/_authenticated/app/setlists/$setlistId'
 import { Route as AuthenticatedAppAlbumsAlbumIdRouteImport } from './routes/_authenticated/app/albums/$albumId'
@@ -100,6 +102,16 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppSongsSongIdRoute =
   AuthenticatedAppSongsSongIdRouteImport.update({
     id: '/app/songs/$songId',
@@ -158,6 +170,8 @@ export interface FileRoutesByFullPath {
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/albums/': typeof AuthenticatedAppAlbumsIndexRoute
@@ -178,6 +192,8 @@ export interface FileRoutesByTo {
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/albums': typeof AuthenticatedAppAlbumsIndexRoute
@@ -201,6 +217,8 @@ export interface FileRoutesById {
   '/_authenticated/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
   '/_authenticated/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/_authenticated/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/albums/': typeof AuthenticatedAppAlbumsIndexRoute
@@ -224,6 +242,8 @@ export interface FileRouteTypes {
     | '/app/albums/$albumId'
     | '/app/setlists/$setlistId'
     | '/app/songs/$songId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin/'
     | '/app/albums/'
@@ -244,6 +264,8 @@ export interface FileRouteTypes {
     | '/app/albums/$albumId'
     | '/app/setlists/$setlistId'
     | '/app/songs/$songId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin'
     | '/app/albums'
@@ -266,6 +288,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/albums/$albumId'
     | '/_authenticated/app/setlists/$setlistId'
     | '/_authenticated/app/songs/$songId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/albums/'
@@ -279,6 +303,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   PublicSetlistTokenRoute: typeof PublicSetlistTokenRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -373,6 +399,20 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/songs/$songId': {
@@ -483,6 +523,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   PublicSetlistTokenRoute: PublicSetlistTokenRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
