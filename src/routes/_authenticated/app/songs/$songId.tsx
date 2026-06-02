@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex, isChordLine, transposeChordLine } from "@/lib/chords";
@@ -17,14 +18,14 @@ export const Route = createFileRoute("/_authenticated/app/songs/$songId")({
   },
 });
 
+const STALE = 5 * 60 * 1000;
+
 function SongView() {
   const { songId } = Route.useParams();
   const search = Route.useSearch();
   const setlistId = search?.setlist;
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [song, setSong] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [transposeDelta, setTransposeDelta] = useState(0);
   const [fontSize, setFontSize] = useState(18);
   const [fav, setFav] = useState(false);
@@ -36,44 +37,52 @@ function SongView() {
   const rafRef = useRef<number | null>(null);
   const presentationRef = useRef<HTMLDivElement>(null);
 
-  const [setlistSongs, setSetlistSongs] = useState<any[]>([]);
-  const currentIndex = setlistSongs.findIndex(s => s.song_id === songId);
+  // Cifra (cache 5min — conteúdo muda raramente)
+  const { data: song, isLoading: loading } = useQuery({
+    queryKey: ["song", songId],
+    queryFn: async () => {
+      const { data } = await supabase.from("songs").select("*, albums(id,title)").eq("id", songId).maybeSingle();
+      return data;
+    },
+    staleTime: STALE,
+    gcTime: 30 * 60 * 1000,
+  });
 
+  // Repertório (apenas se houver setlistId)
+  const { data: setlistSongs = [] } = useQuery({
+    queryKey: ["setlist-songs", setlistId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("setlist_songs")
+        .select("song_id, position")
+        .eq("setlist_id", setlistId!)
+        .order("position");
+      return data ?? [];
+    },
+    enabled: !!setlistId,
+    staleTime: STALE,
+  });
+
+  const currentIndex = setlistSongs.findIndex((s: any) => s.song_id === songId);
   const currentKey = song?.original_key 
     ? transposeChord(song.original_key, transposeDelta) 
     : "C";
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase.from("songs").select("*, albums(id,title)").eq("id", songId).maybeSingle();
-      if (data) {
-        setSong(data);
-        setTransposeDelta(0); // Reset transpose when changing song
-        if (user) {
-          // Track access history using upsert to avoid duplicate rows for the same song/user
-          supabase.from("access_history").upsert(
-            { user_id: user.id, song_id: songId, accessed_at: new Date().toISOString() },
-            { onConflict: 'user_id, song_id' }
-          ).then(({ error }) => {
-            if (error) console.error("Error updating access history:", error);
-          });
-          const { data: f } = await supabase.from("favorites").select("id").eq("user_id", user.id).eq("song_id", songId).maybeSingle();
-          setFav(!!f);
-        }
-      }
+  // Reset transpose ao trocar de música
+  useEffect(() => { setTransposeDelta(0); }, [songId]);
 
-      if (setlistId) {
-        const { data: ss } = await supabase
-          .from("setlist_songs")
-          .select("song_id, position")
-          .eq("setlist_id", setlistId)
-          .order("position");
-        setSetlistSongs(ss || []);
-      }
-      setLoading(false);
-    })();
-  }, [songId, user, setlistId]);
+  // Registrar acesso + carregar status de favorito (efeitos colaterais, não cacheáveis)
+  useEffect(() => {
+    if (!song || !user) return;
+    supabase.from("access_history").upsert(
+      { user_id: user.id, song_id: songId, accessed_at: new Date().toISOString() },
+      { onConflict: 'user_id, song_id' }
+    ).then(({ error }) => {
+      if (error) console.error("Error updating access history:", error);
+    });
+    supabase.from("favorites").select("id").eq("user_id", user.id).eq("song_id", songId).maybeSingle()
+      .then(({ data: f }) => setFav(!!f));
+  }, [song, user, songId]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {

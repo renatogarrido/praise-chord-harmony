@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Music2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,21 +9,24 @@ export const Route = createFileRoute("/_authenticated/app/albums/")({ component:
 
 type Album = { id: string; title: string; year: number | null; description: string | null; cover_url: string | null; song_count?: number };
 
-function AlbumsPage() {
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+async function fetchAlbums(): Promise<Album[]> {
+  const [{ data: alb }, { data: counts }] = await Promise.all([
+    supabase.from("albums").select("*").order("sort_order").order("year", { ascending: false }),
+    supabase.from("songs").select("album_id"),
+  ]);
+  const countMap = new Map<string, number>();
+  counts?.forEach((s) => { if (s.album_id) countMap.set(s.album_id, (countMap.get(s.album_id) || 0) + 1); });
+  return (alb ?? []).map((a) => ({ ...a, song_count: countMap.get(a.id) || 0 }));
+}
 
-  useEffect(() => {
-    (async () => {
-      const { data: alb } = await supabase.from("albums").select("*").order("sort_order").order("year", { ascending: false });
-      const { data: counts } = await supabase.from("songs").select("album_id");
-      const countMap = new Map<string, number>();
-      counts?.forEach((s) => { if (s.album_id) countMap.set(s.album_id, (countMap.get(s.album_id) || 0) + 1); });
-      setAlbums((alb ?? []).map((a) => ({ ...a, song_count: countMap.get(a.id) || 0 })));
-      setLoading(false);
-    })();
-  }, []);
+function AlbumsPage() {
+  const [search, setSearch] = useState("");
+  const { data: albums = [], isLoading } = useQuery({
+    queryKey: ["albums-with-counts"],
+    queryFn: fetchAlbums,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
   const filtered = albums.filter((a) => a.title.toLowerCase().includes(search.toLowerCase()));
 
@@ -44,7 +48,7 @@ function AlbumsPage() {
         </div>
       </header>
 
-      {loading ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="aspect-square rounded-xl bg-card animate-pulse" />
@@ -64,7 +68,7 @@ function AlbumsPage() {
               <Link to="/app/albums/$albumId" params={{ albumId: album.id }} className="group block">
                 <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-card transition-all duration-500 group-hover:border-gold/40 group-hover:shadow-2xl group-hover:shadow-gold/10">
                   {album.cover_url ? (
-                    <img src={album.cover_url} alt={album.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <img src={album.cover_url} alt={album.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-card to-background">
                       <Music2 className="h-12 w-12 text-gold/30" />
