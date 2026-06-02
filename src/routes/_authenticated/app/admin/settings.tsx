@@ -10,7 +10,9 @@ function AdminSettings() {
   const [s, setS] = useState<any>(null);
 
   useEffect(() => {
-    supabase.from("app_settings").select("*").eq("id", 1).maybeSingle().then(({ data }) => setS(data));
+    supabase.from("app_settings").select("*").eq("id", 1).maybeSingle().then(({ data }) => {
+      setS(data ?? { id: 1, app_name: "Cifras Praise", primary_color: "#C5A059", logo_url: null, bg_url: null, default_theme: "dark" });
+    });
   }, []);
 
   if (!s) return <div className="p-12"><div className="h-32 bg-card rounded-xl animate-pulse" /></div>;
@@ -24,15 +26,16 @@ function AdminSettings() {
   };
 
   const save = async () => {
-    const { error } = await supabase.from("app_settings").update({
+    const { error } = await supabase.from("app_settings").upsert({
+      id: 1,
       app_name: s.app_name,
       primary_color: s.primary_color,
       logo_url: s.logo_url,
       bg_url: s.bg_url,
       default_theme: s.default_theme,
-    }).eq("id", 1);
+    });
     if (error) return toast.error(error.message);
-    toast.success("Configurações salvas! Recarregue para ver."); 
+    toast.success("Configurações salvas! Recarregue para ver.");
   };
 
   return (
