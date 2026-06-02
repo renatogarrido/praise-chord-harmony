@@ -49,16 +49,13 @@ function AdminUsers() {
 
   const deleteUser = async (userId: string) => {
     if (!confirm("Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.")) return;
-    
+
     try {
-      // In a real scenario, you'd want an Edge Function to delete from auth.users too
-      // For now, we delete from the profiles/user_roles table (Supabase usually handles profile deletion via trigger/cascade if set up)
-      const { error } = await supabase.from("profiles").delete().eq("id", userId);
-      if (error) throw error;
+      await deleteUserAdmin({ data: { userId } });
       toast.success("Usuário removido!");
       load();
     } catch (error: any) {
-      toast.error("Erro ao remover usuário: " + error.message);
+      toast.error("Erro ao remover usuário: " + (error?.message || "falha desconhecida"));
     }
   };
 
