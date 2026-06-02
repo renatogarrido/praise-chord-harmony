@@ -66,24 +66,46 @@ function Dashboard() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
-        {topSongs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
-        ) : (
-          <div className="space-y-3">
-            {topSongs.map((s, i) => (
-              <div key={s.id} className="flex items-center gap-4">
-                <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
-                <span className="flex-1 truncate">{s.title}</span>
-                <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
-                  <div className="h-full bg-gold" style={{ width: `${(s.n / topSongs[0].n) * 100}%` }} />
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
+          {topSongs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
+          ) : (
+            <div className="space-y-3">
+              {topSongs.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-4">
+                  <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
+                  <span className="flex-1 truncate">{s.title}</span>
+                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
+                    <div className="h-full bg-gold" style={{ width: `${(s.n / topSongs[0].n) * 100}%` }} />
+                  </div>
+                  <span className="font-mono text-xs text-gold w-10 text-right">{s.n}</span>
                 </div>
-                <span className="font-mono text-xs text-gold w-10 text-right">{s.n}</span>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-serif text-xl mb-5">Top 10 usuários mais ativos</h2>
+          {topUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
+          ) : (
+            <div className="space-y-3">
+              {topUsers.map((u, i) => (
+                <div key={u.id} className="flex items-center gap-4">
+                  <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
+                  <span className="flex-1 truncate">{u.name}</span>
+                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
+                    <div className="h-full bg-gold" style={{ width: `${(u.n / topUsers[0].n) * 100}%` }} />
+                  </div>
+                  <span className="font-mono text-xs text-gold w-10 text-right">{u.n}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
