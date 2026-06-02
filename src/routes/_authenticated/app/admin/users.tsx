@@ -38,11 +38,33 @@ function AdminUsers() {
   });
 
   const load = async () => {
-    const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
-    const { data: roles } = await supabase.from("user_roles").select("*");
-    const roleMap = new Map<string, string[]>();
-    roles?.forEach((r) => { const a = roleMap.get(r.user_id) || []; a.push(r.role); roleMap.set(r.user_id, a); });
-    setUsers((profiles ?? []).map((p) => ({ ...p, roles: roleMap.get(p.id) ?? [] })));
+    try {
+      const { users } = await listUsersAdmin();
+      setUsers(users);
+    } catch (e: any) {
+      toast.error("Erro ao carregar usuários: " + (e?.message || ""));
+    }
+  };
+
+  const exportCsv = () => {
+    const headers = ["Nome", "Email", "Igreja", "Função", "Cadastro", "Último acesso"];
+    const rows = users.map((u) => [
+      u.full_name || "",
+      u.email || "",
+      u.church_name || "",
+      u.roles.includes("admin") ? "Admin" : "Usuário",
+      u.created_at ? new Date(u.created_at).toLocaleString("pt-BR") : "",
+      u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("pt-BR") : "",
+    ]);
+    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `usuarios-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => { load(); }, []);
