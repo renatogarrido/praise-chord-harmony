@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS favorites_user_idx ON public.favorites(user_id);
