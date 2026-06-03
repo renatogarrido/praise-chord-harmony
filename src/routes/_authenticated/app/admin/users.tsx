@@ -108,28 +108,14 @@ function AdminUsers() {
     setIsSubmitting(true);
     try {
       if (editingId) {
-        // Update existing user
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({
-            full_name: formData.fullName,
-            church_name: formData.churchName,
-          })
-          .eq("id", editingId);
-
-        if (profileError) throw profileError;
-
-        // Update role
-        const isAdmin = formData.role === "admin";
-        const currentRoles = users.find(u => u.id === editingId)?.roles || [];
-        const currentlyIsAdmin = currentRoles.includes("admin");
-
-        if (isAdmin && !currentlyIsAdmin) {
-          await supabase.from("user_roles").insert({ user_id: editingId, role: "admin" });
-        } else if (!isAdmin && currentlyIsAdmin) {
-          await supabase.from("user_roles").delete().eq("user_id", editingId).eq("role", "admin");
-        }
-
+        await updateUserAdmin({
+          data: {
+            userId: editingId,
+            fullName: formData.fullName,
+            churchName: formData.churchName,
+            role: formData.role as "user" | "admin",
+          },
+        });
         toast.success("Usuário atualizado com sucesso!");
       } else {
         // Create new user
