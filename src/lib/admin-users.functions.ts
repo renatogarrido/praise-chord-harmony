@@ -95,3 +95,93 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
 
     return { users };
   });
+
+export const toggleAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        isAdmin: z.boolean(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    await assertAdmin(supabase, callerId);
+
+    if (data.userId === callerId) {
+      throw new Error("Você não pode alterar sua própria função.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.isAdmin) {
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+    } else {
+      await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: data.userId, role: "admin" });
+    }
+
+    return { ok: true };
+  });
+
+export const updateUserAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        fullName: z.string().min(1).max(255),
+        churchName: z.string().max(255).optional(),
+        role: z.enum(["user", "admin"]),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    await assertAdmin(supabase, callerId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        full_name: data.fullName,
+        church_name: data.churchName || null,
+      })
+      .eq("id", data.userId);
+
+    if (profileError) throw new Error(profileError.message);
+
+    const { data: existingRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    const currentlyIsAdmin = !!existingRole;
+    const wantsAdmin = data.role === "admin";
+
+    if (wantsAdmin && !currentlyIsAdmin) {
+      await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
+    } else if (!wantsAdmin && currentlyIsAdmin) {
+      if (data.userId === callerId) {
+        throw new Error("Você não pode remover sua própria função de administrador.");
+      }
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+    }
+
+    return { ok: true };
+  });
+

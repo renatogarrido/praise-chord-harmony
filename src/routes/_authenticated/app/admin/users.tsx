@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download } from "lucide-react";
-import { deleteUserAdmin, listUsersAdmin } from "@/lib/admin-users.functions";
+import { deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -94,12 +94,13 @@ function AdminUsers() {
   };
 
   const toggleAdmin = async (userId: string, isAdmin: boolean) => {
-    if (isAdmin) {
-      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
-    } else {
-      await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+    try {
+      await toggleAdminRole({ data: { userId, isAdmin } });
+      toast.success("Atualizado!");
+      load();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao alterar função");
     }
-    toast.success("Atualizado!"); load();
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
@@ -107,28 +108,14 @@ function AdminUsers() {
     setIsSubmitting(true);
     try {
       if (editingId) {
-        // Update existing user
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({
-            full_name: formData.fullName,
-            church_name: formData.churchName,
-          })
-          .eq("id", editingId);
-
-        if (profileError) throw profileError;
-
-        // Update role
-        const isAdmin = formData.role === "admin";
-        const currentRoles = users.find(u => u.id === editingId)?.roles || [];
-        const currentlyIsAdmin = currentRoles.includes("admin");
-
-        if (isAdmin && !currentlyIsAdmin) {
-          await supabase.from("user_roles").insert({ user_id: editingId, role: "admin" });
-        } else if (!isAdmin && currentlyIsAdmin) {
-          await supabase.from("user_roles").delete().eq("user_id", editingId).eq("role", "admin");
-        }
-
+        await updateUserAdmin({
+          data: {
+            userId: editingId,
+            fullName: formData.fullName,
+            churchName: formData.churchName,
+            role: formData.role as "user" | "admin",
+          },
+        });
         toast.success("Usuário atualizado com sucesso!");
       } else {
         // Create new user
