@@ -94,12 +94,13 @@ function AdminUsers() {
   };
 
   const toggleAdmin = async (userId: string, isAdmin: boolean) => {
-    if (isAdmin) {
-      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
-    } else {
-      await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+    try {
+      await toggleAdminRole({ data: { userId, isAdmin } });
+      toast.success("Atualizado!");
+      load();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao alterar função");
     }
-    toast.success("Atualizado!"); load();
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
