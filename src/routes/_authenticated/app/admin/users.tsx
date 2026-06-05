@@ -120,6 +120,8 @@ function AdminUsers() {
             fullName: formData.fullName,
             churchName: formData.churchName,
             role: formData.role as "user" | "admin",
+            instruments,
+            vocalTypes,
           },
         });
         toast.success("Usuário atualizado com sucesso!");
@@ -134,6 +136,8 @@ function AdminUsers() {
 
       setIsDialogOpen(false);
       setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+      setInstruments([]);
+      setVocalTypes([]);
       setEditingId(null);
       load();
     } catch (error: any) {
