@@ -1,0 +1,244 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Plus, Pencil, Trash2, Loader2, Church as ChurchIcon, Instagram } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/_authenticated/app/admin/churches")({
+  component: AdminChurches,
+});
+
+type Church = {
+  id: string;
+  name: string;
+  address: string;
+  instagram: string | null;
+  created_at: string;
+};
+
+function AdminChurches() {
+  const [churches, setChurches] = useState<Church[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "", address: "", instagram: "" });
+
+  const load = async () => {
+    const { data, error } = await supabase
+      .from("churches" as any)
+      .select("*")
+      .order("name", { ascending: true });
+    if (error) {
+      toast.error("Erro ao carregar igrejas: " + error.message);
+      return;
+    }
+    setChurches((data ?? []) as any);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const resetForm = () => {
+    setFormData({ name: "", address: "", instagram: "" });
+    setEditingId(null);
+  };
+
+  const handleEdit = (c: Church) => {
+    setEditingId(c.id);
+    setFormData({ name: c.name, address: c.address, instagram: c.instagram ?? "" });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Excluir esta igreja? Esta ação não pode ser desfeita.")) return;
+    const { error } = await supabase.from("churches" as any).delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir: " + error.message);
+      return;
+    }
+    toast.success("Igreja removida.");
+    load();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        address: formData.address.trim(),
+        instagram: formData.instagram.trim() || null,
+      };
+      if (!payload.name || !payload.address) {
+        toast.error("Nome e endereço são obrigatórios.");
+        return;
+      }
+      if (editingId) {
+        const { error } = await supabase
+          .from("churches" as any)
+          .update(payload)
+          .eq("id", editingId);
+        if (error) throw error;
+        toast.success("Igreja atualizada.");
+      } else {
+        const { error } = await supabase.from("churches" as any).insert(payload);
+        if (error) throw error;
+        toast.success("Igreja cadastrada.");
+      }
+      setIsDialogOpen(false);
+      resetForm();
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao salvar igreja.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const instagramUrl = (handle: string) => {
+    const clean = handle.replace(/^@/, "").trim();
+    if (!clean) return null;
+    if (clean.startsWith("http")) return clean;
+    return `https://instagram.com/${clean}`;
+  };
+
+  return (
+    <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
+      <header className="mb-8 flex justify-between items-end">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Gestão</p>
+          <h1 className="font-serif text-4xl">Igrejas Renascer</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Total: {churches.length}</p>
+        </div>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Igreja
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[480px]">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar Igreja" : "Cadastrar Igreja"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                  id="name"
+                  placeholder="Igreja Renascer ..."
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  maxLength={255}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Endereço completo</Label>
+                <Textarea
+                  id="address"
+                  placeholder="Rua, número, bairro, cidade, estado, CEP"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                  rows={3}
+                  maxLength={1000}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagram">Instagram</Label>
+                <Input
+                  id="instagram"
+                  placeholder="@igrejarenascer"
+                  value={formData.instagram}
+                  onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                  maxLength={255}
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-gold hover:bg-gold/90 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : editingId ? (
+                    "Salvar"
+                  ) : (
+                    "Cadastrar"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </header>
+
+      <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+        {churches.length === 0 && (
+          <p className="p-6 text-sm text-muted-foreground">Nenhuma igreja cadastrada ainda.</p>
+        )}
+        {churches.map((c) => {
+          const igUrl = c.instagram ? instagramUrl(c.instagram) : null;
+          return (
+            <div key={c.id} className="flex items-start gap-4 p-4">
+              <div className="grid size-10 place-items-center rounded-full bg-gold-soft text-gold shrink-0">
+                <ChurchIcon className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium">{c.name}</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{c.address}</p>
+                {c.instagram && (
+                  <a
+                    href={igUrl ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-gold mt-1 hover:underline"
+                  >
+                    <Instagram className="h-3 w-3" /> {c.instagram}
+                  </a>
+                )}
+              </div>
+              <button
+                onClick={() => handleEdit(c)}
+                className="p-2 text-muted-foreground hover:text-gold transition-colors"
+                title="Editar"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleDelete(c.id)}
+                className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                title="Excluir"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut, LifeBuoy, UserCircle, Guitar, Mic2 } from "lucide-react";
+import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut, LifeBuoy, UserCircle, Guitar, Mic2, Church } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppSettings } from "@/hooks/use-app-settings";
 
@@ -18,6 +18,7 @@ const adminLinks = [
   { to: "/app/admin/albums", label: "Álbuns", icon: Album },
   { to: "/app/admin/songs", label: "Cifras", icon: Music2 },
   { to: "/app/admin/users", label: "Usuários", icon: Users },
+  { to: "/app/admin/churches", label: "Igrejas", icon: Church },
   { to: "/app/admin/instruments", label: "Instrumentos", icon: Guitar },
   { to: "/app/admin/vocals", label: "Vozes", icon: Mic2 },
   { to: "/app/admin/support", label: "Suporte", icon: LifeBuoy },

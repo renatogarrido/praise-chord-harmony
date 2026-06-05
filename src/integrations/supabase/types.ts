@@ -106,6 +106,33 @@ export type Database = {
         }
         Relationships: []
       }
+      churches: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          instagram: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          instagram?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          instagram?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
