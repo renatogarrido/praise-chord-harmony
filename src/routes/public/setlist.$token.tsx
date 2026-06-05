@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getPublicSetlist } from "@/lib/public-setlist.functions";
 import { parseLine, transposeChord, ALL_KEYS, semitonesBetween } from "@/lib/chords";
 import { ChevronLeft, ChevronRight, Minus, Plus, Type, Play, Pause, X } from "lucide-react";
 
@@ -8,6 +9,7 @@ export const Route = createFileRoute("/public/setlist/$token")({ component: Publ
 
 function PublicSetlistView() {
   const { token } = Route.useParams();
+  const fetchSetlist = useServerFn(getPublicSetlist);
   const [setlist, setSetlist] = useState<any>(null);
   const [songs, setSongs] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,9 +25,9 @@ function PublicSetlistView() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error: rpcErr } = await supabase.rpc("get_public_setlist", { p_token: token });
+      const data = await fetchSetlist({ data: { token } });
 
-      if (rpcErr || !data) {
+      if (!data) {
         setError("Repertório não encontrado ou link expirado.");
         setLoading(false);
         return;
@@ -45,8 +47,11 @@ function PublicSetlistView() {
       setSongs(ss);
       setCurrentKey(ss[0].custom_key || ss[0].songs.original_key);
       setLoading(false);
-    })();
-  }, [token]);
+    })().catch(() => {
+      setError("Repertório não encontrado ou link expirado.");
+      setLoading(false);
+    });
+  }, [fetchSetlist, token]);
 
   // Autoscroll logic — accumulate sub-pixel offset (iOS Safari floors fractional scrollBy to 0)
   useEffect(() => {
