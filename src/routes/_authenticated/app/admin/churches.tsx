@@ -90,7 +90,7 @@ function AdminChurches() {
   }, []);
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", instagram: "" });
+    setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", estadual: "", instagram: "" });
     setEditingId(null);
   };
 
