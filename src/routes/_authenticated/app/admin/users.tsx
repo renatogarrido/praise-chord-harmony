@@ -240,6 +240,28 @@ function AdminUsers() {
                   </SelectContent>
                 </Select>
               </div>
+              {editingId && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Instrumentos</Label>
+                    <MusicianMultiSelect
+                      groups={INSTRUMENT_GROUPS}
+                      value={instruments}
+                      onChange={setInstruments}
+                      placeholder="Escolher instrumentos…"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vocal</Label>
+                    <MusicianMultiSelect
+                      groups={VOCAL_GROUPS}
+                      value={vocalTypes}
+                      onChange={setVocalTypes}
+                      placeholder="Escolher tipo vocal…"
+                    />
+                  </div>
+                </>
+              )}
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
