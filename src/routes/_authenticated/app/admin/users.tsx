@@ -34,6 +34,7 @@ function AdminUsers() {
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const { groups: instrumentGroups } = useInstrumentGroups();
+  const { groups: vocalGroups } = useVocalGroups();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
