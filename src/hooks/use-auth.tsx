@@ -9,11 +9,13 @@ type AuthCtx = {
   isAdmin: boolean;
   canViewUsers: boolean;
   canManageLocalLeaders: boolean;
+  canManageSchedule: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 };
 
-const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, canViewUsers: false, canManageLocalLeaders: false, loading: true, signOut: async () => {} });
+const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, canViewUsers: false, canManageLocalLeaders: false, canManageSchedule: false, loading: true, signOut: async () => {} });
+
 
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
 
