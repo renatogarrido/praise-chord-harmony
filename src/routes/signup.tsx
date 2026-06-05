@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
+import { ChurchSelect } from "@/components/church-select";
 
 export const Route = createFileRoute("/signup")({ component: SignupPage });
 
@@ -75,9 +76,9 @@ function SignupPage() {
             </div>
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Igreja</label>
-              <input required value={churchName} onChange={(e) => setChurchName(e.target.value)}
-                placeholder="Ex: Renascer em Cristo"
-                className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-gold/50 focus:outline-none" />
+              <div className="mt-2">
+                <ChurchSelect value={churchName} onChange={setChurchName} />
+              </div>
             </div>
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Email</label>
