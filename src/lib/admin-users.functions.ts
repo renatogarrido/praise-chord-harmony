@@ -186,7 +186,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         userId: z.string().uuid(),
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
-        role: z.enum(["user", "admin"]),
+        role: z.enum(["user", "admin", "lider_nacional", "lider_estadual", "lider_local"]),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
       })
@@ -210,27 +210,28 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
 
     if (profileError) throw new Error(profileError.message);
 
-    const { data: existingRole } = await supabaseAdmin
+    // Sync roles: replace all non-default roles with the selected one
+    const { data: existingRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
+      .eq("user_id", data.userId);
+
+    const currentRoles = (existingRoles ?? []).map((r: any) => r.role as string);
+    const wasAdmin = currentRoles.includes("admin");
+
+    if (data.role === "user" && wasAdmin && data.userId === callerId) {
+      throw new Error("Você não pode remover sua própria função de administrador.");
+    }
+
+    // Clear existing role assignments (admin + leadership) and apply the selected one
+    await supabaseAdmin
+      .from("user_roles")
+      .delete()
       .eq("user_id", data.userId)
-      .eq("role", "admin")
-      .maybeSingle();
+      .in("role", ["admin", "lider_nacional", "lider_estadual", "lider_local"] as any);
 
-    const currentlyIsAdmin = !!existingRole;
-    const wantsAdmin = data.role === "admin";
-
-    if (wantsAdmin && !currentlyIsAdmin) {
-      await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
-    } else if (!wantsAdmin && currentlyIsAdmin) {
-      if (data.userId === callerId) {
-        throw new Error("Você não pode remover sua própria função de administrador.");
-      }
-      await supabaseAdmin
-        .from("user_roles")
-        .delete()
-        .eq("user_id", data.userId)
-        .eq("role", "admin");
+    if (data.role !== "user") {
+      await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.role as any });
     }
 
     return { ok: true };
