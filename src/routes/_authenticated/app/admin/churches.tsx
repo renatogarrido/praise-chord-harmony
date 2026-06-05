@@ -23,6 +23,9 @@ type Church = {
   id: string;
   name: string;
   address: string;
+  country: string | null;
+  state: string | null;
+  city: string | null;
   instagram: string | null;
   created_at: string;
 };
@@ -32,7 +35,14 @@ function AdminChurches() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", address: "", instagram: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    country: "Brasil",
+    state: "",
+    city: "",
+    instagram: "",
+  });
 
   const load = async () => {
     const { data, error } = await supabase
