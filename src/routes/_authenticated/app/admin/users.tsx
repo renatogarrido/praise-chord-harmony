@@ -212,7 +212,8 @@ function AdminUsers() {
             setIsDialogOpen(open);
             if (!open) {
               setEditingId(null);
-              setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+              setFormData({ email: "", password: "", fullName: "", churchName: "" });
+              setSelectedRoles([]);
               setInstruments([]);
               setVocalTypes([]);
             }
