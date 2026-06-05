@@ -232,8 +232,7 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
             >
               {opts.map((o) => <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`} className="capitalize">{o.label}</option>)}
             </select>
-            <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Igreja (opcional)</label>
-            <Input value={church} onChange={(e) => setChurch(e.target.value)} placeholder="Ex: Renascer Local" />
+            </select>
             <div className="mt-5 flex justify-end gap-2">
               <button disabled={busy} onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest disabled:opacity-50">Cancelar</button>
               <button disabled={busy} onClick={run} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
