@@ -69,6 +69,7 @@ function AdminChurches() {
     country: "Brasil",
     state: "",
     city: "",
+    estadual: "",
     instagram: "",
   });
 
