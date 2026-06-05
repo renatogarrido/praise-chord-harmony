@@ -19,6 +19,7 @@ const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
   const [loading, setLoading] = useState(true);
   const lastActivityRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
