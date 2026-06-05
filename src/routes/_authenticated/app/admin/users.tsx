@@ -271,11 +271,12 @@ function AdminUsers() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="churchName">Igreja</Label>
+                <Label htmlFor="churchName">Igreja *</Label>
                 <ChurchSelect
                   id="churchName"
                   value={formData.churchName}
                   onChange={(name) => setFormData({ ...formData, churchName: name })}
+                  required
                 />
               </div>
               <div className="space-y-2">
