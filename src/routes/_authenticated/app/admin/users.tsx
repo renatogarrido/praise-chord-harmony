@@ -113,11 +113,13 @@ function AdminUsers() {
   const handleEditUser = async (user: any) => {
     setFormData({
       email: user.email || "",
-      password: "", // Don't show password
+      password: "",
       fullName: user.full_name || "",
       churchName: user.church_name || "",
-      role: getPrimaryRole(user.roles),
     });
+    setSelectedRoles((user.roles ?? []).filter((r: string) =>
+      ["admin", "lider_nacional", "lider_estadual", "lider_local"].includes(r)
+    ));
     setInstruments(user.instruments ?? []);
     setVocalTypes(user.vocal_types ?? []);
     setEditingId(user.id);
@@ -134,6 +136,16 @@ function AdminUsers() {
     }
   };
 
+  const impersonate = async (userId: string, name: string) => {
+    if (!confirm(`Conectar como "${name}"? Sua sessão atual de admin será encerrada.`)) return;
+    try {
+      const { actionLink } = await impersonateUserAdmin({ data: { userId } });
+      window.location.href = actionLink;
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao acessar perfil");
+    }
+  };
+
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -144,21 +156,20 @@ function AdminUsers() {
             userId: editingId,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as any,
+            roles: selectedRoles as any,
             instruments,
             vocalTypes,
           },
         });
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        // Create new user
         await createUserAdmin({
           data: {
             email: formData.email,
             password: formData.password,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as any,
+            roles: selectedRoles as any,
             instruments,
             vocalTypes,
           },
@@ -167,7 +178,8 @@ function AdminUsers() {
       }
 
       setIsDialogOpen(false);
-      setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+      setFormData({ email: "", password: "", fullName: "", churchName: "" });
+      setSelectedRoles([]);
       setInstruments([]);
       setVocalTypes([]);
       setEditingId(null);
