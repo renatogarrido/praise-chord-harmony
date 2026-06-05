@@ -7,17 +7,19 @@ type AuthCtx = {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  canManageLocalLeaders: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 };
 
-const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, loading: true, signOut: async () => {} });
+const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, canManageLocalLeaders: false, loading: true, signOut: async () => {} });
 
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
   const [loading, setLoading] = useState(true);
   const lastActivityRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -33,18 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const checkAdmin = async (userId: string) => {
+    const checkRoles = async (userId: string) => {
       try {
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", userId)
-          .eq("role", "admin")
-          .maybeSingle();
-
-        return roleData?.role === "admin";
+          .eq("user_id", userId);
+        const roles = (roleData ?? []).map((r: any) => r.role as string);
+        const admin = roles.includes("admin");
+        const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
+        return { admin, canManage };
       } catch {
-        return false;
+        return { admin: false, canManage: false };
       }
     };
 
@@ -56,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!s) {
           setSession(null);
           setIsAdmin(false);
+          setCanManageLocalLeaders(false);
           return;
         }
 
@@ -63,17 +66,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userError || !user) {
           setSession(null);
           setIsAdmin(false);
+          setCanManageLocalLeaders(false);
           await supabase.auth.signOut({ scope: "local" }).catch(() => {});
           return;
         }
 
         setSession(s);
-        const isUserAdmin = await checkAdmin(user.id);
-        setIsAdmin(isUserAdmin);
+        const { admin, canManage } = await checkRoles(user.id);
+        setIsAdmin(admin);
+        setCanManageLocalLeaders(canManage);
       } catch (err) {
         console.error("Auth initialization error:", err);
         setSession(null);
         setIsAdmin(false);
+        setCanManageLocalLeaders(false);
       } finally {
         setLoading(false);
       }
@@ -93,14 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error || !user) {
             setSession(null);
             setIsAdmin(false);
+            setCanManageLocalLeaders(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const isUserAdmin = await checkAdmin(s.user.id);
-          setIsAdmin(isUserAdmin);
+          const { admin, canManage } = await checkRoles(s.user.id);
+          setIsAdmin(admin);
+          setCanManageLocalLeaders(canManage);
         }, 0);
       } else {
         setIsAdmin(false);
+        setCanManageLocalLeaders(false);
       }
     });
 
@@ -131,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, loading, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canManageLocalLeaders, loading, signOut }}>
       {children}
     </Ctx.Provider>
   );
