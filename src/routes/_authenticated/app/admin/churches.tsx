@@ -412,10 +412,10 @@ function AdminChurches() {
       </div>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-        {churches.length === 0 && (
+        {filtered.length === 0 && (
           <p className="p-6 text-sm text-muted-foreground">Nenhuma igreja cadastrada ainda.</p>
         )}
-        {churches.map((c) => {
+        {filtered.map((c) => {
           const igUrl = c.instagram ? instagramUrl(c.instagram) : null;
           return (
             <div key={c.id} className="flex items-start gap-4 p-4">
