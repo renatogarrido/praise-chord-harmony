@@ -53,6 +53,7 @@ type Church = {
   country: string | null;
   state: string | null;
   city: string | null;
+  estadual: string | null;
   instagram: string | null;
   created_at: string;
 };
