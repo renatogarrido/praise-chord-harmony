@@ -610,7 +610,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role:
+        | "admin"
+        | "user"
+        | "lider_nacional"
+        | "lider_estadual"
+        | "lider_local"
       support_category: "erro" | "correcao_cifra" | "sugestao" | "outro"
       support_status: "aberto" | "em_andamento" | "resolvido" | "fechado"
     }
@@ -740,7 +745,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: [
+        "admin",
+        "user",
+        "lider_nacional",
+        "lider_estadual",
+        "lider_local",
+      ],
       support_category: ["erro", "correcao_cifra", "sugestao", "outro"],
       support_status: ["aberto", "em_andamento", "resolvido", "fechado"],
     },
