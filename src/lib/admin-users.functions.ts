@@ -128,9 +128,28 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId: callerId } = context;
-    await assertAdmin(supabase, callerId);
+    const viewerRole = await assertCanViewUsers(supabase, callerId);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: callerProfile, error: callerProfileErr } = await supabaseAdmin
+      .from("profiles")
+      .select("church_name")
+      .eq("id", callerId)
+      .maybeSingle();
+    if (callerProfileErr) throw new Error(callerProfileErr.message);
+
+    const callerChurchName = (callerProfile as any)?.church_name as string | null | undefined;
+    let callerEstadual: string | null = null;
+    if (callerChurchName) {
+      const { data: callerChurch, error: callerChurchErr } = await supabaseAdmin
+        .from("churches")
+        .select("estadual")
+        .eq("name", callerChurchName)
+        .maybeSingle();
+      if (callerChurchErr) throw new Error(callerChurchErr.message);
+      callerEstadual = ((callerChurch as any)?.estadual ?? null) as string | null;
+    }
 
     // Fetch all auth users (paginated)
     const emailMap = new Map<string, { email: string | null; last_sign_in_at: string | null }>();
@@ -152,6 +171,16 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (pErr) throw new Error(pErr.message);
 
+    const { data: churches, error: churchesErr } = await supabaseAdmin
+      .from("churches")
+      .select("name,estadual");
+    if (churchesErr) throw new Error(churchesErr.message);
+
+    const churchEstadualMap = new Map<string, string | null>();
+    (churches ?? []).forEach((church: any) => {
+      churchEstadualMap.set(church.name, church.estadual ?? null);
+    });
+
     const { data: roles, error: rErr } = await supabaseAdmin.from("user_roles").select("*");
     if (rErr) throw new Error(rErr.message);
 
@@ -162,14 +191,26 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
       roleMap.set(r.user_id, a);
     });
 
-    const users = (profiles ?? []).map((p: any) => ({
+    const visibleProfiles = (profiles ?? []).filter((profile: any) => {
+      if (viewerRole === "admin" || viewerRole === "lider_nacional") return true;
+      if (viewerRole === "lider_estadual") {
+        return !!callerEstadual && churchEstadualMap.get(profile.church_name) === callerEstadual;
+      }
+      if (viewerRole === "lider_local") {
+        return !!callerChurchName && profile.church_name === callerChurchName;
+      }
+      return false;
+    });
+
+    const users = visibleProfiles.map((p: any) => ({
       ...p,
       email: emailMap.get(p.id)?.email ?? null,
       last_sign_in_at: emailMap.get(p.id)?.last_sign_in_at ?? null,
       roles: roleMap.get(p.id) ?? [],
+      church_estadual: churchEstadualMap.get(p.church_name) ?? null,
     }));
 
-    return { users };
+    return { users, viewerRole };
   });
 
 export const toggleAdminRole = createServerFn({ method: "POST" })
@@ -206,8 +247,6 @@ export const toggleAdminRole = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
-
-const ROLE_VALUES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 
 export const updateUserAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
