@@ -51,6 +51,16 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           ))}
         </Section>
 
+        {!isAdmin && canManageLocalLeaders && (
+          <Section label="Liderança">
+            <NavLink to="/app/leader/local-leaders" icon={Users}
+              active={pathname.startsWith("/app/leader/local-leaders")}
+              onClick={onNavigate}>
+              Líderes Locais
+            </NavLink>
+          </Section>
+        )}
+
         {isAdmin && (
           <Section label="Administração">
             {adminLinks.map((l) => (
