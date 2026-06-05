@@ -264,6 +264,9 @@ function AdminUsers() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">Usuário Comum</SelectItem>
+                    <SelectItem value="lider_local">Líder Local</SelectItem>
+                    <SelectItem value="lider_estadual">Líder Estadual</SelectItem>
+                    <SelectItem value="lider_nacional">Líder Nacional</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
