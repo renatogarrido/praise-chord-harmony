@@ -112,6 +112,7 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string
+          estadual: string | null
           id: string
           instagram: string | null
           name: string
@@ -123,6 +124,7 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          estadual?: string | null
           id?: string
           instagram?: string | null
           name: string
@@ -134,6 +136,7 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          estadual?: string | null
           id?: string
           instagram?: string | null
           name?: string

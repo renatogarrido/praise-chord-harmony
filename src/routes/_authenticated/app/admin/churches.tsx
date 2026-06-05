@@ -14,6 +14,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+
+const ESTADUAIS = [
+  "Alphaville",
+  "Bahia",
+  "Campinas",
+  "Jundiaí",
+  "Litoral/SP",
+  "Osasco",
+  "Santana",
+  "Santo André",
+  "SBC",
+  "Hall Mooca",
+  "Sul",
+  "Zona Leste",
+  "Pernambuco",
+  "S.J. Rio Preto",
+  "Rio de Janeiro",
+  "Tremembé",
+] as const;
 
 export const Route = createFileRoute("/_authenticated/app/admin/churches")({
   component: AdminChurches,
@@ -26,6 +53,7 @@ type Church = {
   country: string | null;
   state: string | null;
   city: string | null;
+  estadual: string | null;
   instagram: string | null;
   created_at: string;
 };
@@ -41,6 +69,7 @@ function AdminChurches() {
     country: "Brasil",
     state: "",
     city: "",
+    estadual: "",
     instagram: "",
   });
 
@@ -61,7 +90,7 @@ function AdminChurches() {
   }, []);
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", instagram: "" });
+    setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", estadual: "", instagram: "" });
     setEditingId(null);
   };
 
@@ -73,6 +102,7 @@ function AdminChurches() {
       country: c.country ?? "",
       state: c.state ?? "",
       city: c.city ?? "",
+      estadual: c.estadual ?? "",
       instagram: c.instagram ?? "",
     });
     setIsDialogOpen(true);
@@ -99,6 +129,7 @@ function AdminChurches() {
         country: formData.country.trim() || null,
         state: formData.state.trim() || null,
         city: formData.city.trim() || null,
+        estadual: formData.estadual.trim() || null,
         instagram: formData.instagram.trim() || null,
       };
       if (!payload.name || !payload.address) {
@@ -216,6 +247,27 @@ function AdminChurches() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="estadual">Estadual</Label>
+                <Select
+                  value={formData.estadual || "__none__"}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, estadual: v === "__none__" ? "" : v })
+                  }
+                >
+                  <SelectTrigger id="estadual">
+                    <SelectValue placeholder="Selecione a estadual" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Nenhuma —</SelectItem>
+                    {ESTADUAIS.map((e) => (
+                      <SelectItem key={e} value={e}>
+                        {e}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="instagram">Instagram</Label>
                 <Input
                   id="instagram"
@@ -260,7 +312,14 @@ function AdminChurches() {
                 <ChurchIcon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium">{c.name}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium">{c.name}</p>
+                  {c.estadual && (
+                    <Badge variant="outline" className="text-[10px] border-gold text-gold">
+                      {c.estadual}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground whitespace-pre-line">{c.address}</p>
                 {(c.city || c.state || c.country) && (
                   <p className="text-xs text-muted-foreground">
