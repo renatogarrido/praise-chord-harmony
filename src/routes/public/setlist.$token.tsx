@@ -48,18 +48,24 @@ function PublicSetlistView() {
     })();
   }, [token]);
 
-  // Autoscroll logic
+  // Autoscroll logic — accumulate sub-pixel offset (iOS Safari floors fractional scrollBy to 0)
   useEffect(() => {
     if (!scrolling) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       return;
     }
-    const el = document.documentElement;
     let last = performance.now();
+    let acc = window.scrollY || window.pageYOffset || 0;
     const tick = (now: number) => {
       const dt = (now - last) / 16.67;
       last = now;
-      window.scrollBy(0, scrollSpeed * dt * 0.6);
+      acc += scrollSpeed * dt * 0.6;
+      const maxScroll = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+      ) - window.innerHeight;
+      if (acc > maxScroll) acc = maxScroll;
+      window.scrollTo(0, Math.round(acc));
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
