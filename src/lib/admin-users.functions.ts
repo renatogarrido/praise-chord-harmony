@@ -233,7 +233,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
       .from("user_roles")
       .delete()
       .eq("user_id", data.userId)
-      .in("role", ROLE_VALUES as unknown as string[]);
+      .in("role", ROLE_VALUES as any);
 
     if (desired.length > 0) {
       await supabaseAdmin
