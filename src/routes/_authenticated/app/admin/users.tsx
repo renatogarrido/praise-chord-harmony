@@ -306,6 +306,7 @@ function AdminUsers() {
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {users.map((u) => {
           const isAdmin = u.roles.includes("admin");
+          const primary = getPrimaryRole(u.roles);
           return (
             <div key={u.id} className="flex items-center gap-4 p-4">
               <div className="grid size-10 place-items-center rounded-full bg-gold-soft text-gold text-sm font-semibold">{(u.full_name?.[0] || "?").toUpperCase()}</div>
@@ -314,7 +315,7 @@ function AdminUsers() {
                 {u.email && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
                 <p className="text-xs text-muted-foreground">desde {new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
               </div>
-              {isAdmin && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold">Admin</span>}
+              {primary !== "user" && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold whitespace-nowrap">{ROLE_LABELS[primary]}</span>}
               <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
                 {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
               </button>
