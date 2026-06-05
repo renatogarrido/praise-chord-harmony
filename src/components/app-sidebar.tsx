@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut } from "lucide-react";
+import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut, LifeBuoy } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppSettings } from "@/hooks/use-app-settings";
 
@@ -9,6 +9,7 @@ const userLinks = [
   { to: "/app/favorites", label: "Favoritos", icon: Heart },
   { to: "/app/setlists", label: "Repertórios", icon: ListMusic },
   { to: "/app/history", label: "Recentes", icon: Clock },
+  { to: "/app/support", label: "Suporte", icon: LifeBuoy },
 ];
 
 const adminLinks = [
@@ -16,6 +17,7 @@ const adminLinks = [
   { to: "/app/admin/albums", label: "Álbuns", icon: Album },
   { to: "/app/admin/songs", label: "Cifras", icon: Music2 },
   { to: "/app/admin/users", label: "Usuários", icon: Users },
+  { to: "/app/admin/support", label: "Suporte", icon: LifeBuoy },
   { to: "/app/admin/settings", label: "Personalização", icon: Settings },
 ];
 
