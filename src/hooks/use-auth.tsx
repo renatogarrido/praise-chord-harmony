@@ -35,18 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const checkAdmin = async (userId: string) => {
+    const checkRoles = async (userId: string) => {
       try {
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", userId)
-          .eq("role", "admin")
-          .maybeSingle();
-
-        return roleData?.role === "admin";
+          .eq("user_id", userId);
+        const roles = (roleData ?? []).map((r: any) => r.role as string);
+        const admin = roles.includes("admin");
+        const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
+        return { admin, canManage };
       } catch {
-        return false;
+        return { admin: false, canManage: false };
       }
     };
 
