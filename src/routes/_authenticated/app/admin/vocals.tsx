@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/app/admin/vocals")({ component: AdminInstruments });
+export const Route = createFileRoute("/_authenticated/app/admin/vocals")({ component: AdminVocals });
 
 type Cat = { id: string; name: string; sort_order: number };
 type Inst = { id: string; category_id: string; value: string; label: string; sort_order: number };
@@ -22,7 +22,7 @@ function slugify(s: string) {
     .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 64);
 }
 
-function AdminInstruments() {
+function AdminVocals() {
   const [cats, setCats] = useState<Cat[]>([]);
   const [insts, setInsts] = useState<Inst[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,8 +41,8 @@ function AdminInstruments() {
   const load = async () => {
     setLoading(true);
     const [c, i] = await Promise.all([
-      supabase.from("instrument_categories").select("*").order("sort_order"),
-      supabase.from("instruments").select("*").order("sort_order"),
+      supabase.from("vocal_categories").select("*").order("sort_order"),
+      supabase.from("vocals").select("*").order("sort_order"),
     ]);
     if (c.error) toast.error(c.error.message);
     if (i.error) toast.error(i.error.message);
@@ -62,11 +62,11 @@ function AdminInstruments() {
     const name = catName.trim();
     if (!name) return toast.error("Informe o nome da categoria.");
     if (catDialog.editing) {
-      const { error } = await supabase.from("instrument_categories")
+      const { error } = await supabase.from("vocal_categories")
         .update({ name, sort_order: catOrder }).eq("id", catDialog.editing.id);
       if (error) return toast.error(error.message);
     } else {
-      const { error } = await supabase.from("instrument_categories")
+      const { error } = await supabase.from("vocal_categories")
         .insert({ name, sort_order: catOrder });
       if (error) return toast.error(error.message);
     }
@@ -75,8 +75,8 @@ function AdminInstruments() {
     load();
   };
   const deleteCat = async (c: Cat) => {
-    if (!confirm(`Excluir a categoria "${c.name}" e todos os seus instrumentos?`)) return;
-    const { error } = await supabase.from("instrument_categories").delete().eq("id", c.id);
+    if (!confirm(`Excluir a categoria "${c.name}" e todos os seus vozes?`)) return;
+    const { error } = await supabase.from("vocal_categories").delete().eq("id", c.id);
     if (error) return toast.error(error.message);
     toast.success("Categoria excluída.");
     load();
@@ -91,28 +91,28 @@ function AdminInstruments() {
   };
   const saveInst = async () => {
     const label = instLabel.trim();
-    if (!label) return toast.error("Informe o nome do instrumento.");
+    if (!label) return toast.error("Informe o nome do tipo vocal.");
     const value = (instValue.trim() || slugify(label));
     if (!instCategory) return toast.error("Selecione uma categoria.");
     if (instDialog.editing) {
-      const { error } = await supabase.from("instruments")
+      const { error } = await supabase.from("vocals")
         .update({ label, value, category_id: instCategory, sort_order: instOrder })
         .eq("id", instDialog.editing.id);
       if (error) return toast.error(error.message);
     } else {
-      const { error } = await supabase.from("instruments")
+      const { error } = await supabase.from("vocals")
         .insert({ label, value, category_id: instCategory, sort_order: instOrder });
       if (error) return toast.error(error.message);
     }
-    toast.success("Instrumento salvo.");
+    toast.success("Tipo vocal salvo.");
     setInstDialog({ open: false });
     load();
   };
   const deleteInst = async (i: Inst) => {
-    if (!confirm(`Excluir o instrumento "${i.label}"?`)) return;
-    const { error } = await supabase.from("instruments").delete().eq("id", i.id);
+    if (!confirm(`Excluir o tipo vocal "${i.label}"?`)) return;
+    const { error } = await supabase.from("vocals").delete().eq("id", i.id);
     if (error) return toast.error(error.message);
-    toast.success("Instrumento excluído.");
+    toast.success("Tipo vocal excluído.");
     load();
   };
 
@@ -129,9 +129,9 @@ function AdminInstruments() {
       <header className="mb-8 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Administração</p>
-          <h1 className="font-serif text-4xl">Instrumentos</h1>
+          <h1 className="font-serif text-4xl">Vozes</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Gerencie as categorias e instrumentos disponíveis no cadastro de músicos.
+            Gerencie as categorias e vozes disponíveis no cadastro vocal dos músicos.
           </p>
         </div>
         <Button onClick={() => openCat()} className="bg-gold hover:bg-gold/90 text-white gap-2">
@@ -155,10 +155,10 @@ function AdminInstruments() {
                 </button>
                 <div className="flex-1">
                   <p className="font-medium">{c.name}</p>
-                  <p className="text-xs text-muted-foreground">{items.length} instrumento(s)</p>
+                  <p className="text-xs text-muted-foreground">{items.length} tipo vocal(s)</p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => openInst(c.id)} className="gap-1">
-                  <Plus className="h-3.5 w-3.5" /> Instrumento
+                  <Plus className="h-3.5 w-3.5" /> Tipo vocal
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => openCat(c)}>
                   <Pencil className="h-4 w-4" />
@@ -170,7 +170,7 @@ function AdminInstruments() {
               {isOpen && (
                 <div className="border-t border-border divide-y divide-border">
                   {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground p-4">Nenhum instrumento nesta categoria.</p>
+                    <p className="text-sm text-muted-foreground p-4">Nenhum tipo vocal nesta categoria.</p>
                   )}
                   {items.map((i) => (
                     <div key={i.id} className="flex items-center gap-3 p-3 pl-10">
@@ -222,12 +222,12 @@ function AdminInstruments() {
       <Dialog open={instDialog.open} onOpenChange={(o) => setInstDialog({ open: o, editing: o ? instDialog.editing : undefined, categoryId: o ? instDialog.categoryId : undefined })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{instDialog.editing ? "Editar instrumento" : "Novo instrumento"}</DialogTitle>
+            <DialogTitle>{instDialog.editing ? "Editar tipo vocal" : "Novo tipo vocal"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Nome</Label>
-              <Input value={instLabel} maxLength={120} onChange={(e) => setInstLabel(e.target.value)} placeholder="Ex.: Tecladista — synth" />
+              <Input value={instLabel} maxLength={120} onChange={(e) => setInstLabel(e.target.value)} placeholder="Ex.: Soprano (mais aguda)" />
             </div>
             <div className="space-y-2">
               <Label>Identificador (opcional)</Label>
