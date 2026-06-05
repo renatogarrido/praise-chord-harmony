@@ -129,6 +129,7 @@ function AdminChurches() {
         country: formData.country.trim() || null,
         state: formData.state.trim() || null,
         city: formData.city.trim() || null,
+        estadual: formData.estadual.trim() || null,
         instagram: formData.instagram.trim() || null,
       };
       if (!payload.name || !payload.address) {
