@@ -83,16 +83,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setSession(s);
-        const { admin, viewUsers, canManage } = await checkRoles(user.id);
+        const { admin, viewUsers, canManage, manageSchedule } = await checkRoles(user.id);
         setIsAdmin(admin);
         setCanViewUsers(viewUsers);
         setCanManageLocalLeaders(canManage);
+        setCanManageSchedule(manageSchedule);
       } catch (err) {
         console.error("Auth initialization error:", err);
         setSession(null);
         setIsAdmin(false);
         setCanViewUsers(false);
         setCanManageLocalLeaders(false);
+        setCanManageSchedule(false);
+
       } finally {
         setLoading(false);
       }
@@ -114,20 +117,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsAdmin(false);
             setCanViewUsers(false);
             setCanManageLocalLeaders(false);
+            setCanManageSchedule(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const { admin, viewUsers, canManage } = await checkRoles(s.user.id);
+          const { admin, viewUsers, canManage, manageSchedule } = await checkRoles(s.user.id);
           setIsAdmin(admin);
           setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
+          setCanManageSchedule(manageSchedule);
         }, 0);
       } else {
         setIsAdmin(false);
         setCanViewUsers(false);
         setCanManageLocalLeaders(false);
+        setCanManageSchedule(false);
       }
     });
+
 
     return () => subscription.unsubscribe();
   }, []);
@@ -156,8 +163,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canViewUsers, canManageLocalLeaders, loading, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, signOut }}>
       {children}
+
     </Ctx.Provider>
   );
 }
