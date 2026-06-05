@@ -187,11 +187,20 @@ function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
 
 function GenerateMonthButton({ onDone }: { onDone: () => void }) {
   const gen = useServerFn(generateMonthlySundays);
+  const setlistsFn = useServerFn(listMySetlists);
   const today = new Date();
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [busy, setBusy] = useState(false);
+  const [sundaySetlists, setSundaySetlists] = useState<Record<string, string>>({});
+
+  const setlistsQ = useQuery({
+    queryKey: ["my-setlists", "gen"],
+    queryFn: () => setlistsFn(),
+    enabled: open,
+  });
+  const setlists: { id: string; name: string }[] = (setlistsQ.data as any)?.setlists ?? [];
 
   const opts: { y: number; m: number; label: string }[] = [];
   const base = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -200,12 +209,32 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
     opts.push({ y: d.getFullYear(), m: d.getMonth() + 1, label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) });
   }
 
+  // Compute Sundays for the selected month
+  const sundays: { ymd: string; label: string }[] = [];
+  {
+    const last = new Date(year, month, 0).getDate();
+    for (let d = 1; d <= last; d++) {
+      const dt = new Date(year, month - 1, d);
+      if (dt.getDay() === 0) {
+        const ymd = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+        sundays.push({
+          ymd,
+          label: dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
+        });
+      }
+    }
+  }
+
   const run = async () => {
     setBusy(true);
     try {
-      const r: any = await gen({ data: { year, month, churchName: null } });
+      // Strip empty selections
+      const payloadSetlists: Record<string, string> = {};
+      for (const [k, v] of Object.entries(sundaySetlists)) if (v) payloadSetlists[k] = v;
+      const r: any = await gen({ data: { year, month, churchName: null, sundaySetlists: payloadSetlists } });
       toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.sundayCount} domingos.`);
       setOpen(false);
+      setSundaySetlists({});
       onDone();
     } catch (e: any) {
       toast.error(e.message || "Erro ao gerar.");
@@ -221,17 +250,43 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
       </button>
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => !busy && setOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-serif text-2xl mb-1">Gerar escala mensal</h3>
-            <p className="text-xs text-muted-foreground mb-5">Cria 4 escalas (08:00, 10:00, 16:00, 18:00) para cada domingo, usando a disponibilidade dos usuários.</p>
+            <p className="text-xs text-muted-foreground mb-5">Cria 4 escalas (08:00, 10:00, 16:00, 18:00) para cada domingo, usando a disponibilidade dos usuários. O repertório escolhido por domingo é aplicado aos 4 cultos.</p>
             <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Mês</label>
             <select
               value={`${year}-${month}`}
-              onChange={(e) => { const [y, m] = e.target.value.split("-").map(Number); setYear(y); setMonth(m); }}
-              className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm capitalize mb-4 focus:border-gold/50 focus:outline-none"
+              onChange={(e) => { const [y, m] = e.target.value.split("-").map(Number); setYear(y); setMonth(m); setSundaySetlists({}); }}
+              className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm capitalize mb-5 focus:border-gold/50 focus:outline-none"
             >
               {opts.map((o) => <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`} className="capitalize">{o.label}</option>)}
             </select>
+
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Repertório de domingo</p>
+            <div className="space-y-2 mb-2">
+              {sundays.map((s) => (
+                <div key={s.ymd} className="rounded-2xl border border-border bg-background p-3">
+                  <p className="text-xs capitalize mb-2">{s.label}</p>
+                  <select
+                    value={sundaySetlists[s.ymd] ?? ""}
+                    onChange={(e) => setSundaySetlists((prev) => ({ ...prev, [s.ymd]: e.target.value }))}
+                    className="w-full rounded-full border border-border bg-card px-3 py-2 text-sm focus:border-gold/50 focus:outline-none"
+                  >
+                    <option value="">— Sem repertório —</option>
+                    {setlists.map((sl) => (
+                      <option key={sl.id} value={sl.id}>{sl.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              {sundays.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum domingo neste mês.</p>
+              )}
+              {setlists.length === 0 && setlistsQ.isFetched && (
+                <p className="text-xs text-muted-foreground">Você ainda não criou repertórios. Crie um em "Repertórios" para selecionar aqui.</p>
+              )}
+            </div>
+
             <div className="mt-5 flex justify-end gap-2">
               <button disabled={busy} onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest disabled:opacity-50">Cancelar</button>
               <button disabled={busy} onClick={run} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
@@ -244,4 +299,5 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
     </>
   );
 }
+
 
