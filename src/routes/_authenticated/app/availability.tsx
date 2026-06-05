@@ -229,31 +229,65 @@ function AvailabilityPage() {
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-6 mb-6">
-            <h2 className="font-serif text-xl mb-1">Domingo</h2>
-            <p className="text-xs text-muted-foreground mb-5">Marque os cultos em que você pode servir.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {SUNDAY_SERVICES.map((t) => {
-                const active = sundays.has(t);
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => toggleSunday(t)}
-                    className={`rounded-2xl border-2 px-4 py-5 text-center transition-all ${
-                      active
-                        ? "border-gold bg-gold-soft text-gold"
-                        : "border-border bg-background text-muted-foreground hover:border-gold/30 hover:text-foreground"
-                    }`}
-                  >
-                    <div className="font-serif text-2xl">{t}</div>
-                    <div className="text-[10px] uppercase tracking-widest mt-1">
-                      {active ? "Disponível" : "Indisponível"}
+            <h2 className="font-serif text-xl mb-1">Domingos do mês</h2>
+            <p className="text-xs text-muted-foreground mb-5">
+              Para cada domingo, marque os cultos em que você pode servir. Você pode estar disponível em horários diferentes em domingos diferentes.
+            </p>
+            {monthSundays.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum domingo neste mês.</p>
+            ) : (
+              <div className="space-y-4">
+                {monthSundays.map(({ ymd, date }) => {
+                  const selected = sundaysByDate[ymd] ?? new Set<string>();
+                  const allOn = selected.size === SUNDAY_SERVICES.length;
+                  return (
+                    <div key={ymd} className="rounded-xl border border-border bg-background p-4">
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div>
+                          <p className="font-serif text-lg capitalize">
+                            {date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+                          </p>
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
+                            {selected.size} de {SUNDAY_SERVICES.length} cultos
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAllForDate(ymd, !allOn)}
+                          className="text-[10px] uppercase tracking-widest text-gold hover:underline"
+                        >
+                          {allOn ? "Limpar dia" : "Marcar todos"}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {SUNDAY_SERVICES.map((t) => {
+                          const active = selected.has(t);
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => toggleSunday(ymd, t)}
+                              className={`rounded-xl border-2 px-3 py-3 text-center transition-all ${
+                                active
+                                  ? "border-gold bg-gold-soft text-gold"
+                                  : "border-border bg-background text-muted-foreground hover:border-gold/30 hover:text-foreground"
+                              }`}
+                            >
+                              <div className="font-serif text-xl">{t}</div>
+                              <div className="text-[9px] uppercase tracking-widest mt-0.5">
+                                {active ? "Disp." : "—"}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
+
 
           <section className="rounded-2xl border border-border bg-card p-6 mb-6">
             <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Observações (opcional)</label>
