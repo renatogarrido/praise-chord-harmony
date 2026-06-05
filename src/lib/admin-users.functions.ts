@@ -140,6 +140,8 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
         role: z.enum(["user", "admin"]),
+        instruments: z.array(z.string().max(64)).max(40).optional(),
+        vocalTypes: z.array(z.string().max(64)).max(10).optional(),
       })
       .parse(input)
   )
@@ -154,6 +156,8 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
       .update({
         full_name: data.fullName,
         church_name: data.churchName || null,
+        instruments: data.instruments ?? [],
+        vocal_types: data.vocalTypes ?? [],
       })
       .eq("id", data.userId);
 
