@@ -88,7 +88,7 @@ function AdminChurches() {
       toast.error("Erro ao carregar igrejas: " + error.message);
       return;
     }
-    const list = (data ?? []) as Church[];
+    const list = ((data ?? []) as unknown) as Church[];
     setChurches(list);
     setFiltered(list);
   };
