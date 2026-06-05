@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!s) {
           setSession(null);
           setIsAdmin(false);
+          setCanViewUsers(false);
           setCanManageLocalLeaders(false);
           return;
         }
@@ -69,19 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userError || !user) {
           setSession(null);
           setIsAdmin(false);
+          setCanViewUsers(false);
           setCanManageLocalLeaders(false);
           await supabase.auth.signOut({ scope: "local" }).catch(() => {});
           return;
         }
 
         setSession(s);
-        const { admin, canManage } = await checkRoles(user.id);
+        const { admin, viewUsers, canManage } = await checkRoles(user.id);
         setIsAdmin(admin);
+        setCanViewUsers(viewUsers);
         setCanManageLocalLeaders(canManage);
       } catch (err) {
         console.error("Auth initialization error:", err);
         setSession(null);
         setIsAdmin(false);
+        setCanViewUsers(false);
         setCanManageLocalLeaders(false);
       } finally {
         setLoading(false);
@@ -102,16 +106,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error || !user) {
             setSession(null);
             setIsAdmin(false);
+            setCanViewUsers(false);
             setCanManageLocalLeaders(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const { admin, canManage } = await checkRoles(s.user.id);
+          const { admin, viewUsers, canManage } = await checkRoles(s.user.id);
           setIsAdmin(admin);
+          setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
         }, 0);
       } else {
         setIsAdmin(false);
+        setCanViewUsers(false);
         setCanManageLocalLeaders(false);
       }
     });
@@ -143,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canManageLocalLeaders, loading, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canViewUsers, canManageLocalLeaders, loading, signOut }}>
       {children}
     </Ctx.Provider>
   );
