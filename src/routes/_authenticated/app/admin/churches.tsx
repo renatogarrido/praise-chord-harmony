@@ -212,7 +212,7 @@ function AdminChurches() {
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Gestão</p>
           <h1 className="font-serif text-4xl">Igrejas Renascer</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Total: {churches.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Total: {filtered.length}</p>
         </div>
         <div className="flex items-center gap-2">
           <ChurchesImportDialog onImported={load} />
@@ -343,6 +343,73 @@ function AdminChurches() {
         </Dialog>
         </div>
       </header>
+
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">País</Label>
+          <Select
+            value={filterCountry}
+            onValueChange={(v) => {
+              setFilterCountry(v);
+              setFilterState("__all__");
+              setFilterCity("__all__");
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {uniqueCountries.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Estado</Label>
+          <Select
+            value={filterState}
+            onValueChange={(v) => {
+              setFilterState(v);
+              setFilterCity("__all__");
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {uniqueStates.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Cidade</Label>
+          <Select
+            value={filterCity}
+            onValueChange={setFilterCity}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {uniqueCities.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {churches.length === 0 && (
