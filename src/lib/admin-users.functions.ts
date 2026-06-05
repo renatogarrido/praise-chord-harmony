@@ -178,6 +178,8 @@ export const toggleAdminRole = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const ROLE_VALUES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
+
 export const updateUserAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -186,7 +188,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         userId: z.string().uuid(),
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
-        role: z.enum(["user", "admin", "lider_nacional", "lider_estadual", "lider_local"]),
+        roles: z.array(z.enum(ROLE_VALUES)).max(4),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
       })
@@ -210,30 +212,59 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
 
     if (profileError) throw new Error(profileError.message);
 
-    // Sync roles: replace all non-default roles with the selected one
+    const desired = Array.from(new Set(data.roles));
     const { data: existingRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", data.userId);
-
     const currentRoles = (existingRoles ?? []).map((r: any) => r.role as string);
     const wasAdmin = currentRoles.includes("admin");
 
-    if (data.role === "user" && wasAdmin && data.userId === callerId) {
+    if (wasAdmin && !desired.includes("admin") && data.userId === callerId) {
       throw new Error("Você não pode remover sua própria função de administrador.");
     }
 
-    // Clear existing role assignments (admin + leadership) and apply the selected one
     await supabaseAdmin
       .from("user_roles")
       .delete()
       .eq("user_id", data.userId)
-      .in("role", ["admin", "lider_nacional", "lider_estadual", "lider_local"] as any);
+      .in("role", ROLE_VALUES as unknown as string[]);
 
-    if (data.role !== "user") {
-      await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.role as any });
+    if (desired.length > 0) {
+      await supabaseAdmin
+        .from("user_roles")
+        .insert(desired.map((r) => ({ user_id: data.userId, role: r as any })));
     }
 
     return { ok: true };
+  });
+
+export const impersonateUserAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    await assertAdmin(supabase, callerId);
+
+    if (data.userId === callerId) {
+      throw new Error("Você já está conectado como você mesmo.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: targetUser, error: getErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (getErr || !targetUser?.user?.email) {
+      throw new Error("Usuário alvo não encontrado ou sem e-mail.");
+    }
+
+    const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: targetUser.user.email,
+    });
+    if (linkErr || !linkData?.properties?.action_link) {
+      throw new Error(linkErr?.message || "Falha ao gerar link de acesso.");
+    }
+
+    return { actionLink: linkData.properties.action_link, email: targetUser.user.email };
   });
 
