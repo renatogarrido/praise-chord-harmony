@@ -177,6 +177,8 @@ function AdminUsers() {
             if (!open) {
               setEditingId(null);
               setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+              setInstruments([]);
+              setVocalTypes([]);
             }
           }}>
             <DialogTrigger asChild>
