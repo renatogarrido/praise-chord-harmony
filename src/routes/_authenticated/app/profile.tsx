@@ -122,7 +122,7 @@ function ProfilePage() {
         <div className="space-y-2">
           <Label>Vocal</Label>
           <MusicianMultiSelect
-            groups={VOCAL_GROUPS}
+            groups={vocalGroups}
             value={vocalTypes}
             onChange={setVocalTypes}
             placeholder="Escolher tipo vocal…"
