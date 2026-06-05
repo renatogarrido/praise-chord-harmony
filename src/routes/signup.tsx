@@ -27,6 +27,9 @@ function SignupPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!churchName.trim()) {
+      return toast.error("Selecione sua igreja.");
+    }
     setLoading(true);
     const { data: signUpData, error } = await supabase.auth.signUp({
       email, password,
@@ -75,9 +78,9 @@ function SignupPage() {
                 className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-gold/50 focus:outline-none" />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Igreja</label>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Igreja *</label>
               <div className="mt-2">
-                <ChurchSelect value={churchName} onChange={setChurchName} />
+                <ChurchSelect value={churchName} onChange={setChurchName} required />
               </div>
             </div>
             <div>

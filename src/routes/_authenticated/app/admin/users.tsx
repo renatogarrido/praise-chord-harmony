@@ -145,6 +145,10 @@ function AdminUsers() {
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.churchName.trim()) {
+      toast.error("Selecione a igreja do usuário.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (editingId) {
@@ -267,11 +271,12 @@ function AdminUsers() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="churchName">Igreja</Label>
+                <Label htmlFor="churchName">Igreja *</Label>
                 <ChurchSelect
                   id="churchName"
                   value={formData.churchName}
                   onChange={(name) => setFormData({ ...formData, churchName: name })}
+                  required
                 />
               </div>
               <div className="space-y-2">
