@@ -52,13 +52,29 @@ function AdminUsers() {
     }
   };
 
+  const ROLE_LABELS: Record<string, string> = {
+    admin: "Administrador",
+    lider_nacional: "Líder Nacional",
+    lider_estadual: "Líder Estadual",
+    lider_local: "Líder Local",
+    user: "Usuário",
+  };
+
+  const getPrimaryRole = (roles: string[]): "user" | "admin" | "lider_nacional" | "lider_estadual" | "lider_local" => {
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("lider_nacional")) return "lider_nacional";
+    if (roles.includes("lider_estadual")) return "lider_estadual";
+    if (roles.includes("lider_local")) return "lider_local";
+    return "user";
+  };
+
   const exportCsv = () => {
     const headers = ["Nome", "Email", "Igreja", "Função", "Cadastro", "Último acesso"];
     const rows = users.map((u) => [
       u.full_name || "",
       u.email || "",
       u.church_name || "",
-      u.roles.includes("admin") ? "Admin" : "Usuário",
+      ROLE_LABELS[getPrimaryRole(u.roles)],
       u.created_at ? new Date(u.created_at).toLocaleString("pt-BR") : "",
       u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("pt-BR") : "",
     ]);
@@ -93,7 +109,7 @@ function AdminUsers() {
       password: "", // Don't show password
       fullName: user.full_name || "",
       churchName: user.church_name || "",
-      role: user.roles.includes("admin") ? "admin" : "user",
+      role: getPrimaryRole(user.roles),
     });
     setInstruments(user.instruments ?? []);
     setVocalTypes(user.vocal_types ?? []);
@@ -121,7 +137,7 @@ function AdminUsers() {
             userId: editingId,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as "user" | "admin",
+            role: formData.role as any,
             instruments,
             vocalTypes,
           },
@@ -135,7 +151,7 @@ function AdminUsers() {
             password: formData.password,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as "user" | "admin",
+            role: formData.role as any,
             instruments,
             vocalTypes,
           },
@@ -248,6 +264,9 @@ function AdminUsers() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">Usuário Comum</SelectItem>
+                    <SelectItem value="lider_local">Líder Local</SelectItem>
+                    <SelectItem value="lider_estadual">Líder Estadual</SelectItem>
+                    <SelectItem value="lider_nacional">Líder Nacional</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
@@ -287,6 +306,7 @@ function AdminUsers() {
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {users.map((u) => {
           const isAdmin = u.roles.includes("admin");
+          const primary = getPrimaryRole(u.roles);
           return (
             <div key={u.id} className="flex items-center gap-4 p-4">
               <div className="grid size-10 place-items-center rounded-full bg-gold-soft text-gold text-sm font-semibold">{(u.full_name?.[0] || "?").toUpperCase()}</div>
@@ -295,7 +315,7 @@ function AdminUsers() {
                 {u.email && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
                 <p className="text-xs text-muted-foreground">desde {new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
               </div>
-              {isAdmin && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold">Admin</span>}
+              {primary !== "user" && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold whitespace-nowrap">{ROLE_LABELS[primary]}</span>}
               <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
                 {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
               </button>
