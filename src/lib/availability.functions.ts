@@ -103,6 +103,8 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
     const dow = d.getDay(); // 0=Sun..6=Sat
     const hhmm = d.toTimeString().slice(0, 5);
 
+    const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
     const { data: rows, error } = await supabase
       .from("monthly_availability")
       .select("user_id, weekdays, sunday_services")
@@ -113,8 +115,7 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
     const ids = new Set<string>();
     for (const r of rows ?? []) {
       if (dow === 0) {
-        const list: string[] = (r.sunday_services as any) ?? [];
-        // Match by service time prefix
+        const list = sundayTimesFor(r.sunday_services, ymd);
         if (list.some((t) => t === hhmm)) ids.add(r.user_id);
       } else {
         const wk = (r.weekdays as any) ?? {};
