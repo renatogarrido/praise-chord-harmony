@@ -93,6 +93,8 @@ function AdminUsers() {
       churchName: user.church_name || "",
       role: user.roles.includes("admin") ? "admin" : "user",
     });
+    setInstruments(user.instruments ?? []);
+    setVocalTypes(user.vocal_types ?? []);
     setEditingId(user.id);
     setIsDialogOpen(true);
   };
