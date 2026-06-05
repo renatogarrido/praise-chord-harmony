@@ -14,6 +14,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+
+const ESTADUAIS = [
+  "Alphaville",
+  "Bahia",
+  "Campinas",
+  "Jundiaí",
+  "Litoral/SP",
+  "Osasco",
+  "Santana",
+  "Santo André",
+  "SBC",
+  "Hall Mooca",
+  "Sul",
+  "Zona Leste",
+  "Pernambuco",
+  "S.J. Rio Preto",
+  "Rio de Janeiro",
+  "Tremembé",
+] as const;
 
 export const Route = createFileRoute("/_authenticated/app/admin/churches")({
   component: AdminChurches,
