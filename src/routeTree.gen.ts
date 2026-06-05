@@ -33,6 +33,7 @@ import { Route as AuthenticatedAppAdminUsersRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppAdminSupportRouteImport } from './routes/_authenticated/app/admin/support'
 import { Route as AuthenticatedAppAdminSongsRouteImport } from './routes/_authenticated/app/admin/songs'
 import { Route as AuthenticatedAppAdminSettingsRouteImport } from './routes/_authenticated/app/admin/settings'
+import { Route as AuthenticatedAppAdminInstrumentsRouteImport } from './routes/_authenticated/app/admin/instruments'
 import { Route as AuthenticatedAppAdminAlbumsRouteImport } from './routes/_authenticated/app/admin/albums'
 
 const SignupRoute = SignupRouteImport.update({
@@ -167,6 +168,12 @@ const AuthenticatedAppAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminInstrumentsRoute =
+  AuthenticatedAppAdminInstrumentsRouteImport.update({
+    id: '/instruments',
+    path: '/instruments',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminAlbumsRoute =
   AuthenticatedAppAdminAlbumsRouteImport.update({
     id: '/albums',
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/app/support': typeof AuthenticatedAppSupportRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
+  '/app/admin/instruments': typeof AuthenticatedAppAdminInstrumentsRoute
   '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/app/support': typeof AuthenticatedAppSupportRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
+  '/app/admin/instruments': typeof AuthenticatedAppAdminInstrumentsRoute
   '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
@@ -238,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/_authenticated/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
+  '/_authenticated/app/admin/instruments': typeof AuthenticatedAppAdminInstrumentsRoute
   '/_authenticated/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/_authenticated/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/_authenticated/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/app/support'
     | '/public/setlist/$token'
     | '/app/admin/albums'
+    | '/app/admin/instruments'
     | '/app/admin/settings'
     | '/app/admin/songs'
     | '/app/admin/support'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/app/support'
     | '/public/setlist/$token'
     | '/app/admin/albums'
+    | '/app/admin/instruments'
     | '/app/admin/settings'
     | '/app/admin/songs'
     | '/app/admin/support'
@@ -318,6 +330,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/support'
     | '/public/setlist/$token'
     | '/_authenticated/app/admin/albums'
+    | '/_authenticated/app/admin/instruments'
     | '/_authenticated/app/admin/settings'
     | '/_authenticated/app/admin/songs'
     | '/_authenticated/app/admin/support'
@@ -515,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/instruments': {
+      id: '/_authenticated/app/admin/instruments'
+      path: '/instruments'
+      fullPath: '/app/admin/instruments'
+      preLoaderRoute: typeof AuthenticatedAppAdminInstrumentsRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/albums': {
       id: '/_authenticated/app/admin/albums'
       path: '/albums'
@@ -527,6 +547,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminAlbumsRoute: typeof AuthenticatedAppAdminAlbumsRoute
+  AuthenticatedAppAdminInstrumentsRoute: typeof AuthenticatedAppAdminInstrumentsRoute
   AuthenticatedAppAdminSettingsRoute: typeof AuthenticatedAppAdminSettingsRoute
   AuthenticatedAppAdminSongsRoute: typeof AuthenticatedAppAdminSongsRoute
   AuthenticatedAppAdminSupportRoute: typeof AuthenticatedAppAdminSupportRoute
@@ -536,6 +557,7 @@ interface AuthenticatedAppAdminRouteChildren {
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
   AuthenticatedAppAdminAlbumsRoute: AuthenticatedAppAdminAlbumsRoute,
+  AuthenticatedAppAdminInstrumentsRoute: AuthenticatedAppAdminInstrumentsRoute,
   AuthenticatedAppAdminSettingsRoute: AuthenticatedAppAdminSettingsRoute,
   AuthenticatedAppAdminSongsRoute: AuthenticatedAppAdminSongsRoute,
   AuthenticatedAppAdminSupportRoute: AuthenticatedAppAdminSupportRoute,
