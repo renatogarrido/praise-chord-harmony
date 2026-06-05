@@ -274,22 +274,24 @@ function AdminUsers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Função</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">Usuário Comum</SelectItem>
-                    <SelectItem value="lider_local">Líder Local</SelectItem>
-                    <SelectItem value="lider_estadual">Líder Estadual</SelectItem>
-                    <SelectItem value="lider_nacional">Líder Nacional</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Funções</Label>
+                <p className="text-xs text-muted-foreground">Marque uma ou mais funções. Sem marcações = usuário comum.</p>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {[
+                    { v: "admin", l: "Administrador" },
+                    { v: "lider_nacional", l: "Líder Nacional" },
+                    { v: "lider_estadual", l: "Líder Estadual" },
+                    { v: "lider_local", l: "Líder Local" },
+                  ].map((r) => (
+                    <label key={r.v} className="flex items-center gap-2 rounded-lg border border-border p-2 cursor-pointer hover:bg-accent">
+                      <Checkbox
+                        checked={selectedRoles.includes(r.v)}
+                        onCheckedChange={() => toggleRole(r.v)}
+                      />
+                      <span className="text-sm">{r.l}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Instrumentos</Label>
