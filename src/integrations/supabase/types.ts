@@ -229,8 +229,10 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          instruments: string[]
           role: Database["public"]["Enums"]["app_role"] | null
           updated_at: string
+          vocal_types: string[]
         }
         Insert: {
           avatar_url?: string | null
@@ -238,8 +240,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          instruments?: string[]
           role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string
+          vocal_types?: string[]
         }
         Update: {
           avatar_url?: string | null
@@ -247,8 +251,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          instruments?: string[]
           role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string
+          vocal_types?: string[]
         }
         Relationships: []
       }

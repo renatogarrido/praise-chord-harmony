@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { MusicianMultiSelect } from "@/components/musician-multi-select";
+import { INSTRUMENT_GROUPS, VOCAL_GROUPS } from "@/lib/musician-roles";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
@@ -29,6 +31,8 @@ function AdminUsers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [instruments, setInstruments] = useState<string[]>([]);
+  const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -89,6 +93,8 @@ function AdminUsers() {
       churchName: user.church_name || "",
       role: user.roles.includes("admin") ? "admin" : "user",
     });
+    setInstruments(user.instruments ?? []);
+    setVocalTypes(user.vocal_types ?? []);
     setEditingId(user.id);
     setIsDialogOpen(true);
   };
@@ -114,6 +120,8 @@ function AdminUsers() {
             fullName: formData.fullName,
             churchName: formData.churchName,
             role: formData.role as "user" | "admin",
+            instruments,
+            vocalTypes,
           },
         });
         toast.success("Usuário atualizado com sucesso!");
@@ -128,6 +136,8 @@ function AdminUsers() {
 
       setIsDialogOpen(false);
       setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+      setInstruments([]);
+      setVocalTypes([]);
       setEditingId(null);
       load();
     } catch (error: any) {
@@ -166,7 +176,7 @@ function AdminUsers() {
                 Novo Usuário
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
             </DialogHeader>
@@ -230,6 +240,28 @@ function AdminUsers() {
                   </SelectContent>
                 </Select>
               </div>
+              {editingId && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Instrumentos</Label>
+                    <MusicianMultiSelect
+                      groups={INSTRUMENT_GROUPS}
+                      value={instruments}
+                      onChange={setInstruments}
+                      placeholder="Escolher instrumentos…"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vocal</Label>
+                    <MusicianMultiSelect
+                      groups={VOCAL_GROUPS}
+                      value={vocalTypes}
+                      onChange={setVocalTypes}
+                      placeholder="Escolher tipo vocal…"
+                    />
+                  </div>
+                </>
+              )}
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
