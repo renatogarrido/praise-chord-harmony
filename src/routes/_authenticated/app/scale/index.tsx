@@ -192,7 +192,6 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [busy, setBusy] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   const opts: { y: number; m: number; label: string }[] = [];
   const base = new Date(today.getFullYear(), today.getMonth(), 1);
