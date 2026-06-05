@@ -27,24 +27,24 @@ function AuthLayout() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      {/* Desktop sidebar */}
-      <div className="hidden md:block fixed inset-y-0 left-0 z-30">
+      {/* Desktop sidebar (lg+ so iPad portrait uses the drawer) */}
+      <div className="hidden lg:block fixed inset-y-0 left-0 z-30">
         <AppSidebar />
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile / tablet drawer */}
       {mobileOpen && (
         <>
-          <div className="md:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="md:hidden fixed inset-y-0 left-0 z-50">
+          <div className="lg:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="lg:hidden fixed inset-y-0 left-0 z-50">
             <AppSidebar onNavigate={() => setMobileOpen(false)} />
           </div>
         </>
       )}
 
-      <div className="flex-1 md:pl-64">
-        {/* Mobile header */}
-        <header className="md:hidden sticky top-0 z-20 flex items-center justify-between border-b border-border/50 bg-background/80 px-4 py-3 backdrop-blur-xl">
+      <div className="flex-1 min-w-0 lg:pl-64">
+        {/* Mobile / tablet header */}
+        <header className="lg:hidden sticky top-0 z-20 flex items-center justify-between border-b border-border/50 bg-background/80 px-4 py-3 backdrop-blur-xl">
           <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 hover:bg-accent">
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -52,7 +52,7 @@ function AuthLayout() {
           <div className="w-9" />
         </header>
 
-        <main className="min-h-screen">
+        <main className="min-h-screen min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
       </div>
