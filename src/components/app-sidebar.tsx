@@ -18,6 +18,7 @@ const adminLinks = [
   { to: "/app/admin/albums", label: "Álbuns", icon: Album },
   { to: "/app/admin/songs", label: "Cifras", icon: Music2 },
   { to: "/app/admin/users", label: "Usuários", icon: Users },
+  { to: "/app/admin/instruments", label: "Instrumentos", icon: Guitar },
   { to: "/app/admin/support", label: "Suporte", icon: LifeBuoy },
   { to: "/app/admin/settings", label: "Personalização", icon: Settings },
 ];
