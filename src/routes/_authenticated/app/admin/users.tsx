@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download } from "lucide-react";
-import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin } from "@/lib/admin-users.functions";
+import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download, LogIn } from "lucide-react";
+import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin, impersonateUserAdmin } from "@/lib/admin-users.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -35,13 +36,19 @@ function AdminUsers() {
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const { groups: instrumentGroups, reload: reloadInstruments } = useInstrumentGroups();
   const { groups: vocalGroups, reload: reloadVocals } = useVocalGroups();
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     fullName: "",
     churchName: "",
-    role: "user",
   });
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
 
   const load = async () => {
     try {
@@ -106,11 +113,13 @@ function AdminUsers() {
   const handleEditUser = async (user: any) => {
     setFormData({
       email: user.email || "",
-      password: "", // Don't show password
+      password: "",
       fullName: user.full_name || "",
       churchName: user.church_name || "",
-      role: getPrimaryRole(user.roles),
     });
+    setSelectedRoles((user.roles ?? []).filter((r: string) =>
+      ["admin", "lider_nacional", "lider_estadual", "lider_local"].includes(r)
+    ));
     setInstruments(user.instruments ?? []);
     setVocalTypes(user.vocal_types ?? []);
     setEditingId(user.id);
@@ -127,6 +136,16 @@ function AdminUsers() {
     }
   };
 
+  const impersonate = async (userId: string, name: string) => {
+    if (!confirm(`Conectar como "${name}"? Sua sessão atual de admin será encerrada.`)) return;
+    try {
+      const { actionLink } = await impersonateUserAdmin({ data: { userId } });
+      window.location.href = actionLink;
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao acessar perfil");
+    }
+  };
+
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -137,21 +156,20 @@ function AdminUsers() {
             userId: editingId,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as any,
+            roles: selectedRoles as any,
             instruments,
             vocalTypes,
           },
         });
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        // Create new user
         await createUserAdmin({
           data: {
             email: formData.email,
             password: formData.password,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as any,
+            roles: selectedRoles as any,
             instruments,
             vocalTypes,
           },
@@ -160,7 +178,8 @@ function AdminUsers() {
       }
 
       setIsDialogOpen(false);
-      setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+      setFormData({ email: "", password: "", fullName: "", churchName: "" });
+      setSelectedRoles([]);
       setInstruments([]);
       setVocalTypes([]);
       setEditingId(null);
@@ -193,7 +212,8 @@ function AdminUsers() {
             setIsDialogOpen(open);
             if (!open) {
               setEditingId(null);
-              setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+              setFormData({ email: "", password: "", fullName: "", churchName: "" });
+              setSelectedRoles([]);
               setInstruments([]);
               setVocalTypes([]);
             }
@@ -254,22 +274,24 @@ function AdminUsers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Função</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">Usuário Comum</SelectItem>
-                    <SelectItem value="lider_local">Líder Local</SelectItem>
-                    <SelectItem value="lider_estadual">Líder Estadual</SelectItem>
-                    <SelectItem value="lider_nacional">Líder Nacional</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Funções</Label>
+                <p className="text-xs text-muted-foreground">Marque uma ou mais funções. Sem marcações = usuário comum.</p>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {[
+                    { v: "admin", l: "Administrador" },
+                    { v: "lider_nacional", l: "Líder Nacional" },
+                    { v: "lider_estadual", l: "Líder Estadual" },
+                    { v: "lider_local", l: "Líder Local" },
+                  ].map((r) => (
+                    <label key={r.v} className="flex items-center gap-2 rounded-lg border border-border p-2 cursor-pointer hover:bg-accent">
+                      <Checkbox
+                        checked={selectedRoles.includes(r.v)}
+                        onCheckedChange={() => toggleRole(r.v)}
+                      />
+                      <span className="text-sm">{r.l}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Instrumentos</Label>
@@ -306,16 +328,25 @@ function AdminUsers() {
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {users.map((u) => {
           const isAdmin = u.roles.includes("admin");
-          const primary = getPrimaryRole(u.roles);
+          const userRoles: string[] = (u.roles ?? []).filter((r: string) =>
+            ["admin", "lider_nacional", "lider_estadual", "lider_local"].includes(r)
+          );
           return (
-            <div key={u.id} className="flex items-center gap-4 p-4">
+            <div key={u.id} className="flex items-center gap-3 p-4">
               <div className="grid size-10 place-items-center rounded-full bg-gold-soft text-gold text-sm font-semibold">{(u.full_name?.[0] || "?").toUpperCase()}</div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{u.full_name || "—"}</p>
                 {u.email && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
                 <p className="text-xs text-muted-foreground">desde {new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
               </div>
-              {primary !== "user" && <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold whitespace-nowrap">{ROLE_LABELS[primary]}</span>}
+              <div className="flex flex-wrap gap-1 justify-end max-w-[220px]">
+                {userRoles.map((r) => (
+                  <span key={r} className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold whitespace-nowrap">{ROLE_LABELS[r]}</span>
+                ))}
+              </div>
+              <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
+                <LogIn className="h-4 w-4" />
+              </button>
               <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
                 {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
               </button>
