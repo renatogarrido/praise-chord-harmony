@@ -2,6 +2,32 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const ROLE_VALUES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
+const USER_VIEW_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
+type UserViewRole = (typeof USER_VIEW_ROLES)[number];
+
+function pickHighestUserViewRole(roles: string[]): UserViewRole | null {
+  for (const role of USER_VIEW_ROLES) {
+    if (roles.includes(role)) return role;
+  }
+  return null;
+}
+
+async function assertCanViewUsers(supabase: any, callerId: string): Promise<UserViewRole> {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", callerId)
+    .in("role", USER_VIEW_ROLES as unknown as string[]);
+  if (error) throw new Error(error.message);
+
+  const role = pickHighestUserViewRole((data ?? []).map((r: any) => r.role as string));
+  if (!role) {
+    throw new Error("Acesso negado: apenas administradores e líderes podem visualizar usuários.");
+  }
+  return role;
+}
+
 export const createUserAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -11,9 +37,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
         password: z.string().min(6).max(128),
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
-        roles: z
-          .array(z.enum(["admin", "lider_nacional", "lider_estadual", "lider_local"]))
-          .max(4),
+        roles: z.array(z.enum(ROLE_VALUES)).max(4),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
       })
