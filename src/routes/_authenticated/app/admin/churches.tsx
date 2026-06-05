@@ -187,6 +187,25 @@ function AdminChurches() {
     return `https://instagram.com/${clean}`;
   };
 
+  const uniqueCountries = Array.from(new Set(churches.map((c) => c.country).filter(Boolean))).sort() as string[];
+  const uniqueStates = Array.from(
+    new Set(
+      churches
+        .filter((c) => filterCountry === "__all__" || c.country === filterCountry)
+        .map((c) => c.state)
+        .filter(Boolean)
+    )
+  ).sort() as string[];
+  const uniqueCities = Array.from(
+    new Set(
+      churches
+        .filter((c) => filterCountry === "__all__" || c.country === filterCountry)
+        .filter((c) => filterState === "__all__" || c.state === filterState)
+        .map((c) => c.city)
+        .filter(Boolean)
+    )
+  ).sort() as string[];
+
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
       <header className="mb-8 flex justify-between items-end">
