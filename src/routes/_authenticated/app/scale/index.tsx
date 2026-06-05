@@ -3,11 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listSchedules, createSchedule, deleteSchedule, listMySetlists } from "@/lib/worship-schedule.functions";
+import { generateMonthlySundays } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { CalendarDays, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/")({ component: ScalePage });
+
 
 function ScalePage() {
   const { canManageSchedule, user } = useAuth();
@@ -66,11 +68,15 @@ function ScalePage() {
           <p className="mt-2 text-sm text-muted-foreground">Cultos, eventos e os músicos escalados para cada um.</p>
         </div>
         {canManageSchedule && (
-          <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
-            <Plus className="h-4 w-4" /> Nova escala
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <GenerateMonthButton onDone={() => refetch()} />
+            <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
+              <Plus className="h-4 w-4" /> Nova escala
+            </button>
+          </div>
         )}
       </header>
+
 
       {open && canManageSchedule && (
         <form onSubmit={onCreate} className="mb-8 rounded-2xl border border-border bg-card p-6 grid gap-4 md:grid-cols-2">
