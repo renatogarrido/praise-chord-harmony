@@ -27,6 +27,9 @@ function SignupPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!churchName.trim()) {
+      return toast.error("Selecione sua igreja.");
+    }
     setLoading(true);
     const { data: signUpData, error } = await supabase.auth.signUp({
       email, password,
