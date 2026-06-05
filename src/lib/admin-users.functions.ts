@@ -2,6 +2,53 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export const createUserAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        email: z.string().email().max(255),
+        password: z.string().min(6).max(128),
+        fullName: z.string().min(1).max(255),
+        churchName: z.string().max(255).optional(),
+        role: z.enum(["user", "admin"]),
+        instruments: z.array(z.string().max(64)).max(40).optional(),
+        vocalTypes: z.array(z.string().max(64)).max(10).optional(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    await assertAdmin(supabase, callerId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.fullName, church_name: data.churchName ?? null },
+    });
+    if (createErr) throw new Error(createErr.message);
+    const newId = created.user!.id;
+
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        full_name: data.fullName,
+        church_name: data.churchName || null,
+        instruments: data.instruments ?? [],
+        vocal_types: data.vocalTypes ?? [],
+      } as any)
+      .eq("id", newId);
+
+    if (data.role === "admin") {
+      await supabaseAdmin.from("user_roles").insert({ user_id: newId, role: "admin" });
+    }
+
+    return { ok: true, userId: newId };
+  });
+
 export const deleteUserAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))

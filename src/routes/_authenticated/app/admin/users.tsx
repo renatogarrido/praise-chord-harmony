@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download } from "lucide-react";
-import { deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin } from "@/lib/admin-users.functions";
+import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -129,10 +129,17 @@ function AdminUsers() {
         toast.success("Usuário atualizado com sucesso!");
       } else {
         // Create new user
-        const { data, error } = await supabase.functions.invoke("create-user-admin", {
-          body: formData,
+        await createUserAdmin({
+          data: {
+            email: formData.email,
+            password: formData.password,
+            fullName: formData.fullName,
+            churchName: formData.churchName,
+            role: formData.role as "user" | "admin",
+            instruments,
+            vocalTypes,
+          },
         });
-        if (error) throw error;
         toast.success("Usuário criado com sucesso!");
       }
 
@@ -170,6 +177,8 @@ function AdminUsers() {
             if (!open) {
               setEditingId(null);
               setFormData({ email: "", password: "", fullName: "", churchName: "", role: "user" });
+              setInstruments([]);
+              setVocalTypes([]);
             }
           }}>
             <DialogTrigger asChild>
@@ -242,28 +251,24 @@ function AdminUsers() {
                   </SelectContent>
                 </Select>
               </div>
-              {editingId && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Instrumentos</Label>
-                    <MusicianMultiSelect
-                      groups={instrumentGroups}
-                      value={instruments}
-                      onChange={setInstruments}
-                      placeholder="Escolher instrumentos…"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Vocal</Label>
-                    <MusicianMultiSelect
-                      groups={vocalGroups}
-                      value={vocalTypes}
-                      onChange={setVocalTypes}
-                      placeholder="Escolher tipo vocal…"
-                    />
-                  </div>
-                </>
-              )}
+              <div className="space-y-2">
+                <Label>Instrumentos</Label>
+                <MusicianMultiSelect
+                  groups={instrumentGroups}
+                  value={instruments}
+                  onChange={setInstruments}
+                  placeholder="Escolher instrumentos…"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Vocal</Label>
+                <MusicianMultiSelect
+                  groups={vocalGroups}
+                  value={vocalTypes}
+                  onChange={setVocalTypes}
+                  placeholder="Escolher tipo vocal…"
+                />
+              </div>
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
