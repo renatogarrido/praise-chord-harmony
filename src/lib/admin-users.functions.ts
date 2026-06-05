@@ -141,14 +141,16 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
 
     const callerChurchName = (callerProfile as any)?.church_name as string | null | undefined;
     let callerEstadual: string | null = null;
+    let callerState: string | null = null;
     if (callerChurchName) {
       const { data: callerChurch, error: callerChurchErr } = await supabaseAdmin
         .from("churches")
-        .select("estadual")
+        .select("estadual,state")
         .eq("name", callerChurchName)
         .maybeSingle();
       if (callerChurchErr) throw new Error(callerChurchErr.message);
       callerEstadual = ((callerChurch as any)?.estadual ?? null) as string | null;
+      callerState = ((callerChurch as any)?.state ?? null) as string | null;
     }
 
     // Fetch all auth users (paginated)
@@ -173,13 +175,35 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
 
     const { data: churches, error: churchesErr } = await supabaseAdmin
       .from("churches")
-      .select("name,estadual");
+      .select("name,estadual,state");
     if (churchesErr) throw new Error(churchesErr.message);
 
     const churchEstadualMap = new Map<string, string | null>();
+    const churchStateMap = new Map<string, string | null>();
+    const normalize = (s: string | null | undefined) =>
+      (s ?? "")
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    const churchByNormalizedName = new Map<string, { estadual: string | null; state: string | null }>();
     (churches ?? []).forEach((church: any) => {
       churchEstadualMap.set(church.name, church.estadual ?? null);
+      churchStateMap.set(church.name, church.state ?? null);
+      churchByNormalizedName.set(normalize(church.name), {
+        estadual: church.estadual ?? null,
+        state: church.state ?? null,
+      });
     });
+
+    const lookupChurch = (name: string | null | undefined) => {
+      if (!name) return { estadual: null as string | null, state: null as string | null };
+      if (churchEstadualMap.has(name)) {
+        return { estadual: churchEstadualMap.get(name) ?? null, state: churchStateMap.get(name) ?? null };
+      }
+      return churchByNormalizedName.get(normalize(name)) ?? { estadual: null, state: null };
+    };
 
     const { data: roles, error: rErr } = await supabaseAdmin.from("user_roles").select("*");
     if (rErr) throw new Error(rErr.message);
@@ -193,22 +217,31 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
 
     const visibleProfiles = (profiles ?? []).filter((profile: any) => {
       if (viewerRole === "admin" || viewerRole === "lider_nacional") return true;
+      const info = lookupChurch(profile.church_name);
       if (viewerRole === "lider_estadual") {
-        return !!callerEstadual && churchEstadualMap.get(profile.church_name) === callerEstadual;
+        // Match by `estadual` regional grouping when set; otherwise fall back to state (UF)
+        if (callerEstadual && info.estadual) return info.estadual === callerEstadual;
+        if (callerState && info.state) return info.state === callerState;
+        // Last resort: same church as the leader
+        return !!callerChurchName && normalize(profile.church_name) === normalize(callerChurchName);
       }
       if (viewerRole === "lider_local") {
-        return !!callerChurchName && profile.church_name === callerChurchName;
+        return !!callerChurchName && normalize(profile.church_name) === normalize(callerChurchName);
       }
       return false;
     });
 
-    const users = visibleProfiles.map((p: any) => ({
-      ...p,
-      email: emailMap.get(p.id)?.email ?? null,
-      last_sign_in_at: emailMap.get(p.id)?.last_sign_in_at ?? null,
-      roles: roleMap.get(p.id) ?? [],
-      church_estadual: churchEstadualMap.get(p.church_name) ?? null,
-    }));
+    const users = visibleProfiles.map((p: any) => {
+      const info = lookupChurch(p.church_name);
+      return {
+        ...p,
+        email: emailMap.get(p.id)?.email ?? null,
+        last_sign_in_at: emailMap.get(p.id)?.last_sign_in_at ?? null,
+        roles: roleMap.get(p.id) ?? [],
+        church_estadual: info.estadual,
+      };
+    });
+
 
     return { users, viewerRole };
   });
