@@ -11,7 +11,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
         password: z.string().min(6).max(128),
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
-        role: z.enum(["user", "admin"]),
+        role: z.enum(["user", "admin", "lider_nacional", "lider_estadual", "lider_local"]),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
       })
@@ -42,8 +42,8 @@ export const createUserAdmin = createServerFn({ method: "POST" })
       } as any)
       .eq("id", newId);
 
-    if (data.role === "admin") {
-      await supabaseAdmin.from("user_roles").insert({ user_id: newId, role: "admin" });
+    if (data.role !== "user") {
+      await supabaseAdmin.from("user_roles").insert({ user_id: newId, role: data.role as any });
     }
 
     return { ok: true, userId: newId };
