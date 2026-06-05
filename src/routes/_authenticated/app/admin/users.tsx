@@ -137,7 +137,7 @@ function AdminUsers() {
             userId: editingId,
             fullName: formData.fullName,
             churchName: formData.churchName,
-            role: formData.role as "user" | "admin",
+            role: formData.role as any,
             instruments,
             vocalTypes,
           },
