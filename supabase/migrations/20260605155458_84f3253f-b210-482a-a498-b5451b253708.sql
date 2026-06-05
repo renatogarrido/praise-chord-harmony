@@ -1,0 +1,1 @@
+ALTER TABLE public.churches ADD COLUMN IF NOT EXISTS estadual text;
