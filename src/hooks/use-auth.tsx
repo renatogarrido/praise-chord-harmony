@@ -99,14 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error || !user) {
             setSession(null);
             setIsAdmin(false);
+            setCanManageLocalLeaders(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const isUserAdmin = await checkAdmin(s.user.id);
-          setIsAdmin(isUserAdmin);
+          const { admin, canManage } = await checkRoles(s.user.id);
+          setIsAdmin(admin);
+          setCanManageLocalLeaders(canManage);
         }, 0);
       } else {
         setIsAdmin(false);
+        setCanManageLocalLeaders(false);
       }
     });
 
