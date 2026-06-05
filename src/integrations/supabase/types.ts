@@ -362,6 +362,42 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          admin_response: string | null
+          category: Database["public"]["Enums"]["support_category"]
+          created_at: string
+          id: string
+          message: string
+          status: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          category?: Database["public"]["Enums"]["support_category"]
+          created_at?: string
+          id?: string
+          message: string
+          status?: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          category?: Database["public"]["Enums"]["support_category"]
+          created_at?: string
+          id?: string
+          message?: string
+          status?: Database["public"]["Enums"]["support_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -448,6 +484,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      support_category: "erro" | "correcao_cifra" | "sugestao" | "outro"
+      support_status: "aberto" | "em_andamento" | "resolvido" | "fechado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -576,6 +614,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      support_category: ["erro", "correcao_cifra", "sugestao", "outro"],
+      support_status: ["aberto", "em_andamento", "resolvido", "fechado"],
     },
   },
 } as const
