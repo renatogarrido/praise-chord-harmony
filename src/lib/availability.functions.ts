@@ -136,6 +136,10 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       year: z.number().int().min(2024).max(2100),
       month: z.number().int().min(1).max(12),
       churchName: z.string().max(255).optional().nullable(),
+      sundaySetlists: z
+        .record(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.string().uuid().nullable())
+        .optional()
+        .default({}),
     }).parse(i)
   )
   .handler(async ({ data, context }) => {
@@ -143,6 +147,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
     if (!(await isManager(supabase, userId))) {
       throw new Error("Apenas administradores e líderes podem gerar a escala.");
     }
+
 
     // Determine caller scope (church / estadual) based on role
     const { data: roleRows } = await supabase
