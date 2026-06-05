@@ -102,6 +102,7 @@ function AdminChurches() {
       country: c.country ?? "",
       state: c.state ?? "",
       city: c.city ?? "",
+      estadual: c.estadual ?? "",
       instagram: c.instagram ?? "",
     });
     setIsDialogOpen(true);
