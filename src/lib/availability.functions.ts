@@ -126,38 +126,82 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       throw new Error("Apenas administradores e líderes podem gerar a escala.");
     }
 
-    // 1. Read all availabilities for the month
-    const { data: avs, error: avErr } = await supabase
+    // Determine caller scope (church / estadual) based on role
+    const { data: roleRows } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId);
+    const callerRoles = (roleRows ?? []).map((r: any) => r.role as string);
+    const isLocal = callerRoles.includes("lider_local")
+      && !callerRoles.includes("admin")
+      && !callerRoles.includes("lider_nacional")
+      && !callerRoles.includes("lider_estadual");
+    const isEstadual = callerRoles.includes("lider_estadual")
+      && !callerRoles.includes("admin")
+      && !callerRoles.includes("lider_nacional");
+
+    const { data: myProfile } = await supabase
+      .from("profiles").select("church_name").eq("id", userId).maybeSingle();
+    const myChurch = (myProfile as any)?.church_name ?? null;
+
+    let allowedChurchNames: string[] | null = null; // null = no church restriction
+    if (isLocal) {
+      if (!myChurch) throw new Error("Defina sua igreja no perfil antes de gerar a escala.");
+      allowedChurchNames = [myChurch];
+    } else if (isEstadual) {
+      if (!myChurch) throw new Error("Defina sua igreja no perfil antes de gerar a escala.");
+      const { data: myC } = await supabase
+        .from("churches").select("estadual").eq("name", myChurch).maybeSingle();
+      const estadual = (myC as any)?.estadual ?? null;
+      if (!estadual) throw new Error("Sua igreja não está vinculada a um agrupamento estadual.");
+      const { data: regionChurches } = await supabase
+        .from("churches").select("name").eq("estadual", estadual);
+      allowedChurchNames = (regionChurches ?? []).map((c: any) => c.name);
+    }
+
+    const effectiveChurchName = isLocal ? myChurch : (data.churchName || null);
+    if (isEstadual && effectiveChurchName && !(allowedChurchNames ?? []).includes(effectiveChurchName)) {
+      throw new Error("Você só pode gerar escalas de igrejas do seu estadual.");
+    }
+
+    // 1. Read availabilities for the month
+    const { data: avsRaw, error: avErr } = await supabase
       .from("monthly_availability")
       .select("user_id, sunday_services")
       .eq("year", data.year)
       .eq("month", data.month);
     if (avErr) throw new Error(avErr.message);
 
-    // Map service time -> [userIds]
-    const byService = new Map<string, string[]>();
-    for (const t of SUNDAY_SERVICES) byService.set(t, []);
-    for (const a of avs ?? []) {
-      const list: string[] = (a.sunday_services as any) ?? [];
-      for (const t of list) {
-        if (byService.has(t)) byService.get(t)!.push(a.user_id);
-      }
-    }
-
-    // 2. Read profiles for those users (for role labels)
-    const allIds = Array.from(new Set((avs ?? []).map((a: any) => a.user_id)));
-    let profileMap = new Map<string, { instruments: string[]; vocal_types: string[] }>();
+    const allIds = Array.from(new Set((avsRaw ?? []).map((a: any) => a.user_id)));
+    let profileMap = new Map<string, { instruments: string[]; vocal_types: string[]; church_name: string | null }>();
     if (allIds.length > 0) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id, instruments, vocal_types")
+        .select("id, instruments, vocal_types, church_name")
         .in("id", allIds);
       (profs ?? []).forEach((p: any) =>
         profileMap.set(p.id, {
           instruments: p.instruments ?? [],
           vocal_types: p.vocal_types ?? [],
+          church_name: p.church_name ?? null,
         })
       );
+    }
+
+    // Filter availabilities by church scope
+    const scopedAvs = (avsRaw ?? []).filter((a: any) => {
+      const ch = profileMap.get(a.user_id)?.church_name ?? null;
+      if (effectiveChurchName) return ch === effectiveChurchName;
+      if (!allowedChurchNames) return true;
+      return !!ch && allowedChurchNames.includes(ch);
+    });
+
+    // Map service time -> [userIds]
+    const byService = new Map<string, string[]>();
+    for (const t of SUNDAY_SERVICES) byService.set(t, []);
+    for (const a of scopedAvs) {
+      const list: string[] = (a.sunday_services as any) ?? [];
+      for (const t of list) {
+        if (byService.has(t)) byService.get(t)!.push(a.user_id);
+      }
     }
 
     // 3. Build list of Sundays in the month
