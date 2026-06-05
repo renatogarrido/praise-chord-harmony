@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download, LogIn } from "lucide-react";
+import { Shield, ShieldOff, UserPlus, Loader2, Pencil, Trash2, Download, LogIn } from "lucide-react";
 import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin, impersonateUserAdmin } from "@/lib/admin-users.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -14,13 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
@@ -29,7 +22,9 @@ import { ChurchSelect } from "@/components/church-select";
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
 function AdminUsers() {
+  const { isAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,8 +48,9 @@ function AdminUsers() {
 
   const load = async () => {
     try {
-      const { users } = await listUsersAdmin();
+      const { users, viewerRole } = await listUsersAdmin();
       setUsers(users);
+      setViewerRole(viewerRole);
     } catch (e: any) {
       toast.error("Erro ao carregar usuários: " + (e?.message || ""));
     }
@@ -200,7 +196,11 @@ function AdminUsers() {
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Gestão</p>
           <h1 className="font-serif text-4xl">Usuários</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Total: {users.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Total: {users.length}
+            {viewerRole === "lider_estadual" && " · usuários da sua estadual"}
+            {viewerRole === "lider_local" && " · usuários da sua igreja"}
+          </p>
         </div>
         
         <div className="flex gap-2">
@@ -208,24 +208,25 @@ function AdminUsers() {
             <Download className="h-4 w-4" />
             Exportar CSV
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            if (open) { reloadInstruments(); reloadVocals(); }
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingId(null);
-              setFormData({ email: "", password: "", fullName: "", churchName: "" });
-              setSelectedRoles([]);
-              setInstruments([]);
-              setVocalTypes([]);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
-                <UserPlus className="h-4 w-4" />
-                Novo Usuário
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+          {isAdmin && (
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              if (open) { reloadInstruments(); reloadVocals(); }
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingId(null);
+                setFormData({ email: "", password: "", fullName: "", churchName: "" });
+                setSelectedRoles([]);
+                setInstruments([]);
+                setVocalTypes([]);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Novo Usuário
+                </Button>
+              </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
             </DialogHeader>
@@ -320,14 +321,15 @@ function AdminUsers() {
                 </Button>
               </div>
             </form>
-          </DialogContent>
-          </Dialog>
+            </DialogContent>
+            </Dialog>
+          )}
         </div>
       </header>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {users.map((u) => {
-          const isAdmin = u.roles.includes("admin");
+          const targetIsAdmin = u.roles.includes("admin");
           const userRoles: string[] = (u.roles ?? []).filter((r: string) =>
             ["admin", "lider_nacional", "lider_estadual", "lider_local"].includes(r)
           );
@@ -344,18 +346,22 @@ function AdminUsers() {
                   <span key={r} className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold whitespace-nowrap">{ROLE_LABELS[r]}</span>
                 ))}
               </div>
-              <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
-                <LogIn className="h-4 w-4" />
-              </button>
-              <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
-                {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-              </button>
-              <button onClick={() => handleEditUser(u)} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Editar Usuário">
-                <Pencil className="h-4 w-4" />
-              </button>
-              <button onClick={() => deleteUser(u.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Excluir Usuário">
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <>
+                  <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
+                    <LogIn className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => toggleAdmin(u.id, targetIsAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={targetIsAdmin ? "Remover Admin" : "Tornar Admin"}>
+                    {targetIsAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                  </button>
+                  <button onClick={() => handleEditUser(u)} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Editar Usuário">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => deleteUser(u.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Excluir Usuário">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
           );
         })}

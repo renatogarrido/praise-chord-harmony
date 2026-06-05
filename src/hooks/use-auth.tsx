@@ -7,18 +7,20 @@ type AuthCtx = {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  canViewUsers: boolean;
   canManageLocalLeaders: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 };
 
-const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, canManageLocalLeaders: false, loading: true, signOut: async () => {} });
+const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, canViewUsers: false, canManageLocalLeaders: false, loading: true, signOut: async () => {} });
 
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canViewUsers, setCanViewUsers] = useState(false);
   const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
   const [loading, setLoading] = useState(true);
   const lastActivityRef = useRef<number>(Date.now());
@@ -43,10 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq("user_id", userId);
         const roles = (roleData ?? []).map((r: any) => r.role as string);
         const admin = roles.includes("admin");
+        const viewUsers = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
         const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
-        return { admin, canManage };
+        return { admin, viewUsers, canManage };
       } catch {
-        return { admin: false, canManage: false };
+        return { admin: false, viewUsers: false, canManage: false };
       }
     };
 
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!s) {
           setSession(null);
           setIsAdmin(false);
+          setCanViewUsers(false);
           setCanManageLocalLeaders(false);
           return;
         }
@@ -66,19 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userError || !user) {
           setSession(null);
           setIsAdmin(false);
+          setCanViewUsers(false);
           setCanManageLocalLeaders(false);
           await supabase.auth.signOut({ scope: "local" }).catch(() => {});
           return;
         }
 
         setSession(s);
-        const { admin, canManage } = await checkRoles(user.id);
+        const { admin, viewUsers, canManage } = await checkRoles(user.id);
         setIsAdmin(admin);
+        setCanViewUsers(viewUsers);
         setCanManageLocalLeaders(canManage);
       } catch (err) {
         console.error("Auth initialization error:", err);
         setSession(null);
         setIsAdmin(false);
+        setCanViewUsers(false);
         setCanManageLocalLeaders(false);
       } finally {
         setLoading(false);
@@ -99,16 +106,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error || !user) {
             setSession(null);
             setIsAdmin(false);
+            setCanViewUsers(false);
             setCanManageLocalLeaders(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const { admin, canManage } = await checkRoles(s.user.id);
+          const { admin, viewUsers, canManage } = await checkRoles(s.user.id);
           setIsAdmin(admin);
+          setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
         }, 0);
       } else {
         setIsAdmin(false);
+        setCanViewUsers(false);
         setCanManageLocalLeaders(false);
       }
     });
@@ -140,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canManageLocalLeaders, loading, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canViewUsers, canManageLocalLeaders, loading, signOut }}>
       {children}
     </Ctx.Provider>
   );

@@ -27,7 +27,7 @@ const adminLinks = [
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user, isAdmin, canManageLocalLeaders, signOut } = useAuth();
+  const { user, isAdmin, canViewUsers, canManageLocalLeaders, signOut } = useAuth();
   const { app_name, logo_url } = useAppSettings();
 
   return (
@@ -58,6 +58,16 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
               active={pathname.startsWith("/app/leader/local-leaders")}
               onClick={onNavigate}>
               Líderes Locais
+            </NavLink>
+          </Section>
+        )}
+
+        {!isAdmin && canViewUsers && (
+          <Section label="Administração">
+            <NavLink to="/app/admin/users" icon={Users}
+              active={pathname.startsWith("/app/admin/users")}
+              onClick={onNavigate}>
+              Usuários
             </NavLink>
           </Section>
         )}
