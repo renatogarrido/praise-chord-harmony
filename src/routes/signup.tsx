@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { MusicianMultiSelect } from "@/components/musician-multi-select";
+import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
 
 export const Route = createFileRoute("/signup")({ component: SignupPage });
 
@@ -14,31 +16,50 @@ function SignupPage() {
   const [churchName, setChurchName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [instruments, setInstruments] = useState<string[]>([]);
+  const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const { groups: instrumentGroups } = useInstrumentGroups();
+  const { groups: vocalGroups } = useVocalGroups();
 
   useEffect(() => { if (!authLoading && session) navigate({ to: "/app/albums" }); }, [authLoading, session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: `${window.location.origin}/app/albums`,
-        data: { 
+        data: {
           full_name: name,
-          church_name: churchName 
+          church_name: churchName,
         },
       },
     });
+    if (error) { setLoading(false); return toast.error(error.message); }
+
+    // Persist profile details (church, instruments, vocals) after signup
+    const userId = signUpData.user?.id;
+    if (userId && signUpData.session) {
+      await supabase
+        .from("profiles")
+        .update({
+          full_name: name.trim().slice(0, 255),
+          church_name: churchName.trim().slice(0, 255) || null,
+          instruments,
+          vocal_types: vocalTypes,
+        } as any)
+        .eq("id", userId);
+    }
+
     setLoading(false);
-    if (error) return toast.error(error.message);
     toast.success("Conta criada! Verifique seu email se for solicitado.");
     navigate({ to: "/app/albums" });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm">
         <Link to="/" className="block text-center mb-10">
           <span className="font-serif text-3xl text-gold">Cifras Praise</span>
@@ -67,6 +88,28 @@ function SignupPage() {
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Senha</label>
               <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
                 className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-gold/50 focus:outline-none" />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Instrumentos</label>
+              <div className="mt-2">
+                <MusicianMultiSelect
+                  groups={instrumentGroups}
+                  value={instruments}
+                  onChange={setInstruments}
+                  placeholder="Escolher instrumentos…"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Vocal</label>
+              <div className="mt-2">
+                <MusicianMultiSelect
+                  groups={vocalGroups}
+                  value={vocalTypes}
+                  onChange={setVocalTypes}
+                  placeholder="Escolher tipo vocal…"
+                />
+              </div>
             </div>
             <button type="submit" disabled={loading}
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-gold py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
