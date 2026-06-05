@@ -36,13 +36,19 @@ function AdminUsers() {
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const { groups: instrumentGroups, reload: reloadInstruments } = useInstrumentGroups();
   const { groups: vocalGroups, reload: reloadVocals } = useVocalGroups();
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     fullName: "",
     churchName: "",
-    role: "user",
   });
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
 
   const load = async () => {
     try {
