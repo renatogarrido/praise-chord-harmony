@@ -61,6 +61,7 @@ type Church = {
 
 function AdminChurches() {
   const [churches, setChurches] = useState<Church[]>([]);
+  const [filtered, setFiltered] = useState<Church[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,6 +75,10 @@ function AdminChurches() {
     instagram: "",
   });
 
+  const [filterCountry, setFilterCountry] = useState<string>("__all__");
+  const [filterState, setFilterState] = useState<string>("__all__");
+  const [filterCity, setFilterCity] = useState<string>("__all__");
+
   const load = async () => {
     const { data, error } = await supabase
       .from("churches" as any)
@@ -83,12 +88,28 @@ function AdminChurches() {
       toast.error("Erro ao carregar igrejas: " + error.message);
       return;
     }
-    setChurches((data ?? []) as any);
+    const list = (data ?? []) as Church[];
+    setChurches(list);
+    setFiltered(list);
   };
 
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    let result = churches;
+    if (filterCountry !== "__all__") {
+      result = result.filter((c) => c.country === filterCountry);
+    }
+    if (filterState !== "__all__") {
+      result = result.filter((c) => c.state === filterState);
+    }
+    if (filterCity !== "__all__") {
+      result = result.filter((c) => c.city === filterCity);
+    }
+    setFiltered(result);
+  }, [churches, filterCountry, filterState, filterCity]);
 
   const resetForm = () => {
     setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", estadual: "", instagram: "" });
