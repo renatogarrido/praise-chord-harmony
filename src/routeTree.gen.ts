@@ -13,7 +13,9 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as PublicSetlistTokenRouteImport } from './routes/public/setlist.$token'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAppSupportRouteImport } from './routes/_authenticated/app/support'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated/app/history'
@@ -23,6 +25,8 @@ import { Route as AuthenticatedAppSongsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppSetlistsIndexRouteImport } from './routes/_authenticated/app/setlists/index'
 import { Route as AuthenticatedAppAlbumsIndexRouteImport } from './routes/_authenticated/app/albums/index'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app/admin/index'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -58,9 +62,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicSetlistTokenRoute = PublicSetlistTokenRouteImport.update({
   id: '/public/setlist/$token',
   path: '/public/setlist/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppSupportRoute = AuthenticatedAppSupportRouteImport.update({
@@ -112,6 +126,18 @@ const AuthenticatedAppAdminIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -206,11 +232,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
   '/app/admin/churches': typeof AuthenticatedAppAdminChurchesRoute
@@ -227,6 +255,8 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/albums/': typeof AuthenticatedAppAlbumsIndexRoute
   '/app/setlists/': typeof AuthenticatedAppSetlistsIndexRoute
@@ -236,10 +266,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
   '/app/admin/churches': typeof AuthenticatedAppAdminChurchesRoute
@@ -256,6 +288,8 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/albums': typeof AuthenticatedAppAlbumsIndexRoute
   '/app/setlists': typeof AuthenticatedAppSetlistsIndexRoute
@@ -267,11 +301,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/_authenticated/app/history': typeof AuthenticatedAppHistoryRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/_authenticated/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
   '/_authenticated/app/admin/churches': typeof AuthenticatedAppAdminChurchesRoute
@@ -288,6 +324,8 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/albums/': typeof AuthenticatedAppAlbumsIndexRoute
   '/_authenticated/app/setlists/': typeof AuthenticatedAppSetlistsIndexRoute
@@ -299,11 +337,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/email/unsubscribe'
     | '/app/admin'
     | '/app/favorites'
     | '/app/history'
     | '/app/profile'
     | '/app/support'
+    | '/lovable/email/suppression'
     | '/public/setlist/$token'
     | '/app/admin/albums'
     | '/app/admin/churches'
@@ -320,6 +360,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/app/admin/'
     | '/app/albums/'
     | '/app/setlists/'
@@ -329,10 +371,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/email/unsubscribe'
     | '/app/favorites'
     | '/app/history'
     | '/app/profile'
     | '/app/support'
+    | '/lovable/email/suppression'
     | '/public/setlist/$token'
     | '/app/admin/albums'
     | '/app/admin/churches'
@@ -349,6 +393,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/app/admin'
     | '/app/albums'
     | '/app/setlists'
@@ -359,11 +405,13 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/signup'
+    | '/email/unsubscribe'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/favorites'
     | '/_authenticated/app/history'
     | '/_authenticated/app/profile'
     | '/_authenticated/app/support'
+    | '/lovable/email/suppression'
     | '/public/setlist/$token'
     | '/_authenticated/app/admin/albums'
     | '/_authenticated/app/admin/churches'
@@ -380,6 +428,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/albums/'
     | '/_authenticated/app/setlists/'
@@ -391,10 +441,14 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   PublicSetlistTokenRoute: typeof PublicSetlistTokenRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -427,11 +481,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/public/setlist/$token': {
       id: '/public/setlist/$token'
       path: '/public/setlist/$token'
       fullPath: '/public/setlist/$token'
       preLoaderRoute: typeof PublicSetlistTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/support': {
@@ -496,6 +564,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/admin/'
       preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -675,10 +757,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   PublicSetlistTokenRoute: PublicSetlistTokenRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
