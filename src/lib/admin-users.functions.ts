@@ -158,7 +158,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         church_name: data.churchName || null,
         instruments: data.instruments ?? [],
         vocal_types: data.vocalTypes ?? [],
-      })
+      } as any)
       .eq("id", data.userId);
 
     if (profileError) throw new Error(profileError.message);
