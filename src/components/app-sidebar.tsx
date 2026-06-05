@@ -26,7 +26,7 @@ const adminLinks = [
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, canManageLocalLeaders, signOut } = useAuth();
   const { app_name, logo_url } = useAppSettings();
 
   return (

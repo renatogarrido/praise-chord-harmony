@@ -28,6 +28,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedAppSongsSongIdRouteImport } from './routes/_authenticated/app/songs/$songId'
 import { Route as AuthenticatedAppSetlistsSetlistIdRouteImport } from './routes/_authenticated/app/setlists/$setlistId'
+import { Route as AuthenticatedAppLeaderLocalLeadersRouteImport } from './routes/_authenticated/app/leader/local-leaders'
 import { Route as AuthenticatedAppAlbumsAlbumIdRouteImport } from './routes/_authenticated/app/albums/$albumId'
 import { Route as AuthenticatedAppAdminVocalsRouteImport } from './routes/_authenticated/app/admin/vocals'
 import { Route as AuthenticatedAppAdminUsersRouteImport } from './routes/_authenticated/app/admin/users'
@@ -139,6 +140,12 @@ const AuthenticatedAppSetlistsSetlistIdRoute =
     path: '/app/setlists/$setlistId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAppLeaderLocalLeadersRoute =
+  AuthenticatedAppLeaderLocalLeadersRouteImport.update({
+    id: '/app/leader/local-leaders',
+    path: '/app/leader/local-leaders',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppAlbumsAlbumIdRoute =
   AuthenticatedAppAlbumsAlbumIdRouteImport.update({
     id: '/app/albums/$albumId',
@@ -206,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/app/admin/vocals': typeof AuthenticatedAppAdminVocalsRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
+  '/app/leader/local-leaders': typeof AuthenticatedAppLeaderLocalLeadersRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -233,6 +241,7 @@ export interface FileRoutesByTo {
   '/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/app/admin/vocals': typeof AuthenticatedAppAdminVocalsRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
+  '/app/leader/local-leaders': typeof AuthenticatedAppLeaderLocalLeadersRoute
   '/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -263,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/_authenticated/app/admin/vocals': typeof AuthenticatedAppAdminVocalsRoute
   '/_authenticated/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
+  '/_authenticated/app/leader/local-leaders': typeof AuthenticatedAppLeaderLocalLeadersRoute
   '/_authenticated/app/setlists/$setlistId': typeof AuthenticatedAppSetlistsSetlistIdRoute
   '/_authenticated/app/songs/$songId': typeof AuthenticatedAppSongsSongIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/admin/vocals'
     | '/app/albums/$albumId'
+    | '/app/leader/local-leaders'
     | '/app/setlists/$setlistId'
     | '/app/songs/$songId'
     | '/lovable/email/auth/preview'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/admin/vocals'
     | '/app/albums/$albumId'
+    | '/app/leader/local-leaders'
     | '/app/setlists/$setlistId'
     | '/app/songs/$songId'
     | '/lovable/email/auth/preview'
@@ -349,6 +361,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/users'
     | '/_authenticated/app/admin/vocals'
     | '/_authenticated/app/albums/$albumId'
+    | '/_authenticated/app/leader/local-leaders'
     | '/_authenticated/app/setlists/$setlistId'
     | '/_authenticated/app/songs/$songId'
     | '/lovable/email/auth/preview'
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSetlistsSetlistIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/leader/local-leaders': {
+      id: '/_authenticated/app/leader/local-leaders'
+      path: '/app/leader/local-leaders'
+      fullPath: '/app/leader/local-leaders'
+      preLoaderRoute: typeof AuthenticatedAppLeaderLocalLeadersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/albums/$albumId': {
       id: '/_authenticated/app/albums/$albumId'
       path: '/app/albums/$albumId'
@@ -599,6 +619,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
   AuthenticatedAppSupportRoute: typeof AuthenticatedAppSupportRoute
   AuthenticatedAppAlbumsAlbumIdRoute: typeof AuthenticatedAppAlbumsAlbumIdRoute
+  AuthenticatedAppLeaderLocalLeadersRoute: typeof AuthenticatedAppLeaderLocalLeadersRoute
   AuthenticatedAppSetlistsSetlistIdRoute: typeof AuthenticatedAppSetlistsSetlistIdRoute
   AuthenticatedAppSongsSongIdRoute: typeof AuthenticatedAppSongsSongIdRoute
   AuthenticatedAppAlbumsIndexRoute: typeof AuthenticatedAppAlbumsIndexRoute
@@ -613,6 +634,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
   AuthenticatedAppSupportRoute: AuthenticatedAppSupportRoute,
   AuthenticatedAppAlbumsAlbumIdRoute: AuthenticatedAppAlbumsAlbumIdRoute,
+  AuthenticatedAppLeaderLocalLeadersRoute:
+    AuthenticatedAppLeaderLocalLeadersRoute,
   AuthenticatedAppSetlistsSetlistIdRoute:
     AuthenticatedAppSetlistsSetlistIdRoute,
   AuthenticatedAppSongsSongIdRoute: AuthenticatedAppSongsSongIdRoute,
