@@ -11,7 +11,24 @@ const TimeRange = z.object({
 });
 
 const WeekdaysSchema = z.record(z.enum(WEEKDAY_KEYS), TimeRange.nullable()).default({});
-const SundaySchema = z.array(z.enum(SUNDAY_SERVICES)).default([]);
+// Sunday availability can be either:
+//  - legacy: string[] of service times that apply to EVERY Sunday in the month
+//  - new:    Record<"YYYY-MM-DD", string[]> for per-Sunday selection
+const SundaySchema = z.union([
+  z.array(z.enum(SUNDAY_SERVICES)),
+  z.record(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.array(z.enum(SUNDAY_SERVICES))),
+]).default({} as any);
+
+function sundayTimesFor(
+  sundayServices: any,
+  isoDateYMD: string,
+): string[] {
+  if (Array.isArray(sundayServices)) return sundayServices as string[];
+  if (sundayServices && typeof sundayServices === "object") {
+    return (sundayServices[isoDateYMD] as string[]) ?? [];
+  }
+  return [];
+}
 
 const MANAGER_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 
