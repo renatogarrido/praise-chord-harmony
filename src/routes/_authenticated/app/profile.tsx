@@ -21,6 +21,7 @@ function ProfilePage() {
   const [churchName, setChurchName] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
+  const { groups: instrumentGroups } = useInstrumentGroups();
 
   useEffect(() => {
     if (!user) return;
