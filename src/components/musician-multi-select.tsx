@@ -45,7 +45,7 @@ export function MusicianMultiSelect({ groups, value, onChange, placeholder = "Se
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
             <CommandInput placeholder="Buscar…" />
-            <CommandList className="max-h-72">
+            <CommandList className="max-h-[60vh]">
               <CommandEmpty>{emptyText}</CommandEmpty>
               {groups.map((g, idx) => (
                 <div key={g.label}>
