@@ -52,13 +52,29 @@ function AdminUsers() {
     }
   };
 
+  const ROLE_LABELS: Record<string, string> = {
+    admin: "Administrador",
+    lider_nacional: "Líder Nacional",
+    lider_estadual: "Líder Estadual",
+    lider_local: "Líder Local",
+    user: "Usuário",
+  };
+
+  const getPrimaryRole = (roles: string[]): "user" | "admin" | "lider_nacional" | "lider_estadual" | "lider_local" => {
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("lider_nacional")) return "lider_nacional";
+    if (roles.includes("lider_estadual")) return "lider_estadual";
+    if (roles.includes("lider_local")) return "lider_local";
+    return "user";
+  };
+
   const exportCsv = () => {
     const headers = ["Nome", "Email", "Igreja", "Função", "Cadastro", "Último acesso"];
     const rows = users.map((u) => [
       u.full_name || "",
       u.email || "",
       u.church_name || "",
-      u.roles.includes("admin") ? "Admin" : "Usuário",
+      ROLE_LABELS[getPrimaryRole(u.roles)],
       u.created_at ? new Date(u.created_at).toLocaleString("pt-BR") : "",
       u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("pt-BR") : "",
     ]);
