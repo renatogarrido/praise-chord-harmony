@@ -40,9 +40,24 @@ function AvailabilityPage() {
 
   const [weekdays, setWeekdays] = useState<Record<string, Slot>>({});
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
-  const [sundays, setSundays] = useState<Set<string>>(new Set());
+  // Per-Sunday-date map: { "YYYY-MM-DD": Set<"08:00"|"10:00"|...> }
+  const [sundaysByDate, setSundaysByDate] = useState<Record<string, Set<string>>>({});
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Compute Sundays in the selected month
+  const monthSundays = useMemo(() => {
+    const result: { ymd: string; date: Date }[] = [];
+    const last = new Date(year, month, 0).getDate();
+    for (let d = 1; d <= last; d++) {
+      const dt = new Date(year, month - 1, d);
+      if (dt.getDay() === 0) {
+        const ymd = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        result.push({ ymd, date: dt });
+      }
+    }
+    return result;
+  }, [year, month]);
 
   useEffect(() => {
     const a = (data as any)?.availability;
@@ -55,9 +70,21 @@ function AvailabilityPage() {
     }
     setWeekdays(wk);
     setEnabled(en);
-    setSundays(new Set((a?.sunday_services ?? []) as string[]));
+
+    // Hydrate per-Sunday map. Supports legacy array format (apply to every Sunday).
+    const raw = a?.sunday_services;
+    const next: Record<string, Set<string>> = {};
+    if (Array.isArray(raw)) {
+      for (const { ymd } of monthSundays) next[ymd] = new Set(raw as string[]);
+    } else if (raw && typeof raw === "object") {
+      for (const [k, v] of Object.entries(raw)) {
+        next[k] = new Set(v as string[]);
+      }
+    }
+    setSundaysByDate(next);
     setNotes(a?.notes ?? "");
-  }, [data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, year, month]);
 
   const monthLabel = useMemo(
     () => new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
