@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!s) {
           setSession(null);
           setIsAdmin(false);
+          setCanManageLocalLeaders(false);
           return;
         }
 
@@ -65,17 +66,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userError || !user) {
           setSession(null);
           setIsAdmin(false);
+          setCanManageLocalLeaders(false);
           await supabase.auth.signOut({ scope: "local" }).catch(() => {});
           return;
         }
 
         setSession(s);
-        const isUserAdmin = await checkAdmin(user.id);
-        setIsAdmin(isUserAdmin);
+        const { admin, canManage } = await checkRoles(user.id);
+        setIsAdmin(admin);
+        setCanManageLocalLeaders(canManage);
       } catch (err) {
         console.error("Auth initialization error:", err);
         setSession(null);
         setIsAdmin(false);
+        setCanManageLocalLeaders(false);
       } finally {
         setLoading(false);
       }
