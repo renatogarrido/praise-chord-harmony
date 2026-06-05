@@ -109,26 +109,35 @@ export type Database = {
       churches: {
         Row: {
           address: string
+          city: string | null
+          country: string | null
           created_at: string
           id: string
           instagram: string | null
           name: string
+          state: string | null
           updated_at: string
         }
         Insert: {
           address: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           instagram?: string | null
           name: string
+          state?: string | null
           updated_at?: string
         }
         Update: {
           address?: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           instagram?: string | null
           name?: string
+          state?: string | null
           updated_at?: string
         }
         Relationships: []
