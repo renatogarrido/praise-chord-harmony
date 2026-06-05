@@ -203,7 +203,7 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
   const run = async () => {
     setBusy(true);
     try {
-      const r: any = await gen({ data: { year, month, churchName: church.trim() || null } });
+      const r: any = await gen({ data: { year, month, churchName: null } });
       toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.sundayCount} domingos.`);
       setOpen(false);
       onDone();
