@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download, LogIn } from "lucide-react";
+import { Shield, ShieldOff, UserPlus, Loader2, Pencil, Trash2, Download, LogIn } from "lucide-react";
 import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin, impersonateUserAdmin } from "@/lib/admin-users.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -14,13 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
@@ -29,7 +22,9 @@ import { ChurchSelect } from "@/components/church-select";
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
 function AdminUsers() {
+  const { isAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,8 +48,9 @@ function AdminUsers() {
 
   const load = async () => {
     try {
-      const { users } = await listUsersAdmin();
+      const { users, viewerRole } = await listUsersAdmin();
       setUsers(users);
+      setViewerRole(viewerRole);
     } catch (e: any) {
       toast.error("Erro ao carregar usuários: " + (e?.message || ""));
     }
