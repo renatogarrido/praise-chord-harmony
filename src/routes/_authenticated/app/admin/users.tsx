@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download } from "lucide-react";
-import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin } from "@/lib/admin-users.functions";
+import { Shield, ShieldOff, UserPlus, X, Loader2, Pencil, Trash2, Download, LogIn } from "lucide-react";
+import { createUserAdmin, deleteUserAdmin, listUsersAdmin, toggleAdminRole, updateUserAdmin, impersonateUserAdmin } from "@/lib/admin-users.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
