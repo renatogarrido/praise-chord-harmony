@@ -609,11 +609,83 @@ export type Database = {
           },
         ]
       }
+      worship_schedule_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          role_label: string
+          schedule_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_label: string
+          schedule_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_label?: string
+          schedule_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worship_schedule_assignments_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "worship_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worship_schedules: {
+        Row: {
+          church_name: string | null
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          service_date: string
+          setlist_id: string | null
+          setlist_name: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          church_name?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          service_date: string
+          setlist_id?: string | null
+          setlist_name?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          church_name?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          service_date?: string
+          setlist_id?: string | null
+          setlist_name?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_manage_schedule: { Args: { _uid: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
