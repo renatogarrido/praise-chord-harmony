@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { MusicianMultiSelect } from "@/components/musician-multi-select";
+import { INSTRUMENT_GROUPS, VOCAL_GROUPS } from "@/lib/musician-roles";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
@@ -29,6 +31,8 @@ function AdminUsers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [instruments, setInstruments] = useState<string[]>([]);
+  const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
