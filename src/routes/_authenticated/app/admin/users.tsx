@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
+import { ChurchSelect } from "@/components/church-select";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
@@ -266,11 +267,10 @@ function AdminUsers() {
               )}
               <div className="space-y-2">
                 <Label htmlFor="churchName">Igreja</Label>
-                <Input
+                <ChurchSelect
                   id="churchName"
-                  placeholder="Nome da igreja"
                   value={formData.churchName}
-                  onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
+                  onChange={(name) => setFormData({ ...formData, churchName: name })}
                 />
               </div>
               <div className="space-y-2">

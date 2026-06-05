@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
+import { ChurchSelect } from "@/components/church-select";
 
 export const Route = createFileRoute("/_authenticated/app/profile")({ component: ProfilePage });
 
@@ -100,13 +101,7 @@ function ProfilePage() {
 
         <div className="space-y-2">
           <Label htmlFor="churchName">Igreja</Label>
-          <Input
-            id="churchName"
-            maxLength={255}
-            value={churchName}
-            onChange={(e) => setChurchName(e.target.value)}
-            placeholder="Nome da sua igreja"
-          />
+          <ChurchSelect id="churchName" value={churchName} onChange={setChurchName} />
         </div>
 
         <div className="space-y-2">
