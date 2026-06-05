@@ -225,11 +225,29 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       if (dt.getDay() === 0) sundays.push(dt);
     }
 
+    // Resolve setlist names (admin client — setlists are owner-scoped via RLS)
+    const setlistNameByDate = new Map<string, { id: string; name: string | null }>();
+    const sundaySetlists = (data.sundaySetlists ?? {}) as Record<string, string | null>;
+    const distinctSetlistIds = Array.from(
+      new Set(Object.values(sundaySetlists).filter((v): v is string => !!v))
+    );
+    if (distinctSetlistIds.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: sls } = await supabaseAdmin
+        .from("setlists").select("id, name").in("id", distinctSetlistIds);
+      const nameById = new Map<string, string | null>();
+      (sls ?? []).forEach((s: any) => nameById.set(s.id, s.name ?? null));
+      for (const [ymd, sid] of Object.entries(sundaySetlists)) {
+        if (sid) setlistNameByDate.set(ymd, { id: sid, name: nameById.get(sid) ?? null });
+      }
+    }
+
     let createdSchedules = 0;
     let createdAssignments = 0;
 
     for (const sun of sundays) {
       const ymd = `${sun.getFullYear()}-${String(sun.getMonth() + 1).padStart(2, "0")}-${String(sun.getDate()).padStart(2, "0")}`;
+      const sundaySetlist = setlistNameByDate.get(ymd) ?? null;
 
       // Map service time -> [userIds] FOR THIS SUNDAY
       const byService = new Map<string, string[]>();
@@ -250,7 +268,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
         // Skip if a schedule already exists for that exact date+time+churchName
         const { data: existing } = await supabase
           .from("worship_schedules")
-          .select("id")
+          .select("id, setlist_id")
           .eq("service_date", iso)
           .eq("church_name", effectiveChurchName || null as any)
           .maybeSingle();
@@ -258,6 +276,13 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
         let scheduleId: string;
         if (existing?.id) {
           scheduleId = existing.id;
+          // Apply the chosen Sunday setlist if the existing schedule has none
+          if (sundaySetlist && !existing.setlist_id) {
+            await supabase
+              .from("worship_schedules")
+              .update({ setlist_id: sundaySetlist.id, setlist_name: sundaySetlist.name } as any)
+              .eq("id", scheduleId);
+          }
         } else {
           const title = `Culto ${time} — ${sun.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}`;
           const { data: ins, error: insErr } = await supabase
@@ -266,6 +291,8 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
               title,
               service_date: iso,
               church_name: effectiveChurchName || null,
+              setlist_id: sundaySetlist?.id ?? null,
+              setlist_name: sundaySetlist?.name ?? null,
               created_by: userId,
             } as any)
             .select("id")
@@ -274,6 +301,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
           scheduleId = ins!.id;
           createdSchedules++;
         }
+
 
         // Auto-assign available users by their profile roles
         const userIds = byService.get(time) ?? [];
