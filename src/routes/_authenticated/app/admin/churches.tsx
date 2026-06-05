@@ -247,6 +247,27 @@ function AdminChurches() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="estadual">Estadual</Label>
+                <Select
+                  value={formData.estadual || "__none__"}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, estadual: v === "__none__" ? "" : v })
+                  }
+                >
+                  <SelectTrigger id="estadual">
+                    <SelectValue placeholder="Selecione a estadual" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Nenhuma —</SelectItem>
+                    {ESTADUAIS.map((e) => (
+                      <SelectItem key={e} value={e}>
+                        {e}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="instagram">Instagram</Label>
                 <Input
                   id="instagram"
