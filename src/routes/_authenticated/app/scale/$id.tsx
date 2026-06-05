@@ -5,11 +5,13 @@ import { useMemo, useState } from "react";
 import {
   getSchedule, assignUser, unassignUser, listAssignableUsers, deleteSchedule,
 } from "@/lib/worship-schedule.functions";
+import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, Music2, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Music2, Plus, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/$id")({ component: ScaleDetail });
+
 
 function ScaleDetail() {
   const { id } = useParams({ from: "/_authenticated/app/scale/$id" });
@@ -20,9 +22,17 @@ function ScaleDetail() {
   const assign = useServerFn(assignUser);
   const unassign = useServerFn(unassignUser);
   const del = useServerFn(deleteSchedule);
+  const listAvail = useServerFn(listAvailableUserIdsFor);
 
   const detailQ = useQuery({ queryKey: ["schedule", id], queryFn: () => get({ data: { id } }) });
   const usersQ = useQuery({ queryKey: ["assignable-users"], queryFn: () => list(), enabled: canManageSchedule });
+  const availQ = useQuery({
+    queryKey: ["available-for", (detailQ.data as any)?.schedule?.service_date],
+    queryFn: () => listAvail({ data: { isoDate: (detailQ.data as any).schedule.service_date } }),
+    enabled: canManageSchedule && !!(detailQ.data as any)?.schedule?.service_date,
+  });
+  const availableSet = useMemo(() => new Set<string>(((availQ.data as any)?.userIds ?? []) as string[]), [availQ.data]);
+
 
   const [picker, setPicker] = useState(false);
   const [pickedUser, setPickedUser] = useState<string>("");
@@ -34,9 +44,16 @@ function ScaleDetail() {
 
   const filteredUsers = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return users;
-    return users.filter((u) => (u.full_name ?? "").toLowerCase().includes(s) || (u.church_name ?? "").toLowerCase().includes(s));
-  }, [users, search]);
+    const base = users.slice().sort((a, b) => {
+      const aAv = availableSet.has(a.id) ? 0 : 1;
+      const bAv = availableSet.has(b.id) ? 0 : 1;
+      if (aAv !== bAv) return aAv - bAv;
+      return (a.full_name ?? "").localeCompare(b.full_name ?? "");
+    });
+    if (!s) return base;
+    return base.filter((u) => (u.full_name ?? "").toLowerCase().includes(s) || (u.church_name ?? "").toLowerCase().includes(s));
+  }, [users, search, availableSet]);
+
 
   const pickedUserObj = users.find((u) => u.id === pickedUser);
   const availableRoles: string[] = pickedUserObj
@@ -176,15 +193,28 @@ function ScaleDetail() {
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou igreja…"
               className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm mb-3 focus:border-gold/50 focus:outline-none" />
             <div className="max-h-64 overflow-y-auto rounded-xl border border-border mb-4">
-              {filteredUsers.map((u) => (
-                <button key={u.id} type="button" onClick={() => { setPickedUser(u.id); setPickedRole(""); }}
-                  className={`w-full text-left px-3 py-2 border-b border-border last:border-0 hover:bg-accent ${pickedUser === u.id ? "bg-gold-soft" : ""}`}>
-                  <p className="text-sm truncate">{u.full_name ?? "Sem nome"}</p>
-                  <p className="text-[10px] text-muted-foreground">{u.church_name ?? "—"}</p>
-                </button>
-              ))}
+              {filteredUsers.map((u) => {
+                const isAv = availableSet.has(u.id);
+                return (
+                  <button key={u.id} type="button" onClick={() => { setPickedUser(u.id); setPickedRole(""); }}
+                    className={`w-full text-left px-3 py-2 border-b border-border last:border-0 hover:bg-accent ${pickedUser === u.id ? "bg-gold-soft" : ""}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm truncate">{u.full_name ?? "Sem nome"}</p>
+                        <p className="text-[10px] text-muted-foreground">{u.church_name ?? "—"}</p>
+                      </div>
+                      {isAv && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-500 text-[10px] px-2 py-0.5 shrink-0">
+                          <CheckCircle2 className="h-3 w-3" /> Disponível
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
               {filteredUsers.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhum usuário.</p>}
             </div>
+
             <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Função</label>
             {availableRoles.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
