@@ -212,16 +212,6 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       return !!ch && allowedChurchNames.includes(ch);
     });
 
-    // Map service time -> [userIds]
-    const byService = new Map<string, string[]>();
-    for (const t of SUNDAY_SERVICES) byService.set(t, []);
-    for (const a of scopedAvs) {
-      const list: string[] = (a.sunday_services as any) ?? [];
-      for (const t of list) {
-        if (byService.has(t)) byService.get(t)!.push(a.user_id);
-      }
-    }
-
     // 3. Build list of Sundays in the month
     const sundays: Date[] = [];
     const last = new Date(data.year, data.month, 0).getDate();
@@ -234,6 +224,18 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
     let createdAssignments = 0;
 
     for (const sun of sundays) {
+      const ymd = `${sun.getFullYear()}-${String(sun.getMonth() + 1).padStart(2, "0")}-${String(sun.getDate()).padStart(2, "0")}`;
+
+      // Map service time -> [userIds] FOR THIS SUNDAY
+      const byService = new Map<string, string[]>();
+      for (const t of SUNDAY_SERVICES) byService.set(t, []);
+      for (const a of scopedAvs) {
+        const list = sundayTimesFor((a as any).sunday_services, ymd);
+        for (const t of list) {
+          if (byService.has(t)) byService.get(t)!.push(a.user_id);
+        }
+      }
+
       for (const time of SUNDAY_SERVICES) {
         const [hh, mm] = time.split(":").map(Number);
         const serviceDate = new Date(sun);
@@ -271,6 +273,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
         // Auto-assign available users by their profile roles
         const userIds = byService.get(time) ?? [];
         for (const uid of userIds) {
+
           const prof = profileMap.get(uid);
           const roles = Array.from(
             new Set([...(prof?.instruments ?? []), ...(prof?.vocal_types ?? [])])
