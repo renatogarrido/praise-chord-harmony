@@ -39,15 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
+          .eq("role", "admin")
           .maybeSingle();
 
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .maybeSingle();
-
-        return (roleData?.role === "admin") || (profileData?.role === "admin");
+        return roleData?.role === "admin";
       } catch {
         return false;
       }
