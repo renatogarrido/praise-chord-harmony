@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -228,7 +228,7 @@ export const assignUser = createServerFn({ method: "POST" })
           dateStyle: "full", timeStyle: "short",
         });
         const origin = process.env.SITE_URL || "https://cifraspraise.com.br";
-        const userAuth = getRequestHeader("Authorization") ?? "";
+        const userAuth = getRequest()?.headers.get("authorization") ?? "";
         await fetch(`${origin}/lovable/email/transactional/send`, {
           method: "POST",
           headers: {
