@@ -129,10 +129,17 @@ function AdminUsers() {
         toast.success("Usuário atualizado com sucesso!");
       } else {
         // Create new user
-        const { data, error } = await supabase.functions.invoke("create-user-admin", {
-          body: formData,
+        await createUserAdmin({
+          data: {
+            email: formData.email,
+            password: formData.password,
+            fullName: formData.fullName,
+            churchName: formData.churchName,
+            role: formData.role as "user" | "admin",
+            instruments,
+            vocalTypes,
+          },
         });
-        if (error) throw error;
         toast.success("Usuário criado com sucesso!");
       }
 
