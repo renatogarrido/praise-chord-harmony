@@ -61,6 +61,7 @@ type Church = {
 
 function AdminChurches() {
   const [churches, setChurches] = useState<Church[]>([]);
+  const [filtered, setFiltered] = useState<Church[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,6 +75,10 @@ function AdminChurches() {
     instagram: "",
   });
 
+  const [filterCountry, setFilterCountry] = useState<string>("__all__");
+  const [filterState, setFilterState] = useState<string>("__all__");
+  const [filterCity, setFilterCity] = useState<string>("__all__");
+
   const load = async () => {
     const { data, error } = await supabase
       .from("churches" as any)
@@ -83,12 +88,28 @@ function AdminChurches() {
       toast.error("Erro ao carregar igrejas: " + error.message);
       return;
     }
-    setChurches((data ?? []) as any);
+    const list = ((data ?? []) as unknown) as Church[];
+    setChurches(list);
+    setFiltered(list);
   };
 
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    let result = churches;
+    if (filterCountry !== "__all__") {
+      result = result.filter((c) => c.country === filterCountry);
+    }
+    if (filterState !== "__all__") {
+      result = result.filter((c) => c.state === filterState);
+    }
+    if (filterCity !== "__all__") {
+      result = result.filter((c) => c.city === filterCity);
+    }
+    setFiltered(result);
+  }, [churches, filterCountry, filterState, filterCity]);
 
   const resetForm = () => {
     setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", estadual: "", instagram: "" });
@@ -166,13 +187,32 @@ function AdminChurches() {
     return `https://instagram.com/${clean}`;
   };
 
+  const uniqueCountries = Array.from(new Set(churches.map((c) => c.country).filter(Boolean))).sort() as string[];
+  const uniqueStates = Array.from(
+    new Set(
+      churches
+        .filter((c) => filterCountry === "__all__" || c.country === filterCountry)
+        .map((c) => c.state)
+        .filter(Boolean)
+    )
+  ).sort() as string[];
+  const uniqueCities = Array.from(
+    new Set(
+      churches
+        .filter((c) => filterCountry === "__all__" || c.country === filterCountry)
+        .filter((c) => filterState === "__all__" || c.state === filterState)
+        .map((c) => c.city)
+        .filter(Boolean)
+    )
+  ).sort() as string[];
+
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
       <header className="mb-8 flex justify-between items-end">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Gestão</p>
           <h1 className="font-serif text-4xl">Igrejas Renascer</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Total: {churches.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Total: {filtered.length}</p>
         </div>
         <div className="flex items-center gap-2">
           <ChurchesImportDialog onImported={load} />
@@ -304,11 +344,78 @@ function AdminChurches() {
         </div>
       </header>
 
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">País</Label>
+          <Select
+            value={filterCountry}
+            onValueChange={(v) => {
+              setFilterCountry(v);
+              setFilterState("__all__");
+              setFilterCity("__all__");
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {uniqueCountries.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Estado</Label>
+          <Select
+            value={filterState}
+            onValueChange={(v) => {
+              setFilterState(v);
+              setFilterCity("__all__");
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {uniqueStates.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Cidade</Label>
+          <Select
+            value={filterCity}
+            onValueChange={setFilterCity}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {uniqueCities.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-        {churches.length === 0 && (
+        {filtered.length === 0 && (
           <p className="p-6 text-sm text-muted-foreground">Nenhuma igreja cadastrada ainda.</p>
         )}
-        {churches.map((c) => {
+        {filtered.map((c) => {
           const igUrl = c.instagram ? instagramUrl(c.instagram) : null;
           return (
             <div key={c.id} className="flex items-start gap-4 p-4">
