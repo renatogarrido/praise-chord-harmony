@@ -329,7 +329,7 @@ function AdminUsers() {
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {users.map((u) => {
-          const isAdmin = u.roles.includes("admin");
+          const targetIsAdmin = u.roles.includes("admin");
           const userRoles: string[] = (u.roles ?? []).filter((r: string) =>
             ["admin", "lider_nacional", "lider_estadual", "lider_local"].includes(r)
           );
@@ -351,8 +351,8 @@ function AdminUsers() {
                   <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
                     <LogIn className="h-4 w-4" />
                   </button>
-                  <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
-                    {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                  <button onClick={() => toggleAdmin(u.id, targetIsAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={targetIsAdmin ? "Remover Admin" : "Tornar Admin"}>
+                    {targetIsAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
                   </button>
                   <button onClick={() => handleEditUser(u)} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Editar Usuário">
                     <Pencil className="h-4 w-4" />
