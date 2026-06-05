@@ -346,18 +346,22 @@ function AdminUsers() {
                   <span key={r} className="text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-gold-soft text-gold whitespace-nowrap">{ROLE_LABELS[r]}</span>
                 ))}
               </div>
-              <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
-                <LogIn className="h-4 w-4" />
-              </button>
-              <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
-                {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-              </button>
-              <button onClick={() => handleEditUser(u)} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Editar Usuário">
-                <Pencil className="h-4 w-4" />
-              </button>
-              <button onClick={() => deleteUser(u.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Excluir Usuário">
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <>
+                  <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
+                    <LogIn className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => toggleAdmin(u.id, isAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={isAdmin ? "Remover Admin" : "Tornar Admin"}>
+                    {isAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                  </button>
+                  <button onClick={() => handleEditUser(u)} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Editar Usuário">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => deleteUser(u.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Excluir Usuário">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
           );
         })}
