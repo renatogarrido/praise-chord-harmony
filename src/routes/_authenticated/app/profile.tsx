@@ -21,6 +21,7 @@ function ProfilePage() {
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const { groups: instrumentGroups } = useInstrumentGroups();
+  const { groups: vocalGroups } = useVocalGroups();
 
   useEffect(() => {
     if (!user) return;
