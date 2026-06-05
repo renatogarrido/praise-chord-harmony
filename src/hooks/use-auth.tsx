@@ -24,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [canViewUsers, setCanViewUsers] = useState(false);
   const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
+  const [canManageSchedule, setCanManageSchedule] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const lastActivityRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -49,11 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const admin = roles.includes("admin");
         const viewUsers = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
         const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
-        return { admin, viewUsers, canManage };
+        const manageSchedule = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
+        return { admin, viewUsers, canManage, manageSchedule };
       } catch {
-        return { admin: false, viewUsers: false, canManage: false };
+        return { admin: false, viewUsers: false, canManage: false, manageSchedule: false };
       }
     };
+
 
     const initializeAuth = async () => {
       try {
