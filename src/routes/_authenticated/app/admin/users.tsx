@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { INSTRUMENT_GROUPS, VOCAL_GROUPS } from "@/lib/musician-roles";
+import { VOCAL_GROUPS } from "@/lib/musician-roles";
+import { useInstrumentGroups } from "@/hooks/use-instrument-groups";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
