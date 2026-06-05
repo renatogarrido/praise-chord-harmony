@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ChurchesImportDialog } from "@/components/admin/churches-import-dialog";
 
 const ESTADUAIS = [
   "Alphaville",
