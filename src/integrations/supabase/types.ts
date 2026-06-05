@@ -722,6 +722,14 @@ export type Database = {
     }
     Functions: {
       can_manage_schedule: { Args: { _uid: string }; Returns: boolean }
+      can_manage_schedule_church: {
+        Args: { _church: string; _uid: string }
+        Returns: boolean
+      }
+      can_view_schedule: {
+        Args: { _church: string; _uid: string }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -755,6 +763,8 @@ export type Database = {
           read_ct: number
         }[]
       }
+      user_church_name: { Args: { _uid: string }; Returns: string }
+      user_estadual: { Args: { _uid: string }; Returns: string }
     }
     Enums: {
       app_role:
