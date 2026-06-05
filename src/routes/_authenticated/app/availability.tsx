@@ -106,13 +106,20 @@ function AvailabilityPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleSunday = (t: string) => {
-    setSundays((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
+  const toggleSunday = (ymd: string, t: string) => {
+    setSundaysByDate((prev) => {
+      const cur = new Set(prev[ymd] ?? []);
+      if (cur.has(t)) cur.delete(t);
+      else cur.add(t);
+      return { ...prev, [ymd]: cur };
     });
+  };
+
+  const setAllForDate = (ymd: string, on: boolean) => {
+    setSundaysByDate((prev) => ({
+      ...prev,
+      [ymd]: new Set(on ? SUNDAY_SERVICES : []),
+    }));
   };
 
   const onSave = async () => {
@@ -122,12 +129,17 @@ function AvailabilityPage() {
       for (const { key } of WEEKDAYS) {
         payloadWeekdays[key] = enabled[key] ? weekdays[key] : null;
       }
+      const sundayPayload: Record<string, string[]> = {};
+      for (const { ymd } of monthSundays) {
+        const arr = Array.from(sundaysByDate[ymd] ?? []);
+        if (arr.length > 0) sundayPayload[ymd] = arr;
+      }
       await save({
         data: {
           year,
           month,
           weekdays: payloadWeekdays as any,
-          sunday_services: Array.from(sundays) as any,
+          sunday_services: sundayPayload as any,
           notes: notes.trim() || null,
         },
       });
@@ -139,6 +151,7 @@ function AvailabilityPage() {
       setSaving(false);
     }
   };
+
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
