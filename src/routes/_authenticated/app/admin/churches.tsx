@@ -174,20 +174,22 @@ function AdminChurches() {
           <h1 className="font-serif text-4xl">Igrejas Renascer</h1>
           <p className="mt-2 text-sm text-muted-foreground">Total: {churches.length}</p>
         </div>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Igreja
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[480px]">
+        <div className="flex items-center gap-2">
+          <ChurchesImportDialog onImported={load} />
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                <Plus className="h-4 w-4" />
+                Nova Igreja
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Igreja" : "Cadastrar Igreja"}</DialogTitle>
             </DialogHeader>
