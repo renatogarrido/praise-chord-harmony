@@ -173,6 +173,7 @@ function AdminUsers() {
             Exportar CSV
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            if (open) { reloadInstruments(); reloadVocals(); }
             setIsDialogOpen(open);
             if (!open) {
               setEditingId(null);
