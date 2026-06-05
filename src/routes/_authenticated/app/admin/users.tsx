@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { INSTRUMENT_GROUPS, VOCAL_GROUPS } from "@/lib/musician-roles";
+import { VOCAL_GROUPS } from "@/lib/musician-roles";
+import { useInstrumentGroups } from "@/hooks/use-instrument-groups";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
@@ -33,6 +34,7 @@ function AdminUsers() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
+  const { groups: instrumentGroups } = useInstrumentGroups();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -245,7 +247,7 @@ function AdminUsers() {
                   <div className="space-y-2">
                     <Label>Instrumentos</Label>
                     <MusicianMultiSelect
-                      groups={INSTRUMENT_GROUPS}
+                      groups={instrumentGroups}
                       value={instruments}
                       onChange={setInstruments}
                       placeholder="Escolher instrumentos…"

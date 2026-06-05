@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { INSTRUMENT_GROUPS, VOCAL_GROUPS } from "@/lib/musician-roles";
+import { VOCAL_GROUPS } from "@/lib/musician-roles";
+import { useInstrumentGroups } from "@/hooks/use-instrument-groups";
 
 export const Route = createFileRoute("/_authenticated/app/profile")({ component: ProfilePage });
 
@@ -20,6 +21,7 @@ function ProfilePage() {
   const [churchName, setChurchName] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
+  const { groups: instrumentGroups } = useInstrumentGroups();
 
   useEffect(() => {
     if (!user) return;
@@ -110,7 +112,7 @@ function ProfilePage() {
         <div className="space-y-2">
           <Label>Instrumentos</Label>
           <MusicianMultiSelect
-            groups={INSTRUMENT_GROUPS}
+            groups={instrumentGroups}
             value={instruments}
             onChange={setInstruments}
             placeholder="Escolher instrumentos…"
