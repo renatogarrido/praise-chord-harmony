@@ -228,12 +228,14 @@ export const assignUser = createServerFn({ method: "POST" })
           dateStyle: "full", timeStyle: "short",
         });
         const origin = process.env.SITE_URL || "https://cifraspraise.com.br";
+        const userAuth = getRequestHeader("Authorization") ?? "";
         await fetch(`${origin}/lovable/email/transactional/send`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.LOVABLE_API_KEY}`,
+            "Authorization": userAuth,
           },
+
           body: JSON.stringify({
             templateName: "worship-schedule-assignment",
             recipientEmail: email,
