@@ -196,7 +196,11 @@ function AdminUsers() {
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Gestão</p>
           <h1 className="font-serif text-4xl">Usuários</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Total: {users.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Total: {users.length}
+            {viewerRole === "lider_estadual" && " · usuários da sua estadual"}
+            {viewerRole === "lider_local" && " · usuários da sua igreja"}
+          </p>
         </div>
         
         <div className="flex gap-2">
@@ -204,24 +208,25 @@ function AdminUsers() {
             <Download className="h-4 w-4" />
             Exportar CSV
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            if (open) { reloadInstruments(); reloadVocals(); }
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingId(null);
-              setFormData({ email: "", password: "", fullName: "", churchName: "" });
-              setSelectedRoles([]);
-              setInstruments([]);
-              setVocalTypes([]);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
-                <UserPlus className="h-4 w-4" />
-                Novo Usuário
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+          {isAdmin && (
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              if (open) { reloadInstruments(); reloadVocals(); }
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingId(null);
+                setFormData({ email: "", password: "", fullName: "", churchName: "" });
+                setSelectedRoles([]);
+                setInstruments([]);
+                setVocalTypes([]);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Novo Usuário
+                </Button>
+              </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
             </DialogHeader>
@@ -316,8 +321,9 @@ function AdminUsers() {
                 </Button>
               </div>
             </form>
-          </DialogContent>
-          </Dialog>
+            </DialogContent>
+            </Dialog>
+          )}
         </div>
       </header>
 
