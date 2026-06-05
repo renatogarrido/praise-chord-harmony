@@ -1,0 +1,243 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { CalendarDays, Save } from "lucide-react";
+import {
+  getMyAvailability,
+  saveMyAvailability,
+  SUNDAY_SERVICES,
+} from "@/lib/availability.functions";
+
+export const Route = createFileRoute("/_authenticated/app/availability")({
+  component: AvailabilityPage,
+});
+
+const WEEKDAYS: { key: string; label: string }[] = [
+  { key: "1", label: "Segunda" },
+  { key: "2", label: "Terça" },
+  { key: "3", label: "Quarta" },
+  { key: "4", label: "Quinta" },
+  { key: "5", label: "Sexta" },
+  { key: "6", label: "Sábado" },
+];
+
+type Slot = { start: string; end: string } | null;
+
+function AvailabilityPage() {
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth() + 1);
+
+  const get = useServerFn(getMyAvailability);
+  const save = useServerFn(saveMyAvailability);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["my-availability", year, month],
+    queryFn: () => get({ data: { year, month } }),
+  });
+
+  const [weekdays, setWeekdays] = useState<Record<string, Slot>>({});
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
+  const [sundays, setSundays] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const a = (data as any)?.availability;
+    const wk: Record<string, Slot> = {};
+    const en: Record<string, boolean> = {};
+    for (const { key } of WEEKDAYS) {
+      const slot = a?.weekdays?.[key] ?? null;
+      wk[key] = slot ?? { start: "19:00", end: "22:00" };
+      en[key] = !!slot;
+    }
+    setWeekdays(wk);
+    setEnabled(en);
+    setSundays(new Set((a?.sunday_services ?? []) as string[]));
+    setNotes(a?.notes ?? "");
+  }, [data]);
+
+  const monthLabel = useMemo(
+    () => new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
+    [year, month]
+  );
+
+  const monthOptions = useMemo(() => {
+    const opts: { y: number; m: number; label: string }[] = [];
+    const base = new Date(today.getFullYear(), today.getMonth(), 1);
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      opts.push({
+        y: d.getFullYear(),
+        m: d.getMonth() + 1,
+        label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
+      });
+    }
+    return opts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleSunday = (t: string) => {
+    setSundays((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  };
+
+  const onSave = async () => {
+    setSaving(true);
+    try {
+      const payloadWeekdays: Record<string, Slot> = {};
+      for (const { key } of WEEKDAYS) {
+        payloadWeekdays[key] = enabled[key] ? weekdays[key] : null;
+      }
+      await save({
+        data: {
+          year,
+          month,
+          weekdays: payloadWeekdays as any,
+          sunday_services: Array.from(sundays) as any,
+          notes: notes.trim() || null,
+        },
+      });
+      toast.success("Disponibilidade salva!");
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
+      <header className="mb-8">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Ministério de Louvor</p>
+        <h1 className="font-serif text-4xl md:text-5xl flex items-center gap-3">
+          <CalendarDays className="h-8 w-8 text-gold" /> Minha Disponibilidade
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Informe quando você pode servir neste mês. A liderança usa isso para montar a escala automaticamente.
+        </p>
+      </header>
+
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Mês:</label>
+        <select
+          value={`${year}-${month}`}
+          onChange={(e) => {
+            const [y, m] = e.target.value.split("-").map(Number);
+            setYear(y); setMonth(m);
+          }}
+          className="rounded-full border border-border bg-background px-4 py-2 text-sm capitalize focus:border-gold/50 focus:outline-none"
+        >
+          {monthOptions.map((o) => (
+            <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`} className="capitalize">{o.label}</option>
+          ))}
+        </select>
+        <span className="text-xs text-muted-foreground capitalize">{monthLabel}</span>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : (
+        <>
+          <section className="rounded-2xl border border-border bg-card p-6 mb-6">
+            <h2 className="font-serif text-xl mb-1">Segunda a Sábado</h2>
+            <p className="text-xs text-muted-foreground mb-5">Marque os dias e informe o horário que você pode servir.</p>
+            <div className="space-y-3">
+              {WEEKDAYS.map(({ key, label }) => (
+                <div key={key} className="grid grid-cols-12 items-center gap-3">
+                  <label className="col-span-12 sm:col-span-4 flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={enabled[key] ?? false}
+                      onChange={(e) => setEnabled((p) => ({ ...p, [key]: e.target.checked }))}
+                      className="h-4 w-4 accent-gold"
+                    />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                  <div className="col-span-6 sm:col-span-4">
+                    <input
+                      type="time"
+                      disabled={!enabled[key]}
+                      value={weekdays[key]?.start ?? "19:00"}
+                      onChange={(e) =>
+                        setWeekdays((p) => ({ ...p, [key]: { ...(p[key] ?? { end: "22:00" })!, start: e.target.value } }))
+                      }
+                      className="w-full rounded-full border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:border-gold/50 focus:outline-none"
+                    />
+                  </div>
+                  <div className="col-span-6 sm:col-span-4">
+                    <input
+                      type="time"
+                      disabled={!enabled[key]}
+                      value={weekdays[key]?.end ?? "22:00"}
+                      onChange={(e) =>
+                        setWeekdays((p) => ({ ...p, [key]: { ...(p[key] ?? { start: "19:00" })!, end: e.target.value } }))
+                      }
+                      className="w-full rounded-full border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:border-gold/50 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-6 mb-6">
+            <h2 className="font-serif text-xl mb-1">Domingo</h2>
+            <p className="text-xs text-muted-foreground mb-5">Marque os cultos em que você pode servir.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {SUNDAY_SERVICES.map((t) => {
+                const active = sundays.has(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleSunday(t)}
+                    className={`rounded-2xl border-2 px-4 py-5 text-center transition-all ${
+                      active
+                        ? "border-gold bg-gold-soft text-gold"
+                        : "border-border bg-background text-muted-foreground hover:border-gold/30 hover:text-foreground"
+                    }`}
+                  >
+                    <div className="font-serif text-2xl">{t}</div>
+                    <div className="text-[10px] uppercase tracking-widest mt-1">
+                      {active ? "Disponível" : "Indisponível"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-6 mb-6">
+            <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Observações (opcional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Ex: Estarei viajando no segundo fim de semana."
+              className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none"
+            />
+          </section>
+
+          <div className="flex justify-end">
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" /> {saving ? "Salvando…" : "Salvar disponibilidade"}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

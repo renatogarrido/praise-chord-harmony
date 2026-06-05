@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppScaleRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated/app/history'
 import { Route as AuthenticatedAppFavoritesRouteImport } from './routes/_authenticated/app/favorites'
+import { Route as AuthenticatedAppAvailabilityRouteImport } from './routes/_authenticated/app/availability'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app/admin'
 import { Route as AuthenticatedAppSongsIndexRouteImport } from './routes/_authenticated/app/songs/index'
 import { Route as AuthenticatedAppSetlistsIndexRouteImport } from './routes/_authenticated/app/setlists/index'
@@ -110,6 +111,12 @@ const AuthenticatedAppFavoritesRoute =
   AuthenticatedAppFavoritesRouteImport.update({
     id: '/app/favorites',
     path: '/app/favorites',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppAvailabilityRoute =
+  AuthenticatedAppAvailabilityRouteImport.update({
+    id: '/app/availability',
+    path: '/app/availability',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
@@ -260,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
+  '/app/availability': typeof AuthenticatedAppAvailabilityRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
@@ -297,6 +305,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/app/availability': typeof AuthenticatedAppAvailabilityRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
@@ -336,6 +345,7 @@ export interface FileRoutesById {
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
+  '/_authenticated/app/availability': typeof AuthenticatedAppAvailabilityRoute
   '/_authenticated/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/_authenticated/app/history': typeof AuthenticatedAppHistoryRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/email/unsubscribe'
     | '/app/admin'
+    | '/app/availability'
     | '/app/favorites'
     | '/app/history'
     | '/app/profile'
@@ -413,6 +424,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/app/availability'
     | '/app/favorites'
     | '/app/history'
     | '/app/profile'
@@ -451,6 +463,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/email/unsubscribe'
     | '/_authenticated/app/admin'
+    | '/_authenticated/app/availability'
     | '/_authenticated/app/favorites'
     | '/_authenticated/app/history'
     | '/_authenticated/app/profile'
@@ -590,6 +603,13 @@ declare module '@tanstack/react-router' {
       path: '/app/favorites'
       fullPath: '/app/favorites'
       preLoaderRoute: typeof AuthenticatedAppFavoritesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/availability': {
+      id: '/_authenticated/app/availability'
+      path: '/app/availability'
+      fullPath: '/app/availability'
+      preLoaderRoute: typeof AuthenticatedAppAvailabilityRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/admin': {
@@ -809,6 +829,7 @@ const AuthenticatedAppScaleRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
+  AuthenticatedAppAvailabilityRoute: typeof AuthenticatedAppAvailabilityRoute
   AuthenticatedAppFavoritesRoute: typeof AuthenticatedAppFavoritesRoute
   AuthenticatedAppHistoryRoute: typeof AuthenticatedAppHistoryRoute
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
@@ -825,6 +846,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
+  AuthenticatedAppAvailabilityRoute: AuthenticatedAppAvailabilityRoute,
   AuthenticatedAppFavoritesRoute: AuthenticatedAppFavoritesRoute,
   AuthenticatedAppHistoryRoute: AuthenticatedAppHistoryRoute,
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
@@ -863,13 +885,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

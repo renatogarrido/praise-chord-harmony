@@ -323,6 +323,42 @@ export type Database = {
           },
         ]
       }
+      monthly_availability: {
+        Row: {
+          created_at: string
+          id: string
+          month: number
+          notes: string | null
+          sunday_services: Json
+          updated_at: string
+          user_id: string
+          weekdays: Json
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: number
+          notes?: string | null
+          sunday_services?: Json
+          updated_at?: string
+          user_id: string
+          weekdays?: Json
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number
+          notes?: string | null
+          sunday_services?: Json
+          updated_at?: string
+          user_id?: string
+          weekdays?: Json
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

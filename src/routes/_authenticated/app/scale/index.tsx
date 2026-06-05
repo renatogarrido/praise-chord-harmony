@@ -3,11 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listSchedules, createSchedule, deleteSchedule, listMySetlists } from "@/lib/worship-schedule.functions";
+import { generateMonthlySundays } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { CalendarDays, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/")({ component: ScalePage });
+
 
 function ScalePage() {
   const { canManageSchedule, user } = useAuth();
@@ -66,11 +68,15 @@ function ScalePage() {
           <p className="mt-2 text-sm text-muted-foreground">Cultos, eventos e os músicos escalados para cada um.</p>
         </div>
         {canManageSchedule && (
-          <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
-            <Plus className="h-4 w-4" /> Nova escala
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <GenerateMonthButton onDone={() => refetch()} />
+            <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
+              <Plus className="h-4 w-4" /> Nova escala
+            </button>
+          </div>
         )}
       </header>
+
 
       {open && canManageSchedule && (
         <form onSubmit={onCreate} className="mb-8 rounded-2xl border border-border bg-card p-6 grid gap-4 md:grid-cols-2">
@@ -178,3 +184,67 @@ function Label({ children }: any) {
 function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...p} className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />;
 }
+
+function GenerateMonthButton({ onDone }: { onDone: () => void }) {
+  const gen = useServerFn(generateMonthlySundays);
+  const today = new Date();
+  const [open, setOpen] = useState(false);
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth() + 1);
+  const [church, setChurch] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const opts: { y: number; m: number; label: string }[] = [];
+  const base = new Date(today.getFullYear(), today.getMonth(), 1);
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+    opts.push({ y: d.getFullYear(), m: d.getMonth() + 1, label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) });
+  }
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const r: any = await gen({ data: { year, month, churchName: church.trim() || null } });
+      toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.sundayCount} domingos.`);
+      setOpen(false);
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao gerar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-5 py-3 text-xs font-semibold uppercase tracking-widest text-gold hover:bg-gold/15">
+        <Wand2 className="h-4 w-4" /> Gerar mês
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => !busy && setOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-serif text-2xl mb-1">Gerar escala mensal</h3>
+            <p className="text-xs text-muted-foreground mb-5">Cria 4 escalas (08:00, 10:00, 16:00, 18:00) para cada domingo, usando a disponibilidade dos usuários.</p>
+            <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Mês</label>
+            <select
+              value={`${year}-${month}`}
+              onChange={(e) => { const [y, m] = e.target.value.split("-").map(Number); setYear(y); setMonth(m); }}
+              className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm capitalize mb-4 focus:border-gold/50 focus:outline-none"
+            >
+              {opts.map((o) => <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`} className="capitalize">{o.label}</option>)}
+            </select>
+            <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Igreja (opcional)</label>
+            <Input value={church} onChange={(e) => setChurch(e.target.value)} placeholder="Ex: Renascer Local" />
+            <div className="mt-5 flex justify-end gap-2">
+              <button disabled={busy} onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest disabled:opacity-50">Cancelar</button>
+              <button disabled={busy} onClick={run} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
+                <Wand2 className="h-3.5 w-3.5" /> {busy ? "Gerando…" : "Gerar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
