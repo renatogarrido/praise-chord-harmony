@@ -40,9 +40,24 @@ function AvailabilityPage() {
 
   const [weekdays, setWeekdays] = useState<Record<string, Slot>>({});
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
-  const [sundays, setSundays] = useState<Set<string>>(new Set());
+  // Per-Sunday-date map: { "YYYY-MM-DD": Set<"08:00"|"10:00"|...> }
+  const [sundaysByDate, setSundaysByDate] = useState<Record<string, Set<string>>>({});
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Compute Sundays in the selected month
+  const monthSundays = useMemo(() => {
+    const result: { ymd: string; date: Date }[] = [];
+    const last = new Date(year, month, 0).getDate();
+    for (let d = 1; d <= last; d++) {
+      const dt = new Date(year, month - 1, d);
+      if (dt.getDay() === 0) {
+        const ymd = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        result.push({ ymd, date: dt });
+      }
+    }
+    return result;
+  }, [year, month]);
 
   useEffect(() => {
     const a = (data as any)?.availability;
@@ -55,9 +70,21 @@ function AvailabilityPage() {
     }
     setWeekdays(wk);
     setEnabled(en);
-    setSundays(new Set((a?.sunday_services ?? []) as string[]));
+
+    // Hydrate per-Sunday map. Supports legacy array format (apply to every Sunday).
+    const raw = a?.sunday_services;
+    const next: Record<string, Set<string>> = {};
+    if (Array.isArray(raw)) {
+      for (const { ymd } of monthSundays) next[ymd] = new Set(raw as string[]);
+    } else if (raw && typeof raw === "object") {
+      for (const [k, v] of Object.entries(raw)) {
+        next[k] = new Set(v as string[]);
+      }
+    }
+    setSundaysByDate(next);
     setNotes(a?.notes ?? "");
-  }, [data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, year, month]);
 
   const monthLabel = useMemo(
     () => new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
@@ -79,13 +106,20 @@ function AvailabilityPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleSunday = (t: string) => {
-    setSundays((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
+  const toggleSunday = (ymd: string, t: string) => {
+    setSundaysByDate((prev) => {
+      const cur = new Set(prev[ymd] ?? []);
+      if (cur.has(t)) cur.delete(t);
+      else cur.add(t);
+      return { ...prev, [ymd]: cur };
     });
+  };
+
+  const setAllForDate = (ymd: string, on: boolean) => {
+    setSundaysByDate((prev) => ({
+      ...prev,
+      [ymd]: new Set(on ? SUNDAY_SERVICES : []),
+    }));
   };
 
   const onSave = async () => {
@@ -95,12 +129,17 @@ function AvailabilityPage() {
       for (const { key } of WEEKDAYS) {
         payloadWeekdays[key] = enabled[key] ? weekdays[key] : null;
       }
+      const sundayPayload: Record<string, string[]> = {};
+      for (const { ymd } of monthSundays) {
+        const arr = Array.from(sundaysByDate[ymd] ?? []);
+        if (arr.length > 0) sundayPayload[ymd] = arr;
+      }
       await save({
         data: {
           year,
           month,
           weekdays: payloadWeekdays as any,
-          sunday_services: Array.from(sundays) as any,
+          sunday_services: sundayPayload as any,
           notes: notes.trim() || null,
         },
       });
@@ -112,6 +151,7 @@ function AvailabilityPage() {
       setSaving(false);
     }
   };
+
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-4xl mx-auto">
@@ -189,31 +229,65 @@ function AvailabilityPage() {
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-6 mb-6">
-            <h2 className="font-serif text-xl mb-1">Domingo</h2>
-            <p className="text-xs text-muted-foreground mb-5">Marque os cultos em que você pode servir.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {SUNDAY_SERVICES.map((t) => {
-                const active = sundays.has(t);
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => toggleSunday(t)}
-                    className={`rounded-2xl border-2 px-4 py-5 text-center transition-all ${
-                      active
-                        ? "border-gold bg-gold-soft text-gold"
-                        : "border-border bg-background text-muted-foreground hover:border-gold/30 hover:text-foreground"
-                    }`}
-                  >
-                    <div className="font-serif text-2xl">{t}</div>
-                    <div className="text-[10px] uppercase tracking-widest mt-1">
-                      {active ? "Disponível" : "Indisponível"}
+            <h2 className="font-serif text-xl mb-1">Domingos do mês</h2>
+            <p className="text-xs text-muted-foreground mb-5">
+              Para cada domingo, marque os cultos em que você pode servir. Você pode estar disponível em horários diferentes em domingos diferentes.
+            </p>
+            {monthSundays.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum domingo neste mês.</p>
+            ) : (
+              <div className="space-y-4">
+                {monthSundays.map(({ ymd, date }) => {
+                  const selected = sundaysByDate[ymd] ?? new Set<string>();
+                  const allOn = selected.size === SUNDAY_SERVICES.length;
+                  return (
+                    <div key={ymd} className="rounded-xl border border-border bg-background p-4">
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div>
+                          <p className="font-serif text-lg capitalize">
+                            {date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+                          </p>
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
+                            {selected.size} de {SUNDAY_SERVICES.length} cultos
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAllForDate(ymd, !allOn)}
+                          className="text-[10px] uppercase tracking-widest text-gold hover:underline"
+                        >
+                          {allOn ? "Limpar dia" : "Marcar todos"}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {SUNDAY_SERVICES.map((t) => {
+                          const active = selected.has(t);
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => toggleSunday(ymd, t)}
+                              className={`rounded-xl border-2 px-3 py-3 text-center transition-all ${
+                                active
+                                  ? "border-gold bg-gold-soft text-gold"
+                                  : "border-border bg-background text-muted-foreground hover:border-gold/30 hover:text-foreground"
+                              }`}
+                            >
+                              <div className="font-serif text-xl">{t}</div>
+                              <div className="text-[9px] uppercase tracking-widest mt-0.5">
+                                {active ? "Disp." : "—"}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
+
 
           <section className="rounded-2xl border border-border bg-card p-6 mb-6">
             <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Observações (opcional)</label>

@@ -11,7 +11,24 @@ const TimeRange = z.object({
 });
 
 const WeekdaysSchema = z.record(z.enum(WEEKDAY_KEYS), TimeRange.nullable()).default({});
-const SundaySchema = z.array(z.enum(SUNDAY_SERVICES)).default([]);
+// Sunday availability can be either:
+//  - legacy: string[] of service times that apply to EVERY Sunday in the month
+//  - new:    Record<"YYYY-MM-DD", string[]> for per-Sunday selection
+const SundaySchema = z.union([
+  z.array(z.enum(SUNDAY_SERVICES)),
+  z.record(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.array(z.enum(SUNDAY_SERVICES))),
+]).default({} as any);
+
+function sundayTimesFor(
+  sundayServices: any,
+  isoDateYMD: string,
+): string[] {
+  if (Array.isArray(sundayServices)) return sundayServices as string[];
+  if (sundayServices && typeof sundayServices === "object") {
+    return (sundayServices[isoDateYMD] as string[]) ?? [];
+  }
+  return [];
+}
 
 const MANAGER_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 
@@ -86,6 +103,8 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
     const dow = d.getDay(); // 0=Sun..6=Sat
     const hhmm = d.toTimeString().slice(0, 5);
 
+    const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
     const { data: rows, error } = await supabase
       .from("monthly_availability")
       .select("user_id, weekdays, sunday_services")
@@ -96,8 +115,7 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
     const ids = new Set<string>();
     for (const r of rows ?? []) {
       if (dow === 0) {
-        const list: string[] = (r.sunday_services as any) ?? [];
-        // Match by service time prefix
+        const list = sundayTimesFor(r.sunday_services, ymd);
         if (list.some((t) => t === hhmm)) ids.add(r.user_id);
       } else {
         const wk = (r.weekdays as any) ?? {};
@@ -194,16 +212,6 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       return !!ch && allowedChurchNames.includes(ch);
     });
 
-    // Map service time -> [userIds]
-    const byService = new Map<string, string[]>();
-    for (const t of SUNDAY_SERVICES) byService.set(t, []);
-    for (const a of scopedAvs) {
-      const list: string[] = (a.sunday_services as any) ?? [];
-      for (const t of list) {
-        if (byService.has(t)) byService.get(t)!.push(a.user_id);
-      }
-    }
-
     // 3. Build list of Sundays in the month
     const sundays: Date[] = [];
     const last = new Date(data.year, data.month, 0).getDate();
@@ -216,6 +224,18 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
     let createdAssignments = 0;
 
     for (const sun of sundays) {
+      const ymd = `${sun.getFullYear()}-${String(sun.getMonth() + 1).padStart(2, "0")}-${String(sun.getDate()).padStart(2, "0")}`;
+
+      // Map service time -> [userIds] FOR THIS SUNDAY
+      const byService = new Map<string, string[]>();
+      for (const t of SUNDAY_SERVICES) byService.set(t, []);
+      for (const a of scopedAvs) {
+        const list = sundayTimesFor((a as any).sunday_services, ymd);
+        for (const t of list) {
+          if (byService.has(t)) byService.get(t)!.push(a.user_id);
+        }
+      }
+
       for (const time of SUNDAY_SERVICES) {
         const [hh, mm] = time.split(":").map(Number);
         const serviceDate = new Date(sun);
@@ -253,6 +273,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
         // Auto-assign available users by their profile roles
         const userIds = byService.get(time) ?? [];
         for (const uid of userIds) {
+
           const prof = profileMap.get(uid);
           const roles = Array.from(
             new Set([...(prof?.instruments ?? []), ...(prof?.vocal_types ?? [])])
