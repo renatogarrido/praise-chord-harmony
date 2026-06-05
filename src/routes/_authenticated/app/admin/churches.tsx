@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ChurchesImportDialog } from "@/components/admin/churches-import-dialog";
 
 const ESTADUAIS = [
   "Alphaville",
@@ -173,20 +174,22 @@ function AdminChurches() {
           <h1 className="font-serif text-4xl">Igrejas Renascer</h1>
           <p className="mt-2 text-sm text-muted-foreground">Total: {churches.length}</p>
         </div>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Igreja
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[480px]">
+        <div className="flex items-center gap-2">
+          <ChurchesImportDialog onImported={load} />
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                <Plus className="h-4 w-4" />
+                Nova Igreja
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Igreja" : "Cadastrar Igreja"}</DialogTitle>
             </DialogHeader>
@@ -298,6 +301,7 @@ function AdminChurches() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </header>
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
