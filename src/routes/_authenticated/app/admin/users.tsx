@@ -145,6 +145,10 @@ function AdminUsers() {
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.churchName.trim()) {
+      toast.error("Selecione a igreja do usuário.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (editingId) {
