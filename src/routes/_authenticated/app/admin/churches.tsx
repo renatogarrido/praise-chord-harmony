@@ -23,6 +23,9 @@ type Church = {
   id: string;
   name: string;
   address: string;
+  country: string | null;
+  state: string | null;
+  city: string | null;
   instagram: string | null;
   created_at: string;
 };
@@ -32,7 +35,14 @@ function AdminChurches() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", address: "", instagram: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    country: "Brasil",
+    state: "",
+    city: "",
+    instagram: "",
+  });
 
   const load = async () => {
     const { data, error } = await supabase
@@ -51,13 +61,20 @@ function AdminChurches() {
   }, []);
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", instagram: "" });
+    setFormData({ name: "", address: "", country: "Brasil", state: "", city: "", instagram: "" });
     setEditingId(null);
   };
 
   const handleEdit = (c: Church) => {
     setEditingId(c.id);
-    setFormData({ name: c.name, address: c.address, instagram: c.instagram ?? "" });
+    setFormData({
+      name: c.name,
+      address: c.address,
+      country: c.country ?? "",
+      state: c.state ?? "",
+      city: c.city ?? "",
+      instagram: c.instagram ?? "",
+    });
     setIsDialogOpen(true);
   };
 
@@ -79,6 +96,9 @@ function AdminChurches() {
       const payload = {
         name: formData.name.trim(),
         address: formData.address.trim(),
+        country: formData.country.trim() || null,
+        state: formData.state.trim() || null,
+        city: formData.city.trim() || null,
         instagram: formData.instagram.trim() || null,
       };
       if (!payload.name || !payload.address) {
@@ -155,12 +175,44 @@ function AdminChurches() {
                 <Label htmlFor="address">Endereço completo</Label>
                 <Textarea
                   id="address"
-                  placeholder="Rua, número, bairro, cidade, estado, CEP"
+                  placeholder="Rua, número, bairro, CEP"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   required
                   rows={3}
                   maxLength={1000}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="country">País</Label>
+                  <Input
+                    id="country"
+                    placeholder="Brasil"
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    maxLength={100}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">Estado</Label>
+                  <Input
+                    id="state"
+                    placeholder="SP"
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    maxLength={100}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  placeholder="São Paulo"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  maxLength={150}
                 />
               </div>
               <div className="space-y-2">
@@ -210,6 +262,11 @@ function AdminChurches() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium">{c.name}</p>
                 <p className="text-xs text-muted-foreground whitespace-pre-line">{c.address}</p>
+                {(c.city || c.state || c.country) && (
+                  <p className="text-xs text-muted-foreground">
+                    {[c.city, c.state, c.country].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 {c.instagram && (
                   <a
                     href={igUrl ?? "#"}
