@@ -109,7 +109,7 @@ function AdminUsers() {
       password: "", // Don't show password
       fullName: user.full_name || "",
       churchName: user.church_name || "",
-      role: user.roles.includes("admin") ? "admin" : "user",
+      role: getPrimaryRole(user.roles),
     });
     setInstruments(user.instruments ?? []);
     setVocalTypes(user.vocal_types ?? []);
