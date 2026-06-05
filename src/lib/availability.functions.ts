@@ -227,7 +227,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
           .from("worship_schedules")
           .select("id")
           .eq("service_date", iso)
-          .eq("church_name", data.churchName || null as any)
+          .eq("church_name", effectiveChurchName || null as any)
           .maybeSingle();
 
         let scheduleId: string;
@@ -240,7 +240,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
             .insert({
               title,
               service_date: iso,
-              church_name: data.churchName || null,
+              church_name: effectiveChurchName || null,
               created_by: userId,
             } as any)
             .select("id")
