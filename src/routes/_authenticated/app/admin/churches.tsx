@@ -312,7 +312,14 @@ function AdminChurches() {
                 <ChurchIcon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium">{c.name}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium">{c.name}</p>
+                  {c.estadual && (
+                    <Badge variant="outline" className="text-[10px] border-gold text-gold">
+                      {c.estadual}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground whitespace-pre-line">{c.address}</p>
                 {(c.city || c.state || c.country) && (
                   <p className="text-xs text-muted-foreground">
