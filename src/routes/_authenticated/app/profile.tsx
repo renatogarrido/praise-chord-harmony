@@ -111,7 +111,7 @@ function ProfilePage() {
         <div className="space-y-2">
           <Label>Instrumentos</Label>
           <MusicianMultiSelect
-            groups={INSTRUMENT_GROUPS}
+            groups={instrumentGroups}
             value={instruments}
             onChange={setInstruments}
             placeholder="Escolher instrumentos…"
