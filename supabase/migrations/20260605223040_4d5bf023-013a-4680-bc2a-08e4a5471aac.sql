@@ -1,0 +1,15 @@
+REVOKE ALL ON FUNCTION public.can_manage_schedule(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.can_manage_schedule_church(uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.can_view_schedule(uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.user_church_name(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.user_estadual(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_public_setlist(text) FROM PUBLIC, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_public_setlist(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.can_manage_schedule(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.can_manage_schedule_church(uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.can_view_schedule(uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.user_church_name(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.user_estadual(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_public_setlist(text) TO service_role;
