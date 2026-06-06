@@ -5,6 +5,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const SUNDAY_SERVICES = ["08:00", "10:00", "16:00", "18:00"] as const;
 export const WEEKDAY_KEYS = ["1", "2", "3", "4", "5", "6"] as const; // ISO: 1=Mon..6=Sat
 
+function throwSafe(label: string, error: unknown): never {
+  console.error(`[availability] ${label}`, error);
+  throw new Error("Não foi possível concluir a operação. Tente novamente.");
+}
+
 const TimeRange = z.object({
   start: z.string().regex(/^\d{2}:\d{2}$/),
   end: z.string().regex(/^\d{2}:\d{2}$/),
@@ -57,7 +62,7 @@ export const getMyAvailability = createServerFn({ method: "POST" })
       .eq("year", data.year)
       .eq("month", data.month)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("get own availability", error);
     return { availability: row };
   });
 
@@ -86,7 +91,7 @@ export const saveMyAvailability = createServerFn({ method: "POST" })
     const { error } = await supabase
       .from("monthly_availability")
       .upsert(payload, { onConflict: "user_id,year,month" });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("save own availability", error);
     return { ok: true };
   });
 
@@ -110,7 +115,7 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
       .select("user_id, weekdays, sunday_services")
       .eq("year", year)
       .eq("month", month);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list available users", error);
 
     const ids = new Set<string>();
     for (const r of rows ?? []) {
@@ -191,7 +196,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       .select("user_id, sunday_services")
       .eq("year", data.year)
       .eq("month", data.month);
-    if (avErr) throw new Error(avErr.message);
+    if (avErr) throwSafe("read monthly availability", avErr);
 
     const allIds = Array.from(new Set((avsRaw ?? []).map((a: any) => a.user_id)));
     let profileMap = new Map<string, { instruments: string[]; vocal_types: string[]; church_name: string | null }>();
@@ -297,7 +302,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
             } as any)
             .select("id")
             .single();
-          if (insErr) throw new Error(insErr.message);
+          if (insErr) throwSafe("create generated schedule", insErr);
           scheduleId = ins!.id;
           createdSchedules++;
         }
