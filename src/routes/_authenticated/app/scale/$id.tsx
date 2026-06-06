@@ -42,6 +42,14 @@ function ScaleDetail() {
   const [pickedRole, setPickedRole] = useState<string>("");
   const [search, setSearch] = useState("");
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editChurch, setEditChurch] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editSetlist, setEditSetlist] = useState("");
+  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => listSetlistsFn(), enabled: editOpen });
+
   const detail = detailQ.data as any;
   const users: any[] = (usersQ.data as any)?.users ?? [];
 
