@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   getSchedule, assignUser, unassignUser, listAssignableUsers, deleteSchedule,
+  updateSchedule, listMySetlists,
 } from "@/lib/worship-schedule.functions";
 import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
