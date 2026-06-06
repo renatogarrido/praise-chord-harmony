@@ -59,10 +59,11 @@ export const getSchedule = createServerFn({ method: "POST" })
     const userIds = (assignments ?? []).map((a: any) => a.user_id);
     let profileMap = new Map<string, { full_name: string | null; church_name: string | null }>();
     if (userIds.length > 0) {
-      const { data: profs } = await supabase
+      const { data: profs, error: profsError } = await supabaseAdmin
         .from("profiles")
         .select("id, full_name, church_name")
         .in("id", userIds);
+      if (profsError) throwSafe("load assignment profiles", profsError);
       (profs ?? []).forEach((p: any) => profileMap.set(p.id, { full_name: p.full_name, church_name: p.church_name }));
     }
 
@@ -185,7 +186,8 @@ export const listAssignableUsers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await assertCanManage(supabase, userId);
-    const { data, error } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, church_name, instruments, vocal_types")
       .order("full_name", { ascending: true });
