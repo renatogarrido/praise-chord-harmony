@@ -39,6 +39,33 @@ function VocalPracticePage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Bulk upload state
+  const [bulkSongId, setBulkSongId] = useState<string>("");
+  const [bulkItems, setBulkItems] = useState<Array<{ id: string; file: File; title: string; voicePart: VoicePart }>>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+
+  function guessVoicePart(name: string): VoicePart {
+    const n = name.toLowerCase();
+    if (/(soprano|sopr)/.test(n)) return "Soprano";
+    if (/(contralto|contr|alto)/.test(n)) return "Contralto";
+    if (/(tenor|ten)/.test(n)) return "Tenor";
+    if (/(baixo|bass|bx)/.test(n)) return "Baixo";
+    if (/(guia|guide|playback|pb)/.test(n)) return "Guia";
+    return "Soprano";
+  }
+
+  const onBulkFilesChosen = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const arr = Array.from(files).map((f) => ({
+      id: crypto.randomUUID(),
+      file: f,
+      title: f.name.replace(/\.[^.]+$/, ""),
+      voicePart: guessVoicePart(f.name),
+    }));
+    setBulkItems((prev) => [...prev, ...arr]);
+  };
+
   const load = async () => {
     setLoading(true);
     const [tRes, sRes, aRes] = await Promise.all([
