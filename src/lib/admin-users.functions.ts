@@ -142,7 +142,7 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
       .select("church_name")
       .eq("id", callerId)
       .maybeSingle();
-    if (callerProfileErr) throw new Error(callerProfileErr.message);
+    if (callerProfileErr) throwSafe("load caller profile", callerProfileErr);
 
     const callerChurchName = (callerProfile as any)?.church_name as string | null | undefined;
     let callerEstadual: string | null = null;
@@ -153,7 +153,7 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
         .select("estadual,state")
         .eq("name", callerChurchName)
         .maybeSingle();
-      if (callerChurchErr) throw new Error(callerChurchErr.message);
+      if (callerChurchErr) throwSafe("load caller church", callerChurchErr);
       callerEstadual = ((callerChurch as any)?.estadual ?? null) as string | null;
       callerState = ((callerChurch as any)?.state ?? null) as string | null;
     }
@@ -164,7 +164,7 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
     const perPage = 1000;
     while (true) {
       const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-      if (error) throw new Error(error.message);
+      if (error) throwSafe("list auth users", error);
       data.users.forEach((u) =>
         emailMap.set(u.id, { email: u.email ?? null, last_sign_in_at: u.last_sign_in_at ?? null })
       );
@@ -176,12 +176,12 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
-    if (pErr) throw new Error(pErr.message);
+    if (pErr) throwSafe("list profiles", pErr);
 
     const { data: churches, error: churchesErr } = await supabaseAdmin
       .from("churches")
       .select("name,estadual,state");
-    if (churchesErr) throw new Error(churchesErr.message);
+    if (churchesErr) throwSafe("list churches", churchesErr);
 
     const churchEstadualMap = new Map<string, string | null>();
     const churchStateMap = new Map<string, string | null>();
@@ -211,7 +211,7 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
     };
 
     const { data: roles, error: rErr } = await supabaseAdmin.from("user_roles").select("*");
-    if (rErr) throw new Error(rErr.message);
+    if (rErr) throwSafe("list user roles", rErr);
 
     const roleMap = new Map<string, string[]>();
     roles?.forEach((r: any) => {
@@ -316,7 +316,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
       } as any)
       .eq("id", data.userId);
 
-    if (profileError) throw new Error(profileError.message);
+    if (profileError) throwSafe("update user profile", profileError);
 
     const desired = Array.from(new Set(data.roles));
     const { data: existingRoles } = await supabaseAdmin
