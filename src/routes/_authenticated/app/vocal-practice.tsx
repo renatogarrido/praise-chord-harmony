@@ -154,6 +154,50 @@ function VocalPracticePage() {
     load();
   };
 
+  const doBulkUpload = async () => {
+    if (!user) return;
+    if (!bulkSongId) return toast.error("Selecione uma música.");
+    if (bulkItems.length === 0) return toast.error("Adicione ao menos um arquivo.");
+    setBulkUploading(true);
+    setBulkProgress({ done: 0, total: bulkItems.length });
+    const failed: string[] = [];
+    let done = 0;
+    for (const item of bulkItems) {
+      try {
+        const ext = item.file.name.split(".").pop() || "mp3";
+        const path = `vocal-tracks/${crypto.randomUUID()}.${ext}`;
+        const up = await supabase.storage.from("app-assets").upload(path, item.file, { contentType: item.file.type || "audio/mpeg" });
+        if (up.error) throw up.error;
+        const url = supabase.storage.from("app-assets").getPublicUrl(path).data.publicUrl;
+        const ins = await supabase.from("vocal_tracks").insert({
+          title: item.title.trim() || item.file.name,
+          voice_part: item.voicePart,
+          audio_url: url,
+          song_id: bulkSongId,
+          created_by: user.id,
+        } as any);
+        if (ins.error) throw ins.error;
+      } catch (e: any) {
+        failed.push(`${item.file.name}: ${e.message || "erro"}`);
+      } finally {
+        done += 1;
+        setBulkProgress({ done, total: bulkItems.length });
+      }
+    }
+    setBulkUploading(false);
+    setBulkProgress(null);
+    if (failed.length === 0) {
+      toast.success(`${bulkItems.length} faixa(s) enviada(s).`);
+      setBulkItems([]);
+      setBulkSongId("");
+      const fi = document.getElementById("vocal-bulk-input") as HTMLInputElement | null;
+      if (fi) fi.value = "";
+    } else {
+      toast.error(`Falhas: ${failed.length}. ${failed[0]}`);
+    }
+    load();
+  };
+
   const songsForSelect = useMemo(() => {
     return songs.map((s) => ({
       ...s,
