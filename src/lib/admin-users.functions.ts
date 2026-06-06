@@ -6,6 +6,11 @@ const ROLE_VALUES = ["admin", "lider_nacional", "lider_estadual", "lider_local"]
 const USER_VIEW_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 type UserViewRole = (typeof USER_VIEW_ROLES)[number];
 
+function throwSafe(label: string, error: unknown): never {
+  console.error(`[admin-users] ${label}`, error);
+  throw new Error("Não foi possível concluir a operação. Tente novamente.");
+}
+
 function pickHighestUserViewRole(roles: string[]): UserViewRole | null {
   for (const role of USER_VIEW_ROLES) {
     if (roles.includes(role)) return role;
@@ -19,7 +24,7 @@ async function assertCanViewUsers(supabase: any, callerId: string): Promise<User
     .select("role")
     .eq("user_id", callerId)
     .in("role", USER_VIEW_ROLES as unknown as string[]);
-  if (error) throw new Error(error.message);
+  if (error) throwSafe("check user viewer role", error);
 
   const role = pickHighestUserViewRole((data ?? []).map((r: any) => r.role as string));
   if (!role) {
@@ -55,7 +60,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { full_name: data.fullName, church_name: data.churchName ?? null },
     });
-    if (createErr) throw new Error(createErr.message);
+    if (createErr) throwSafe("create user", createErr);
     const newId = created.user!.id;
 
     await supabaseAdmin
@@ -91,7 +96,7 @@ export const deleteUserAdmin = createServerFn({ method: "POST" })
       .eq("user_id", callerId)
       .eq("role", "admin")
       .maybeSingle();
-    if (roleErr) throw new Error(roleErr.message);
+    if (roleErr) throwSafe("check admin before delete", roleErr);
     if (!roleRow) throw new Error("Acesso negado: apenas administradores podem excluir usuários.");
 
     if (data.userId === callerId) {
@@ -108,7 +113,7 @@ export const deleteUserAdmin = createServerFn({ method: "POST" })
     await supabaseAdmin.from("profiles").delete().eq("id", data.userId);
 
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (authErr) throw new Error(authErr.message);
+    if (authErr) throwSafe("delete auth user", authErr);
 
     return { ok: true };
   });
@@ -120,7 +125,7 @@ async function assertAdmin(supabase: any, callerId: string) {
     .eq("user_id", callerId)
     .eq("role", "admin")
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throwSafe("check admin role", error);
   if (!roleRow) throw new Error("Acesso negado: apenas administradores.");
 }
 
