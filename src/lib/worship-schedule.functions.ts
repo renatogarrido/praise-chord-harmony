@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -228,12 +227,16 @@ export const assignUser = createServerFn({ method: "POST" })
           dateStyle: "full", timeStyle: "short",
         });
         const origin = process.env.SITE_URL || "https://cifraspraise.com.br";
-        const userAuth = getRequest()?.headers.get("authorization") ?? "";
+        const apiKey = process.env.LOVABLE_API_KEY;
+        if (!apiKey) {
+          console.error("Missing email service API key");
+          return { ok: true };
+        }
         await fetch(`${origin}/lovable/email/transactional/send`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": userAuth,
+            "Authorization": `Bearer ${apiKey}`,
           },
 
           body: JSON.stringify({
