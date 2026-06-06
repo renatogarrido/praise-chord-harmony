@@ -23,6 +23,8 @@ function ScaleDetail() {
   const assign = useServerFn(assignUser);
   const unassign = useServerFn(unassignUser);
   const del = useServerFn(deleteSchedule);
+  const update = useServerFn(updateSchedule);
+  const listSetlistsFn = useServerFn(listMySetlists);
   const listAvail = useServerFn(listAvailableUserIdsFor);
 
   const detailQ = useQuery({ queryKey: ["schedule", id], queryFn: () => get({ data: { id } }) });
