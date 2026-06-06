@@ -106,6 +106,39 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          threshold: number
+          tier: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          name: string
+          threshold: number
+          tier?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          threshold?: number
+          tier?: number
+        }
+        Relationships: []
+      }
       churches: {
         Row: {
           address: string
@@ -562,6 +595,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          badge_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -762,6 +824,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_user_badges: { Args: { _user_id: string }; Returns: number }
       can_manage_schedule: { Args: { _uid: string }; Returns: boolean }
       can_manage_schedule_church: {
         Args: { _church: string; _uid: string }
