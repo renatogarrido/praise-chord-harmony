@@ -101,7 +101,11 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ isoDate: z.string().min(8).max(64) }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    if (!(await isManager(supabase, userId))) {
+      throw new Error("Acesso negado: apenas administradores e líderes podem consultar disponibilidade.");
+    }
+
     const d = new Date(data.isoDate);
     const year = d.getFullYear();
     const month = d.getMonth() + 1;
