@@ -93,6 +93,37 @@ function ScaleDetail() {
     catch (e: any) { toast.error(e.message || "Erro"); }
   };
 
+  const openEdit = () => {
+    const sc = (detailQ.data as any)?.schedule;
+    if (!sc) return;
+    setEditTitle(sc.title ?? "");
+    // datetime-local needs "YYYY-MM-DDTHH:mm"
+    const d = new Date(sc.service_date);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setEditDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    setEditChurch(sc.church_name ?? "");
+    setEditNotes(sc.notes ?? "");
+    setEditSetlist(sc.setlist_id ?? "");
+    setEditOpen(true);
+  };
+
+  const doUpdate = async () => {
+    if (!editTitle.trim() || !editDate) return toast.error("Preencha título e data.");
+    try {
+      await update({ data: {
+        id,
+        title: editTitle.trim(),
+        serviceDate: new Date(editDate).toISOString(),
+        notes: editNotes.trim() || null,
+        churchName: editChurch.trim() || null,
+        setlistId: editSetlist || null,
+      } });
+      toast.success("Escala atualizada.");
+      setEditOpen(false);
+      detailQ.refetch();
+    } catch (e: any) { toast.error(e.message || "Erro"); }
+  };
+
   if (detailQ.isLoading) return <div className="p-12 text-sm text-muted-foreground">Carregando…</div>;
   if (!detail) return <div className="p-12 text-sm text-muted-foreground">Escala não encontrada.</div>;
 
