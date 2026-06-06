@@ -5,13 +5,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const MANAGER_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 
+function throwSafe(label: string, error: unknown): never {
+  console.error(`[worship-schedule] ${label}`, error);
+  throw new Error("Não foi possível concluir a operação. Tente novamente.");
+}
+
 async function assertCanManage(supabase: any, callerId: string) {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId)
     .in("role", MANAGER_ROLES as unknown as string[]);
-  if (error) throw new Error(error.message);
+  if (error) throwSafe("load manager roles", error);
   if (!data || data.length === 0) {
     throw new Error("Acesso negado: apenas administradores e líderes podem gerenciar a escala.");
   }
@@ -26,7 +31,7 @@ export const listSchedules = createServerFn({ method: "GET" })
       .from("worship_schedules")
       .select("id, title, service_date, church_name, setlist_id, setlist_name, notes, worship_schedule_assignments(id, user_id, role_label)")
       .order("service_date", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list schedules", error);
     return { schedules: data ?? [] };
   });
 
@@ -43,7 +48,7 @@ export const getSchedule = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("get schedule", error);
     if (!schedule) throw new Error("Escala não encontrada.");
 
     const { data: assignments } = await supabase
@@ -119,7 +124,7 @@ export const createSchedule = createServerFn({ method: "POST" })
       } as any)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("create schedule", error);
     return { id: created!.id };
   });
 
