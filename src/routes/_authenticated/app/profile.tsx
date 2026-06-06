@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
+import { BadgesPanel } from "@/components/badges-panel";
 
 export const Route = createFileRoute("/_authenticated/app/profile")({ component: ProfilePage });
 
@@ -131,6 +132,11 @@ function ProfilePage() {
           </Button>
         </div>
       </form>
+
+      <div className="mt-8">
+        <BadgesPanel />
+      </div>
     </div>
   );
 }
+
