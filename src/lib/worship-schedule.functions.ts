@@ -5,13 +5,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const MANAGER_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 
+function throwSafe(label: string, error: unknown): never {
+  console.error(`[worship-schedule] ${label}`, error);
+  throw new Error("Não foi possível concluir a operação. Tente novamente.");
+}
+
 async function assertCanManage(supabase: any, callerId: string) {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId)
     .in("role", MANAGER_ROLES as unknown as string[]);
-  if (error) throw new Error(error.message);
+  if (error) throwSafe("load manager roles", error);
   if (!data || data.length === 0) {
     throw new Error("Acesso negado: apenas administradores e líderes podem gerenciar a escala.");
   }
@@ -26,7 +31,7 @@ export const listSchedules = createServerFn({ method: "GET" })
       .from("worship_schedules")
       .select("id, title, service_date, church_name, setlist_id, setlist_name, notes, worship_schedule_assignments(id, user_id, role_label)")
       .order("service_date", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list schedules", error);
     return { schedules: data ?? [] };
   });
 
@@ -43,7 +48,7 @@ export const getSchedule = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("get schedule", error);
     if (!schedule) throw new Error("Escala não encontrada.");
 
     const { data: assignments } = await supabase
@@ -54,10 +59,11 @@ export const getSchedule = createServerFn({ method: "POST" })
     const userIds = (assignments ?? []).map((a: any) => a.user_id);
     let profileMap = new Map<string, { full_name: string | null; church_name: string | null }>();
     if (userIds.length > 0) {
-      const { data: profs } = await supabase
+      const { data: profs, error: profsError } = await supabaseAdmin
         .from("profiles")
         .select("id, full_name, church_name")
         .in("id", userIds);
+      if (profsError) throwSafe("load assignment profiles", profsError);
       (profs ?? []).forEach((p: any) => profileMap.set(p.id, { full_name: p.full_name, church_name: p.church_name }));
     }
 
@@ -119,7 +125,7 @@ export const createSchedule = createServerFn({ method: "POST" })
       } as any)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("create schedule", error);
     return { id: created!.id };
   });
 
@@ -158,7 +164,7 @@ export const updateSchedule = createServerFn({ method: "POST" })
         setlist_name: setlistName,
       } as any)
       .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("update schedule", error);
     return { ok: true };
   });
 
@@ -170,7 +176,7 @@ export const deleteSchedule = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCanManage(supabase, userId);
     const { error } = await supabase.from("worship_schedules").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("delete schedule", error);
     return { ok: true };
   });
 
@@ -180,11 +186,12 @@ export const listAssignableUsers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await assertCanManage(supabase, userId);
-    const { data, error } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, church_name, instruments, vocal_types")
       .order("full_name", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list assignable users", error);
     return { users: data ?? [] };
   });
 
@@ -207,7 +214,7 @@ export const assignUser = createServerFn({ method: "POST" })
       .insert({ schedule_id: data.scheduleId, user_id: data.userId, role_label: data.roleLabel } as any);
     if (error) {
       if (error.code === "23505") throw new Error("Esse usuário já está escalado para essa função.");
-      throw new Error(error.message);
+      throwSafe("assign user", error);
     }
 
     // Send email (best-effort; do not fail the assignment if email fails)
@@ -271,7 +278,7 @@ export const unassignUser = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCanManage(supabase, userId);
     const { error } = await supabase.from("worship_schedule_assignments").delete().eq("id", data.assignmentId);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("unassign user", error);
     return { ok: true };
   });
 
@@ -284,6 +291,6 @@ export const listMySetlists = createServerFn({ method: "GET" })
       .from("setlists")
       .select("id, name")
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list setlists", error);
     return { setlists: data ?? [] };
   });

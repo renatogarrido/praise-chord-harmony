@@ -61,14 +61,16 @@ function VocalPracticePage() {
     return m;
   }, [songs]);
 
-  // group tracks by album, then by voice_part
+  // group tracks by album, then by song, then by voice_part
   const byAlbum = useMemo(() => {
-    const map: Record<string, Record<string, Track[]>> = {};
+    const map: Record<string, Record<string, { title: string; tracksByPart: Record<string, Track[]> }>> = {};
     for (const t of tracks) {
       const song = t.song_id ? songById.get(t.song_id) : null;
       const albumKey = song?.album_id ?? UNASSIGNED;
+      const songKey = song?.id ?? `track:${t.id}`;
       (map[albumKey] ||= {});
-      (map[albumKey][t.voice_part] ||= []).push(t);
+      (map[albumKey][songKey] ||= { title: song?.title ?? t.title, tracksByPart: {} });
+      (map[albumKey][songKey].tracksByPart[t.voice_part] ||= []).push(t);
     }
     return map;
   }, [tracks, songById]);
@@ -86,8 +88,6 @@ function VocalPracticePage() {
     albums.forEach((a) => m.set(a.id, a));
     return m;
   }, [albums]);
-
-  const songTitle = (id: string | null) => id ? songById.get(id)?.title ?? null : null;
 
   const doUpload = async () => {
     if (!file || !title.trim()) return toast.error("Informe título e arquivo de áudio.");
@@ -196,11 +196,8 @@ function VocalPracticePage() {
         <div className="space-y-10">
           {orderedAlbumKeys.map((albumKey) => {
             const album = albumKey === UNASSIGNED ? null : albumById.get(albumKey);
-            const albumTracksByPart = byAlbum[albumKey];
-            const partKeys = [
-              ...VOICE_PARTS.filter((vp) => (albumTracksByPart[vp]?.length ?? 0) > 0),
-              ...Object.keys(albumTracksByPart).filter((k) => !VOICE_PARTS.includes(k as VoicePart)),
-            ];
+            const albumSongs = byAlbum[albumKey];
+            const songGroups = Object.entries(albumSongs).sort(([, a], [, b]) => a.title.localeCompare(b.title));
             return (
               <section key={albumKey} className="rounded-2xl border border-border bg-card/40 p-5">
                 <header className="mb-4 flex items-center gap-4">
@@ -220,34 +217,50 @@ function VocalPracticePage() {
                   </div>
                 </header>
 
-                <div className="space-y-6">
-                  {partKeys.map((vp) => (
-                    <div key={vp}>
-                      <h3 className="font-serif text-lg mb-2">{vp}</h3>
-                      <div className="space-y-2">
-                        {albumTracksByPart[vp].map((t) => (
-                          <div key={t.id} className="rounded-xl border border-border bg-card p-4">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{t.title}</p>
-                                {songTitle(t.song_id) && (
-                                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                    <Music2 className="h-3 w-3" /> {songTitle(t.song_id)}
-                                  </p>
-                                )}
-                              </div>
-                              {isAdmin && (
-                                <button onClick={() => doDelete(t)} className="p-1 text-muted-foreground hover:text-destructive">
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </div>
-                            <audio controls preload="none" src={t.audio_url} className="w-full" />
+                <div className="space-y-4">
+                  {songGroups.map(([songKey, songGroup]) => {
+                    const partKeys = [
+                      ...VOICE_PARTS.filter((vp) => (songGroup.tracksByPart[vp]?.length ?? 0) > 0),
+                      ...Object.keys(songGroup.tracksByPart).filter((k) => !VOICE_PARTS.includes(k as VoicePart)),
+                    ];
+                    return (
+                      <article key={songKey} className="rounded-xl border border-border bg-card p-4">
+                        <header className="mb-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1">
+                              <Music2 className="h-3 w-3" /> Música
+                            </p>
+                            <h3 className="font-serif text-xl truncate">{songGroup.title}</h3>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                          <span className="shrink-0 rounded-full bg-gold-soft px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
+                            {partKeys.length} naipe{partKeys.length === 1 ? "" : "s"}
+                          </span>
+                        </header>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {partKeys.map((vp) => (
+                            <div key={vp} className="rounded-lg border border-border/70 bg-background/50 p-3">
+                              <h4 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gold">{vp}</h4>
+                              <div className="space-y-2">
+                                {songGroup.tracksByPart[vp].map((t) => (
+                                  <div key={t.id}>
+                                    <div className="mb-1 flex items-start justify-between gap-3">
+                                      <p className="text-sm font-medium truncate">{t.title}</p>
+                                      {isAdmin && (
+                                        <button onClick={() => doDelete(t)} className="p-1 text-muted-foreground hover:text-destructive">
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                    <audio controls preload="none" src={t.audio_url} className="w-full" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             );

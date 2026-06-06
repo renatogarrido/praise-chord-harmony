@@ -20,7 +20,10 @@ export const listChurchesPublic = createServerFn({ method: "GET" }).handler(
       .from("churches")
       .select("id,name,city,state,country")
       .order("name", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[churches] list public churches", error);
+      throw new Error("Não foi possível carregar as igrejas.");
+    }
     return (data ?? []) as ChurchOption[];
   }
 );
