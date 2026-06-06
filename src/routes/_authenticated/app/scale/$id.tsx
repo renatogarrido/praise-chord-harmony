@@ -8,7 +8,7 @@ import {
 } from "@/lib/worship-schedule.functions";
 import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, CheckCircle2, Music2, Plus, UserPlus, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/$id")({ component: ScaleDetail });
