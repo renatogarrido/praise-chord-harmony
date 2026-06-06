@@ -259,6 +259,83 @@ function VocalPracticePage() {
         </section>
       )}
 
+      {isAdmin && (
+        <section className="rounded-2xl border border-border bg-card p-6 mb-10">
+          <h2 className="font-serif text-xl mb-2 flex items-center gap-2"><Upload className="h-4 w-4 text-gold" /> Envio em lote por música</h2>
+          <p className="mb-4 text-xs text-muted-foreground">Escolha a música e envie todos os áudios dos naipes de uma só vez. O naipe é detectado pelo nome do arquivo, mas pode ser ajustado.</p>
+          <div className="grid md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Música</label>
+              <select value={bulkSongId} onChange={(e) => setBulkSongId(e.target.value)}
+                className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
+                <option value="">— Selecione —</option>
+                {songsForSelect.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}{s.albumTitle ? ` — ${s.albumTitle}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Arquivos de áudio (vários)</label>
+              <input id="vocal-bulk-input" type="file" accept="audio/*" multiple
+                onChange={(e) => { onBulkFilesChosen(e.target.files); e.target.value = ""; }}
+                className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-gold-soft file:px-3 file:py-1 file:text-xs file:text-gold" />
+            </div>
+          </div>
+
+          {bulkItems.length > 0 && (
+            <div className="space-y-2 mb-4">
+              {bulkItems.map((item, idx) => (
+                <div key={item.id} className="grid md:grid-cols-[1fr_180px_auto] gap-2 items-center rounded-lg border border-border bg-background/50 p-2">
+                  <input
+                    value={item.title}
+                    onChange={(e) => setBulkItems((prev) => prev.map((p, i) => i === idx ? { ...p, title: e.target.value } : p))}
+                    placeholder="Título da faixa"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:border-gold/50 focus:outline-none"
+                  />
+                  <select
+                    value={item.voicePart}
+                    onChange={(e) => setBulkItems((prev) => prev.map((p, i) => i === idx ? { ...p, voicePart: e.target.value as VoicePart } : p))}
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:border-gold/50 focus:outline-none"
+                  >
+                    {VOICE_PARTS.map((v) => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setBulkItems((prev) => prev.filter((_, i) => i !== idx))}
+                    className="p-1.5 text-muted-foreground hover:text-destructive"
+                    aria-label="Remover"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              {bulkItems.length} arquivo(s) selecionado(s)
+              {bulkProgress ? ` — enviando ${bulkProgress.done}/${bulkProgress.total}` : ""}
+            </p>
+            <div className="flex gap-2">
+              {bulkItems.length > 0 && !bulkUploading && (
+                <button onClick={() => setBulkItems([])}
+                  className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                  Limpar
+                </button>
+              )}
+              <button onClick={doBulkUpload} disabled={bulkUploading || bulkItems.length === 0 || !bulkSongId}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
+                <Upload className="h-3.5 w-3.5" /> {bulkUploading ? "Enviando…" : `Enviar ${bulkItems.length || ""}`.trim()}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : tracks.length === 0 ? (
