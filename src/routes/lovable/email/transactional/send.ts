@@ -44,35 +44,27 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
-        // Verify the caller has a valid Supabase auth token.
-        // In TanStack, there is no Supabase gateway — we validate the JWT ourselves.
+        // Verify this server-to-server call with the dedicated internal API key.
         const authHeader = request.headers.get('Authorization')
         if (!authHeader?.startsWith('Bearer ')) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const token = authHeader.slice('Bearer '.length).trim()
-        const supabase = createClient(supabaseUrl, supabaseServiceKey)
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+        const emailServiceKey = process.env.LOVABLE_API_KEY
+        if (!emailServiceKey) {
+          console.error('Missing email service API key')
+          return Response.json(
+            { error: 'Server configuration error' },
+            { status: 500 }
+          )
+        }
 
-        if (authError || !user) {
+        if (token !== emailServiceKey) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { data: roles, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .in('role', ['admin', 'lider_nacional', 'lider_estadual', 'lider_local'])
-
-        if (roleError) {
-          console.error('Failed to verify email sender role', { user_id: user.id, error: roleError })
-          return Response.json({ error: 'Authorization check failed' }, { status: 500 })
-        }
-
-        if (!roles?.length) {
-          return Response.json({ error: 'Forbidden' }, { status: 403 })
-        }
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
         // Parse request body
         let templateName: string
