@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   getSchedule, assignUser, unassignUser, listAssignableUsers, deleteSchedule,
+  updateSchedule, listMySetlists,
 } from "@/lib/worship-schedule.functions";
 import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, CheckCircle2, Music2, Plus, UserPlus, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/$id")({ component: ScaleDetail });
@@ -22,6 +23,8 @@ function ScaleDetail() {
   const assign = useServerFn(assignUser);
   const unassign = useServerFn(unassignUser);
   const del = useServerFn(deleteSchedule);
+  const update = useServerFn(updateSchedule);
+  const listSetlistsFn = useServerFn(listMySetlists);
   const listAvail = useServerFn(listAvailableUserIdsFor);
 
   const detailQ = useQuery({ queryKey: ["schedule", id], queryFn: () => get({ data: { id } }) });
@@ -38,6 +41,14 @@ function ScaleDetail() {
   const [pickedUser, setPickedUser] = useState<string>("");
   const [pickedRole, setPickedRole] = useState<string>("");
   const [search, setSearch] = useState("");
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editChurch, setEditChurch] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editSetlist, setEditSetlist] = useState("");
+  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => listSetlistsFn(), enabled: editOpen });
 
   const detail = detailQ.data as any;
   const users: any[] = (usersQ.data as any)?.users ?? [];
@@ -82,6 +93,37 @@ function ScaleDetail() {
     catch (e: any) { toast.error(e.message || "Erro"); }
   };
 
+  const openEdit = () => {
+    const sc = (detailQ.data as any)?.schedule;
+    if (!sc) return;
+    setEditTitle(sc.title ?? "");
+    // datetime-local needs "YYYY-MM-DDTHH:mm"
+    const d = new Date(sc.service_date);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setEditDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    setEditChurch(sc.church_name ?? "");
+    setEditNotes(sc.notes ?? "");
+    setEditSetlist(sc.setlist_id ?? "");
+    setEditOpen(true);
+  };
+
+  const doUpdate = async () => {
+    if (!editTitle.trim() || !editDate) return toast.error("Preencha título e data.");
+    try {
+      await update({ data: {
+        id,
+        title: editTitle.trim(),
+        serviceDate: new Date(editDate).toISOString(),
+        notes: editNotes.trim() || null,
+        churchName: editChurch.trim() || null,
+        setlistId: editSetlist || null,
+      } });
+      toast.success("Escala atualizada.");
+      setEditOpen(false);
+      detailQ.refetch();
+    } catch (e: any) { toast.error(e.message || "Erro"); }
+  };
+
   if (detailQ.isLoading) return <div className="p-12 text-sm text-muted-foreground">Carregando…</div>;
   if (!detail) return <div className="p-12 text-sm text-muted-foreground">Escala não encontrada.</div>;
 
@@ -111,9 +153,14 @@ function ScaleDetail() {
           {s.notes && <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap">{s.notes}</p>}
         </div>
         {canManageSchedule && (
-          <button onClick={doDelete} className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-destructive hover:border-destructive/40">
-            Excluir escala
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={openEdit} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs uppercase tracking-widest hover:text-gold hover:border-gold/40">
+              <Pencil className="h-3.5 w-3.5" /> Editar
+            </button>
+            <button onClick={doDelete} className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-destructive hover:border-destructive/40">
+              Excluir escala
+            </button>
+          </div>
         )}
       </header>
 
@@ -237,6 +284,57 @@ function ScaleDetail() {
           </div>
         </div>
       )}
+
+      {/* Edit modal */}
+      {editOpen && canManageSchedule && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setEditOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-serif text-2xl">Editar escala</h3>
+              <button onClick={() => setEditOpen(false)} className="p-1"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Título</label>
+                <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Data e hora</label>
+                <input type="datetime-local" value={editDate} onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Igreja</label>
+                <input value={editChurch} onChange={(e) => setEditChurch(e.target.value)} placeholder="Nome da igreja"
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Repertório</label>
+                <select value={editSetlist} onChange={(e) => setEditSetlist(e.target.value)}
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
+                  <option value="">— Sem repertório —</option>
+                  {((setlistsQ.data as any)?.setlists ?? []).map((sl: any) => (
+                    <option key={sl.id} value={sl.id}>{sl.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Observações</label>
+                <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3}
+                  className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-5">
+              <button onClick={() => setEditOpen(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest">Cancelar</button>
+              <button onClick={doUpdate} className="rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
