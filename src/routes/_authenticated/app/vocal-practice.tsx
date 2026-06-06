@@ -61,14 +61,16 @@ function VocalPracticePage() {
     return m;
   }, [songs]);
 
-  // group tracks by album, then by voice_part
+  // group tracks by album, then by song, then by voice_part
   const byAlbum = useMemo(() => {
-    const map: Record<string, Record<string, Track[]>> = {};
+    const map: Record<string, Record<string, { title: string; tracksByPart: Record<string, Track[]> }>> = {};
     for (const t of tracks) {
       const song = t.song_id ? songById.get(t.song_id) : null;
       const albumKey = song?.album_id ?? UNASSIGNED;
+      const songKey = song?.id ?? `track:${t.id}`;
       (map[albumKey] ||= {});
-      (map[albumKey][t.voice_part] ||= []).push(t);
+      (map[albumKey][songKey] ||= { title: song?.title ?? t.title, tracksByPart: {} });
+      (map[albumKey][songKey].tracksByPart[t.voice_part] ||= []).push(t);
     }
     return map;
   }, [tracks, songById]);
@@ -86,8 +88,6 @@ function VocalPracticePage() {
     albums.forEach((a) => m.set(a.id, a));
     return m;
   }, [albums]);
-
-  const songTitle = (id: string | null) => id ? songById.get(id)?.title ?? null : null;
 
   const doUpload = async () => {
     if (!file || !title.trim()) return toast.error("Informe título e arquivo de áudio.");
