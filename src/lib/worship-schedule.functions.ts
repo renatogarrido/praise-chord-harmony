@@ -163,7 +163,7 @@ export const updateSchedule = createServerFn({ method: "POST" })
         setlist_name: setlistName,
       } as any)
       .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("update schedule", error);
     return { ok: true };
   });
 
@@ -175,7 +175,7 @@ export const deleteSchedule = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCanManage(supabase, userId);
     const { error } = await supabase.from("worship_schedules").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("delete schedule", error);
     return { ok: true };
   });
 
@@ -189,7 +189,7 @@ export const listAssignableUsers = createServerFn({ method: "GET" })
       .from("profiles")
       .select("id, full_name, church_name, instruments, vocal_types")
       .order("full_name", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list assignable users", error);
     return { users: data ?? [] };
   });
 
@@ -212,7 +212,7 @@ export const assignUser = createServerFn({ method: "POST" })
       .insert({ schedule_id: data.scheduleId, user_id: data.userId, role_label: data.roleLabel } as any);
     if (error) {
       if (error.code === "23505") throw new Error("Esse usuário já está escalado para essa função.");
-      throw new Error(error.message);
+      throwSafe("assign user", error);
     }
 
     // Send email (best-effort; do not fail the assignment if email fails)
@@ -276,7 +276,7 @@ export const unassignUser = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCanManage(supabase, userId);
     const { error } = await supabase.from("worship_schedule_assignments").delete().eq("id", data.assignmentId);
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("unassign user", error);
     return { ok: true };
   });
 
@@ -289,6 +289,6 @@ export const listMySetlists = createServerFn({ method: "GET" })
       .from("setlists")
       .select("id, name")
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throwSafe("list setlists", error);
     return { setlists: data ?? [] };
   });
