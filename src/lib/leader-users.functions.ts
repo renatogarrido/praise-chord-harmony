@@ -5,13 +5,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const MANAGER_ROLES = ["admin", "lider_nacional", "lider_estadual"] as const;
 type ManagerRole = (typeof MANAGER_ROLES)[number];
 
+function throwSafe(label: string, error: unknown): never {
+  console.error(`[leader-users] ${label}`, error);
+  throw new Error("Não foi possível concluir a operação. Tente novamente.");
+}
+
 async function assertCanManageLocalLeaders(supabase: any, callerId: string): Promise<ManagerRole> {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId)
     .in("role", MANAGER_ROLES as unknown as string[]);
-  if (error) throw new Error(error.message);
+  if (error) throwSafe("check local leader manager role", error);
   const role = (data ?? []).map((r: any) => r.role as string).find((r: string) =>
     (MANAGER_ROLES as readonly string[]).includes(r)
   ) as ManagerRole | undefined;
@@ -45,7 +50,7 @@ export const createLocalLeaderUser = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { full_name: data.fullName, church_name: data.churchName ?? null },
     });
-    if (createErr) throw new Error(createErr.message);
+    if (createErr) throwSafe("create local leader", createErr);
     const newId = created.user!.id;
 
     await supabaseAdmin
@@ -75,7 +80,7 @@ export const listLocalLeaders = createServerFn({ method: "GET" })
       .from("user_roles")
       .select("user_id")
       .eq("role", "lider_local" as any);
-    if (rErr) throw new Error(rErr.message);
+    if (rErr) throwSafe("list local leader roles", rErr);
 
     const ids = (roleRows ?? []).map((r: any) => r.user_id);
     if (ids.length === 0) return { users: [] };
@@ -85,7 +90,7 @@ export const listLocalLeaders = createServerFn({ method: "GET" })
       .select("id, full_name, church_name, created_at")
       .in("id", ids)
       .order("created_at", { ascending: false });
-    if (pErr) throw new Error(pErr.message);
+    if (pErr) throwSafe("list local leader profiles", pErr);
 
     // Fetch emails
     const emailMap = new Map<string, string | null>();
@@ -93,7 +98,7 @@ export const listLocalLeaders = createServerFn({ method: "GET" })
     const perPage = 1000;
     while (true) {
       const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-      if (error) throw new Error(error.message);
+      if (error) throwSafe("list auth users", error);
       data.users.forEach((u) => emailMap.set(u.id, u.email ?? null));
       if (data.users.length < perPage) break;
       page += 1;
