@@ -284,6 +284,57 @@ function ScaleDetail() {
           </div>
         </div>
       )}
+
+      {/* Edit modal */}
+      {editOpen && canManageSchedule && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setEditOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-serif text-2xl">Editar escala</h3>
+              <button onClick={() => setEditOpen(false)} className="p-1"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Título</label>
+                <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Data e hora</label>
+                <input type="datetime-local" value={editDate} onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Igreja</label>
+                <input value={editChurch} onChange={(e) => setEditChurch(e.target.value)} placeholder="Nome da igreja"
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Repertório</label>
+                <select value={editSetlist} onChange={(e) => setEditSetlist(e.target.value)}
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
+                  <option value="">— Sem repertório —</option>
+                  {((setlistsQ.data as any)?.setlists ?? []).map((sl: any) => (
+                    <option key={sl.id} value={sl.id}>{sl.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Observações</label>
+                <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3}
+                  className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-5">
+              <button onClick={() => setEditOpen(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest">Cancelar</button>
+              <button onClick={doUpdate} className="rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
