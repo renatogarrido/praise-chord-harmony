@@ -8,6 +8,7 @@ const userLinks = [
   { to: "/app/songs", label: "Cifras", icon: Music2 },
   { to: "/app/favorites", label: "Favoritos", icon: Heart },
   { to: "/app/setlists", label: "Repertórios", icon: ListMusic },
+  { to: "/app/vocal-practice", label: "Vozes por Naipe", icon: Headphones },
   { to: "/app/scale", label: "Escala", icon: CalendarDays },
   { to: "/app/availability", label: "Disponibilidade", icon: CalendarCheck },
   { to: "/app/history", label: "Recentes", icon: Clock },
