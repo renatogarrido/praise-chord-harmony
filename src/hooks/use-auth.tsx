@@ -2,6 +2,7 @@ import { useEffect, useState, createContext, useContext, type ReactNode, useRef,
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { enforceDeviceLimit } from "@/lib/device-limit.functions";
 
 type AuthCtx = {
   session: Session | null;
@@ -126,6 +127,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
           setCanManageSchedule(manageSchedule);
+
+          // Limita usuários comuns a 2 dispositivos ativos (admins ilimitados)
+          if (event === "SIGNED_IN") {
+            enforceDeviceLimit().catch((e) => console.error("[device-limit]", e));
+          }
         }, 0);
       } else {
         setIsAdmin(false);
