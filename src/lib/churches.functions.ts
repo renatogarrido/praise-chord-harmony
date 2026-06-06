@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 
 export type ChurchOption = {
   id: string;
@@ -10,8 +11,12 @@ export type ChurchOption = {
 
 export const listChurchesPublic = createServerFn({ method: "GET" }).handler(
   async (): Promise<ChurchOption[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!supabaseUrl || !publishableKey) throw new Error("Configuração do servidor indisponível.");
+
+    const supabase = createClient(supabaseUrl, publishableKey);
+    const { data, error } = await supabase
       .from("churches")
       .select("id,name,city,state,country")
       .order("name", { ascending: true });
