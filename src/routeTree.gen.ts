@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as PublicSetlistTokenRouteImport } from './routes/public/setlist.$token'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as AuthenticatedAppVocalPracticeRouteImport } from './routes/_authenticated/app/vocal-practice'
 import { Route as AuthenticatedAppSupportRouteImport } from './routes/_authenticated/app/support'
 import { Route as AuthenticatedAppScaleRouteImport } from './routes/_authenticated/app/scale'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
@@ -87,6 +88,12 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppVocalPracticeRoute =
+  AuthenticatedAppVocalPracticeRouteImport.update({
+    id: '/app/vocal-practice',
+    path: '/app/vocal-practice',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppSupportRoute = AuthenticatedAppSupportRouteImport.update({
   id: '/app/support',
   path: '/app/support',
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/scale': typeof AuthenticatedAppScaleRouteWithChildren
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/app/vocal-practice': typeof AuthenticatedAppVocalPracticeRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
@@ -310,6 +318,7 @@ export interface FileRoutesByTo {
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/app/vocal-practice': typeof AuthenticatedAppVocalPracticeRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
@@ -351,6 +360,7 @@ export interface FileRoutesById {
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/scale': typeof AuthenticatedAppScaleRouteWithChildren
   '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
+  '/_authenticated/app/vocal-practice': typeof AuthenticatedAppVocalPracticeRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
   '/_authenticated/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/scale'
     | '/app/support'
+    | '/app/vocal-practice'
     | '/lovable/email/suppression'
     | '/public/setlist/$token'
     | '/app/admin/albums'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/profile'
     | '/app/support'
+    | '/app/vocal-practice'
     | '/lovable/email/suppression'
     | '/public/setlist/$token'
     | '/app/admin/albums'
@@ -469,6 +481,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profile'
     | '/_authenticated/app/scale'
     | '/_authenticated/app/support'
+    | '/_authenticated/app/vocal-practice'
     | '/lovable/email/suppression'
     | '/public/setlist/$token'
     | '/_authenticated/app/admin/albums'
@@ -569,6 +582,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/vocal-practice': {
+      id: '/_authenticated/app/vocal-practice'
+      path: '/app/vocal-practice'
+      fullPath: '/app/vocal-practice'
+      preLoaderRoute: typeof AuthenticatedAppVocalPracticeRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/support': {
       id: '/_authenticated/app/support'
@@ -835,6 +855,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
   AuthenticatedAppScaleRoute: typeof AuthenticatedAppScaleRouteWithChildren
   AuthenticatedAppSupportRoute: typeof AuthenticatedAppSupportRoute
+  AuthenticatedAppVocalPracticeRoute: typeof AuthenticatedAppVocalPracticeRoute
   AuthenticatedAppAlbumsAlbumIdRoute: typeof AuthenticatedAppAlbumsAlbumIdRoute
   AuthenticatedAppLeaderLocalLeadersRoute: typeof AuthenticatedAppLeaderLocalLeadersRoute
   AuthenticatedAppSetlistsSetlistIdRoute: typeof AuthenticatedAppSetlistsSetlistIdRoute
@@ -852,6 +873,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
   AuthenticatedAppScaleRoute: AuthenticatedAppScaleRouteWithChildren,
   AuthenticatedAppSupportRoute: AuthenticatedAppSupportRoute,
+  AuthenticatedAppVocalPracticeRoute: AuthenticatedAppVocalPracticeRoute,
   AuthenticatedAppAlbumsAlbumIdRoute: AuthenticatedAppAlbumsAlbumIdRoute,
   AuthenticatedAppLeaderLocalLeadersRoute:
     AuthenticatedAppLeaderLocalLeadersRoute,

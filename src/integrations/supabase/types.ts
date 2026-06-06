@@ -607,6 +607,47 @@ export type Database = {
         }
         Relationships: []
       }
+      vocal_tracks: {
+        Row: {
+          audio_url: string
+          created_at: string
+          created_by: string
+          id: string
+          song_id: string | null
+          title: string
+          updated_at: string
+          voice_part: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string
+          created_by: string
+          id?: string
+          song_id?: string | null
+          title: string
+          updated_at?: string
+          voice_part: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          song_id?: string | null
+          title?: string
+          updated_at?: string
+          voice_part?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocal_tracks_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vocals: {
         Row: {
           category_id: string
