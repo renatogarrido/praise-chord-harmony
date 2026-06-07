@@ -2,11 +2,27 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Music2, Album, BarChart3, ListMusic, Church, CalendarCheck, Award, Mic2 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/app/admin/")({ component: Dashboard });
 
 type VoiceRow = { label: string; n: number };
 type BadgeRow = { name: string; icon: string; n: number };
+
+const GOLD = "#C5A059";
+const PIE_COLORS = ["#C5A059", "#8B6F3F", "#E0C896", "#5F4A2A", "#F2E0B8", "#A88550"];
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -19,18 +35,21 @@ function Dashboard() {
     availFilled: 0,
     availMissing: 0,
   });
-  const [topSongs, setTopSongs] = useState<any[]>([]);
-  const [topUsers, setTopUsers] = useState<any[]>([]);
+  const [topSongs, setTopSongs] = useState<{ id: string; title: string; n: number }[]>([]);
+  const [topUsers, setTopUsers] = useState<{ id: string; name: string; n: number }[]>([]);
   const [voices, setVoices] = useState<VoiceRow[]>([]);
   const [badges, setBadges] = useState<BadgeRow[]>([]);
+  const [accessTrend, setAccessTrend] = useState<{ day: string; n: number }[]>([]);
 
   useEffect(() => {
     (async () => {
       const now = new Date();
       const month = now.getMonth() + 1;
       const year = now.getFullYear();
+      const since = new Date(now.getTime() - 13 * 24 * 60 * 60 * 1000);
+      since.setHours(0, 0, 0, 0);
 
-      const [u, s, a, h, sl, ch, av, profs, vocCats, ub, bd] = await Promise.all([
+      const [u, s, a, h, sl, ch, av, profs, vocCats, ub, bd, recent] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("songs").select("id", { count: "exact", head: true }),
         supabase.from("albums").select("id", { count: "exact", head: true }),
@@ -42,6 +61,7 @@ function Dashboard() {
         supabase.from("vocals").select("label, value"),
         supabase.from("user_badges").select("badge_id"),
         supabase.from("badges").select("id, name, icon"),
+        supabase.from("access_history").select("accessed_at").gte("accessed_at", since.toISOString()),
       ]);
 
       const totalUsers = u.count ?? 0;
@@ -57,7 +77,25 @@ function Dashboard() {
         availMissing: Math.max(0, totalUsers - filled),
       });
 
-      // Vozes por naipe — conta usuários por valor em profiles.vocal_types
+      // Tendência de acessos (últimos 14 dias)
+      const dayCounts = new Map<string, number>();
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(since);
+        d.setDate(since.getDate() + i);
+        dayCounts.set(d.toISOString().slice(0, 10), 0);
+      }
+      (recent.data ?? []).forEach((r: any) => {
+        const k = String(r.accessed_at).slice(0, 10);
+        if (dayCounts.has(k)) dayCounts.set(k, (dayCounts.get(k) ?? 0) + 1);
+      });
+      setAccessTrend(
+        [...dayCounts.entries()].map(([k, n]) => ({
+          day: `${k.slice(8, 10)}/${k.slice(5, 7)}`,
+          n,
+        }))
+      );
+
+      // Vozes por naipe
       const labelByValue = new Map<string, string>();
       (vocCats.data ?? []).forEach((v: any) => labelByValue.set(v.value, v.label));
       const voiceCounts = new Map<string, number>();
@@ -72,7 +110,7 @@ function Dashboard() {
           .sort((a, b) => b.n - a.n)
       );
 
-      // Resumo de badges
+      // Badges
       const badgeCounts = new Map<string, number>();
       (ub.data ?? []).forEach((r: any) => {
         badgeCounts.set(r.badge_id, (badgeCounts.get(r.badge_id) ?? 0) + 1);
@@ -118,8 +156,21 @@ function Dashboard() {
     { label: "Disp. pendente", value: stats.availMissing, icon: CalendarCheck },
   ];
 
-  const maxVoice = voices[0]?.n ?? 1;
-  const maxBadge = badges[0]?.n ?? 1;
+  const availData = [
+    { name: "Preenchida", value: stats.availFilled },
+    { name: "Pendente", value: stats.availMissing },
+  ];
+
+  const tooltipStyle = {
+    contentStyle: {
+      background: "hsl(var(--card))",
+      border: "1px solid hsl(var(--border))",
+      borderRadius: 8,
+      fontSize: 12,
+    },
+    labelStyle: { color: "hsl(var(--muted-foreground))" },
+    itemStyle: { color: GOLD },
+  };
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-6xl mx-auto">
@@ -138,7 +189,24 @@ function Dashboard() {
         ))}
       </div>
 
+      {/* Tendência de acessos */}
+      <div className="rounded-2xl border border-border bg-card p-6 mb-6">
+        <h2 className="font-serif text-xl mb-5">Acessos nos últimos 14 dias</h2>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={accessTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip {...tooltipStyle} />
+              <Bar dataKey="n" name="Acessos" fill={GOLD} radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Vozes por naipe */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-5">
             <Mic2 className="h-4 w-4 text-gold" />
@@ -147,20 +215,44 @@ function Dashboard() {
           {voices.length === 0 ? (
             <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
           ) : (
-            <div className="space-y-3">
-              {voices.map((v) => (
-                <div key={v.label} className="flex items-center gap-4">
-                  <span className="flex-1 truncate">{v.label}</span>
-                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
-                    <div className="h-full bg-gold" style={{ width: `${(v.n / maxVoice) * 100}%` }} />
-                  </div>
-                  <span className="font-mono text-xs text-gold w-10 text-right">{v.n}</span>
-                </div>
-              ))}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={voices} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="label" width={90} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="n" name="Usuários" fill={GOLD} radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
         </div>
 
+        {/* Disponibilidade do mês */}
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <CalendarCheck className="h-4 w-4 text-gold" />
+            <h2 className="font-serif text-xl">Disponibilidade do mês</h2>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={availData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                  {availData.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i]} stroke="hsl(var(--card))" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip {...tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 12, color: "hsl(var(--muted-foreground))" }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Badges */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-5">
             <Award className="h-4 w-4 text-gold" />
@@ -169,61 +261,59 @@ function Dashboard() {
           {badges.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum badge concedido ainda.</p>
           ) : (
-            <div className="space-y-3">
-              {badges.map((b) => (
-                <div key={b.name} className="flex items-center gap-4">
-                  <span className="flex-1 truncate">{b.name}</span>
-                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
-                    <div className="h-full bg-gold" style={{ width: `${(b.n / maxBadge) * 100}%` }} />
-                  </div>
-                  <span className="font-mono text-xs text-gold w-10 text-right">{b.n}</span>
-                </div>
-              ))}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={badges} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} interval={0} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="n" name="Conquistas" fill={GOLD} radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
         </div>
-      </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+        {/* Top cifras */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
           {topSongs.length === 0 ? (
             <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
           ) : (
-            <div className="space-y-3">
-              {topSongs.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-4">
-                  <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
-                  <span className="flex-1 truncate">{s.title}</span>
-                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
-                    <div className="h-full bg-gold" style={{ width: `${(s.n / topSongs[0].n) * 100}%` }} />
-                  </div>
-                  <span className="font-mono text-xs text-gold w-10 text-right">{s.n}</span>
-                </div>
-              ))}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topSongs} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="title" width={110} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="n" name="Acessos" fill={GOLD} radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
         </div>
+      </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-serif text-xl mb-5">Top 10 usuários mais ativos</h2>
-          {topUsers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
-          ) : (
-            <div className="space-y-3">
-              {topUsers.map((u, i) => (
-                <div key={u.id} className="flex items-center gap-4">
-                  <span className="font-mono text-xs text-muted-foreground/60 w-6">{i + 1}</span>
-                  <span className="flex-1 truncate">{u.name}</span>
-                  <div className="w-32 h-1.5 bg-background rounded-full overflow-hidden">
-                    <div className="h-full bg-gold" style={{ width: `${(u.n / topUsers[0].n) * 100}%` }} />
-                  </div>
-                  <span className="font-mono text-xs text-gold w-10 text-right">{u.n}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Top usuários */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="font-serif text-xl mb-5">Top 10 usuários mais ativos</h2>
+        {topUsers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
+        ) : (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topUsers} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" width={140} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip {...tooltipStyle} />
+                <Bar dataKey="n" name="Acessos" fill={GOLD} radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   );
