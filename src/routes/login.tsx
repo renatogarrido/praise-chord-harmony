@@ -9,14 +9,14 @@ export const Route = createFileRoute("/login")({ component: LoginPage });
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading, isAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && session) navigate({ to: "/app/albums" });
-  }, [authLoading, session, navigate]);
+    if (!authLoading && session) navigate({ to: isAdmin ? "/app/admin/" : "/app/albums" });
+  }, [authLoading, session, isAdmin, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +25,7 @@ function LoginPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Bem-vindo!");
-    navigate({ to: "/app/albums" });
+    // Navigation handled by useEffect once roles are loaded
   };
 
   return (
