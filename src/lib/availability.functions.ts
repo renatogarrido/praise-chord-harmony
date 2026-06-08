@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedSupabaseAuth as requireSupabaseAuth } from "@/lib/verified-auth-middleware";
 
 export const SUNDAY_SERVICES = ["08:00", "10:00", "16:00", "18:00"] as const;
 export const WEEKDAY_KEYS = ["1", "2", "3", "4", "5", "6"] as const; // ISO: 1=Mon..6=Sat
