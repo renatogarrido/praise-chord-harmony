@@ -107,9 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === "INITIAL_SESSION") return;
 
-      setSession(s);
       if (s?.user) {
         setLoading(true);
+        setSession(s);
         // Defer Supabase calls to evitar deadlock dentro do callback de auth
         setTimeout(async () => {
           const { data: { user }, error } = await supabase.auth.getUser();
@@ -136,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         }, 0);
       } else {
+        setSession(null);
         setIsAdmin(false);
         setCanViewUsers(false);
         setCanManageLocalLeaders(false);
