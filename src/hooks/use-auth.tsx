@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setSession(s);
       if (s?.user) {
+        setLoading(true);
         // Defer Supabase calls to evitar deadlock dentro do callback de auth
         setTimeout(async () => {
           const { data: { user }, error } = await supabase.auth.getUser();
