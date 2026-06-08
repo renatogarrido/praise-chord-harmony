@@ -108,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === "INITIAL_SESSION") return;
 
       setSession(s);
-      setLoading(false);
       if (s?.user) {
         // Defer Supabase calls to evitar deadlock dentro do callback de auth
         setTimeout(async () => {
@@ -119,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCanViewUsers(false);
             setCanManageLocalLeaders(false);
             setCanManageSchedule(false);
+            setLoading(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
@@ -132,12 +132,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (event === "SIGNED_IN") {
             enforceDeviceLimit().catch((e) => console.error("[device-limit]", e));
           }
+          setLoading(false);
         }, 0);
       } else {
         setIsAdmin(false);
         setCanViewUsers(false);
         setCanManageLocalLeaders(false);
         setCanManageSchedule(false);
+        setLoading(false);
       }
     });
 
