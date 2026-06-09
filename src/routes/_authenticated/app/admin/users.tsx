@@ -355,7 +355,7 @@ function AdminUsers() {
               <div className="space-y-2">
                 <Label>Equipe Técnica</Label>
                 <MusicianMultiSelect
-                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
+                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.id })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
                   placeholder={isLoadingTech ? "Carregando funções..." : "Escolher funções técnicas…"}

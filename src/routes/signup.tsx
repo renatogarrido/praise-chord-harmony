@@ -128,7 +128,7 @@ function SignupPage() {
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Técnica</label>
               <div className="mt-2">
                 <MusicianMultiSelect
-                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
+                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.id })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
                   placeholder="Escolher funções técnicas…"
