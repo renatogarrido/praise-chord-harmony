@@ -34,7 +34,7 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
       const fileName = `${userId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -43,14 +43,14 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      // Create a long-lived signed URL (1 year) since the bucket is private
+      const { data: signed, error: signErr } = await supabase.storage
         .from('avatars')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
 
-      // Add a cache-busting timestamp to the URL
-      const finalUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      if (signErr || !signed?.signedUrl) throw signErr || new Error('Falha ao gerar URL');
 
-      onImageUploaded(finalUrl);
+      onImageUploaded(signed.signedUrl);
       toast.success("Foto atualizada!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
