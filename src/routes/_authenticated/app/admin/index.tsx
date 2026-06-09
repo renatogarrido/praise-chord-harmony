@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Music2, Album, BarChart3, ListMusic, Church, CalendarCheck, Award, Mic2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { Users, Music2, Album, BarChart3, ListMusic, Church, CalendarCheck, Award, Mic2, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
@@ -26,6 +27,9 @@ const GOLD = "#9b87f5"; // Primário (Roxo suave/Vibrant Indigo)
 const PIE_COLORS = ["#9b87f5", "#7E69AB", "#D6BCFA", "#6E59A5", "#E9D8FD", "#B794F4"];
 
 function Dashboard() {
+  const { user } = useAuth();
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({
     users: 0,
     songs: 0,
@@ -41,44 +45,100 @@ function Dashboard() {
   const [voices, setVoices] = useState<VoiceRow[]>([]);
   const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [accessTrend, setAccessTrend] = useState<{ day: string; n: number }[]>([]);
+  const [availDetails, setAvailDetails] = useState<{ filled: string[]; missing: string[] }>({
+    filled: [],
+    missing: [],
+  });
 
   useEffect(() => {
     (async () => {
+      if (!user) return;
+
       const now = new Date();
       const month = now.getMonth() + 1;
       const year = now.getFullYear();
       const since = new Date(now.getTime() - 13 * 24 * 60 * 60 * 1000);
       since.setHours(0, 0, 0, 0);
 
-      const [u, s, a, h, sl, ch, av, profs, vocCats, ub, bd, recent] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
+      // 1. Obter papéis e perfil para escopo
+      const [roleData, profData] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      ]);
+
+      const roles = (roleData.data ?? []).map((r: any) => r.role as string);
+      const myProfile = profData.data;
+      setUserRoles(roles);
+      setProfile(myProfile);
+
+      const isAdmin = roles.includes("admin");
+      const isNacional = roles.includes("lider_nacional");
+      const isEstadual = roles.includes("lider_estadual");
+      const isLocal = roles.includes("lider_local");
+
+      // 2. Definir escopo de busca
+      let userQuery = supabase.from("profiles").select("id, full_name, church_name, vocal_types");
+      let churchQuery = supabase.from("churches").select("id, name, estadual", { count: "exact", head: true });
+      let availQuery = supabase.from("monthly_availability").select("user_id").eq("month", month).eq("year", year);
+
+      if (isLocal && !isAdmin && !isNacional && !isEstadual) {
+        userQuery = userQuery.eq("church_name", myProfile?.church_name || "");
+        churchQuery = churchQuery.eq("name", myProfile?.church_name || "");
+      } else if (isEstadual && !isAdmin && !isNacional) {
+        const { data: churchInfo } = await supabase.from("churches").select("estadual").eq("name", myProfile?.church_name || "").maybeSingle();
+        if (churchInfo?.estadual) {
+          const { data: relatedChurches } = await supabase.from("churches").select("name").eq("estadual", churchInfo.estadual);
+          const names = (relatedChurches ?? []).map(c => c.name);
+          userQuery = userQuery.in("church_name", names);
+          churchQuery = churchQuery.eq("estadual", churchInfo.estadual);
+        }
+      }
+
+      const [uRes, sl, al, chRes, avRes, vocCats, ub, bd, recent] = await Promise.all([
+        userQuery,
         supabase.from("songs").select("id", { count: "exact", head: true }),
         supabase.from("albums").select("id", { count: "exact", head: true }),
-        supabase.from("access_history").select("id", { count: "exact", head: true }),
-        supabase.from("setlists").select("id", { count: "exact", head: true }),
-        supabase.from("churches").select("id", { count: "exact", head: true }),
-        supabase.from("monthly_availability").select("user_id").eq("month", month).eq("year", year),
-        supabase.from("profiles").select("id, vocal_types"),
+        churchQuery,
+        availQuery,
         supabase.from("vocals").select("label, value"),
         supabase.from("user_badges").select("badge_id"),
         supabase.from("badges").select("id, name, icon"),
         supabase.from("access_history").select("accessed_at").gte("accessed_at", since.toISOString()),
       ]);
 
-      const totalUsers = u.count ?? 0;
-      const filled = new Set((av.data ?? []).map((r: any) => r.user_id)).size;
-      setStats({
-        users: totalUsers,
-        songs: s.count ?? 0,
-        albums: a.count ?? 0,
-        accesses: h.count ?? 0,
-        setlists: sl.count ?? 0,
-        churches: ch.count ?? 0,
-        availFilled: filled,
-        availMissing: Math.max(0, totalUsers - filled),
+      const profiles = uRes.data ?? [];
+      const totalUsers = profiles.length;
+      const filledUserIds = new Set((avRes.data ?? []).map((r: any) => r.user_id));
+      
+      const filledNames: string[] = [];
+      const missingNames: string[] = [];
+
+      profiles.forEach(p => {
+        if (filledUserIds.has(p.id)) {
+          filledNames.push(p.full_name || "Sem Nome");
+        } else {
+          missingNames.push(p.full_name || "Sem Nome");
+        }
       });
 
-      // Tendência de acessos (últimos 14 dias)
+      setAvailDetails({
+        filled: filledNames.sort(),
+        missing: missingNames.sort(),
+      });
+
+      const filledCount = filledNames.length;
+      setStats({
+        users: totalUsers,
+        songs: sl.count ?? 0,
+        albums: al.count ?? 0,
+        accesses: recent.data?.length ?? 0,
+        setlists: 0, // Placeholder
+        churches: chRes.count ?? 0,
+        availFilled: filledCount,
+        availMissing: Math.max(0, totalUsers - filledCount),
+      });
+
+      // Tendência de acessos
       const dayCounts = new Map<string, number>();
       for (let i = 0; i < 14; i++) {
         const d = new Date(since);
@@ -96,11 +156,11 @@ function Dashboard() {
         }))
       );
 
-      // Vozes por naipe
+      // Vozes
       const labelByValue = new Map<string, string>();
       (vocCats.data ?? []).forEach((v: any) => labelByValue.set(v.value, v.label));
       const voiceCounts = new Map<string, number>();
-      (profs.data ?? []).forEach((p: any) => {
+      profiles.forEach((p: any) => {
         (p.vocal_types ?? []).forEach((vt: string) => {
           voiceCounts.set(vt, (voiceCounts.get(vt) ?? 0) + 1);
         });
@@ -124,19 +184,19 @@ function Dashboard() {
           .sort((a, b) => b.n - a.n)
       );
 
-      const { data } = await supabase
+      const { data: topData } = await supabase
         .from("access_history")
         .select("song_id, user_id, songs(title), profiles(full_name)")
         .limit(1000);
       const counts = new Map<string, { title: string; n: number }>();
       const userCounts = new Map<string, { name: string; n: number }>();
-      data?.forEach((r: any) => {
+      topData?.forEach((r: any) => {
         if (r.songs) {
           const c = counts.get(r.song_id) ?? { title: r.songs.title, n: 0 };
           c.n++; counts.set(r.song_id, c);
         }
-        if (r.user_id) {
-          const name = r.profiles?.full_name ?? "Usuário";
+        if (r.user_id && r.profiles) {
+          const name = r.profiles.full_name ?? "Usuário";
           const c = userCounts.get(r.user_id) ?? { name, n: 0 };
           c.n++; userCounts.set(r.user_id, c);
         }
@@ -144,7 +204,7 @@ function Dashboard() {
       setTopSongs([...counts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(([id, v]) => ({ id, ...v })));
       setTopUsers([...userCounts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 10).map(([id, v]) => ({ id, ...v })));
     })();
-  }, []);
+  }, [user]);
 
   const cards = [
     { label: "Usuários", value: stats.users, icon: Users },
@@ -270,28 +330,66 @@ function Dashboard() {
             <CalendarCheck className="h-4 w-4 text-gold" />
             <h2 className="font-serif text-xl">Disponibilidade do mês</h2>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={availData} 
-                  dataKey="value" 
-                  nameKey="name" 
-                  innerRadius={50} 
-                  outerRadius={80} 
-                  paddingAngle={3}
-                  isAnimationActive={true}
-                  animationBegin={200}
-                  animationDuration={1200}
-                >
-                  {availData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i]} stroke="hsl(var(--card))" strokeWidth={2} />
-                  ))}
-                </Pie>
-                <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 12, color: "hsl(var(--muted-foreground))" }} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="h-64 w-full md:w-1/2">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={availData} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    innerRadius={50} 
+                    outerRadius={80} 
+                    paddingAngle={3}
+                    isAnimationActive={true}
+                    animationBegin={200}
+                    animationDuration={1200}
+                  >
+                    {availData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i]} stroke="hsl(var(--card))" strokeWidth={2} />
+                    ))}
+                  </Pie>
+                  <Tooltip {...tooltipStyle} />
+                  <Legend wrapperStyle={{ fontSize: 12, color: "hsl(var(--muted-foreground))" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="w-full md:w-1/2 max-h-64 overflow-y-auto pr-2 space-y-4">
+              <div>
+                <h3 className="text-[10px] uppercase tracking-widest text-emerald-500 mb-2 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Preencheram
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {availDetails.filled.length > 0 ? (
+                    availDetails.filled.map((name, i) => (
+                      <span key={i} className="text-xs px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20">
+                        {name}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Ninguém preencheu ainda.</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-[10px] uppercase tracking-widest text-amber-500 mb-2 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" /> Pendentes
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {availDetails.missing.length > 0 ? (
+                    availDetails.missing.map((name, i) => (
+                      <span key={i} className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded-full border border-amber-500/20">
+                        {name}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Todos preencheram.</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
