@@ -124,6 +124,13 @@ function AdminUsers() {
     setVocalTypes(user.vocal_types ?? []);
     setTechnicalRoles(user.technical_roles ?? []);
     setEditingId(user.id);
+    
+    // Load technical categories if editing
+    setIsLoadingTech(true);
+    const { data, error } = await supabase.from("technical_categories").select("id, name").order("sort_order");
+    setIsLoadingTech(false);
+    if (data) setTechnicalCategories(data as any);
+    
     setIsDialogOpen(true);
   };
 

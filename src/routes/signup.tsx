@@ -23,7 +23,13 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
   const { groups: instrumentGroups } = useInstrumentGroups();
   const { groups: vocalGroups } = useVocalGroups();
-  const { groups: technicalGroups } = useTechnicalGroups();
+  const [technicalCategories, setTechnicalCategories] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
+      if (data) setTechnicalCategories(data);
+    });
+  }, []);
 
   useEffect(() => { if (!authLoading && session) navigate({ to: "/app/albums" }); }, [authLoading, session, navigate]);
 
@@ -122,7 +128,7 @@ function SignupPage() {
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Técnica</label>
               <div className="mt-2">
                 <MusicianMultiSelect
-                  groups={technicalGroups}
+                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
                   placeholder="Escolher funções técnicas…"
