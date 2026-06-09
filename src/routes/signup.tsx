@@ -163,7 +163,7 @@ function SignupPage() {
                 className="mt-0.5 h-4 w-4 rounded border-border text-gold focus:ring-gold"
               />
               <label htmlFor="lgpd" className="text-[11px] leading-tight text-muted-foreground">
-                Aceito os <span className="text-gold font-medium">termos de uso e política de privacidade</span> de acordo com a LGPD. Meus dados serão utilizados exclusivamente para o funcionamento do sistema.
+                Aceito os <Link to="/public/terms" className="text-gold font-medium hover:underline">termos de uso e política de privacidade</Link> de acordo com a LGPD. Meus dados serão utilizados exclusivamente para o funcionamento do sistema.
               </label>
             </div>
             <button type="submit" disabled={loading}
