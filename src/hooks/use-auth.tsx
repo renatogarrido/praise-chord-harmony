@@ -8,14 +8,27 @@ type AuthCtx = {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  acceptedTerms: boolean;
   canViewUsers: boolean;
   canManageLocalLeaders: boolean;
   canManageSchedule: boolean;
   loading: boolean;
+  refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
-const Ctx = createContext<AuthCtx>({ session: null, user: null, isAdmin: false, canViewUsers: false, canManageLocalLeaders: false, canManageSchedule: false, loading: true, signOut: async () => {} });
+const Ctx = createContext<AuthCtx>({ 
+  session: null, 
+  user: null, 
+  isAdmin: false, 
+  acceptedTerms: true,
+  canViewUsers: false, 
+  canManageLocalLeaders: false, 
+  canManageSchedule: false, 
+  loading: true, 
+  refreshProfile: async () => {},
+  signOut: async () => {} 
+});
 
 
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
@@ -23,6 +36,7 @@ const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [canViewUsers, setCanViewUsers] = useState(false);
   const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
   const [canManageSchedule, setCanManageSchedule] = useState(false);
@@ -42,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const checkRoles = async (userId: string) => {
+    const checkRolesAndProfile = async (userId: string) => {
       try {
         const { data: roleData } = await supabase
           .from("user_roles")
@@ -53,9 +67,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const viewUsers = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
         const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
         const manageSchedule = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
-        return { admin, viewUsers, canManage, manageSchedule };
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("accepted_terms")
+          .eq("id", userId)
+          .single();
+
+        return { 
+          admin, 
+          viewUsers, 
+          canManage, 
+          manageSchedule,
+          acceptedTerms: profile?.accepted_terms ?? false
+        };
       } catch {
-        return { admin: false, viewUsers: false, canManage: false, manageSchedule: false };
+        return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, acceptedTerms: true };
+      }
+    };
+
+    const refreshProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
+        setIsAdmin(admin);
+        setCanViewUsers(viewUsers);
+        setCanManageLocalLeaders(canManage);
+        setCanManageSchedule(manageSchedule);
+        setAcceptedTerms(acceptedTerms);
       }
     };
 
@@ -70,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAdmin(false);
           setCanViewUsers(false);
           setCanManageLocalLeaders(false);
+          setAcceptedTerms(true);
           return;
         }
 
@@ -79,16 +119,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAdmin(false);
           setCanViewUsers(false);
           setCanManageLocalLeaders(false);
+          setAcceptedTerms(true);
           await supabase.auth.signOut({ scope: "local" }).catch(() => {});
           return;
         }
 
         setSession(s);
-        const { admin, viewUsers, canManage, manageSchedule } = await checkRoles(user.id);
+        const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
         setIsAdmin(admin);
         setCanViewUsers(viewUsers);
         setCanManageLocalLeaders(canManage);
         setCanManageSchedule(manageSchedule);
+        setAcceptedTerms(acceptedTerms);
       } catch (err) {
         console.error("Auth initialization error:", err);
         setSession(null);
@@ -96,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCanViewUsers(false);
         setCanManageLocalLeaders(false);
         setCanManageSchedule(false);
+        setAcceptedTerms(true);
 
       } finally {
         setLoading(false);
@@ -119,15 +162,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCanViewUsers(false);
             setCanManageLocalLeaders(false);
             setCanManageSchedule(false);
+            setAcceptedTerms(true);
             setLoading(false);
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const { admin, viewUsers, canManage, manageSchedule } = await checkRoles(s.user.id);
+          const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(s.user.id);
           setIsAdmin(admin);
           setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
           setCanManageSchedule(manageSchedule);
+          setAcceptedTerms(acceptedTerms);
 
           // Limita usuários comuns a 2 dispositivos ativos (admins ilimitados)
           if (event === "SIGNED_IN") {
@@ -141,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCanViewUsers(false);
         setCanManageLocalLeaders(false);
         setCanManageSchedule(false);
+        setAcceptedTerms(true);
         setLoading(false);
       }
     });
@@ -173,7 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, refreshProfile, signOut }}>
       {children}
 
     </Ctx.Provider>

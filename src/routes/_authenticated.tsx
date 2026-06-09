@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Menu, X, Loader2 } from "lucide-react";
+import { LGPDModal } from "@/components/lgpd-modal";
 
 export const Route = createFileRoute("/_authenticated")({ component: AuthLayout });
 
@@ -27,6 +28,7 @@ function AuthLayout() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
+      <LGPDModal />
       {/* Desktop sidebar (lg+ so iPad portrait uses the drawer) */}
       <div className="hidden lg:block fixed inset-y-0 left-0 z-30">
         <AppSidebar />
