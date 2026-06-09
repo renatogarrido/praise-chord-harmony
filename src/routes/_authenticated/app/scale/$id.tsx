@@ -45,6 +45,7 @@ function ScaleDetail() {
   const [pickerType, setPickerType] = useState<"worship" | "technical">("worship");
   const [pickedUser, setPickedUser] = useState<string>("");
   const [pickedRole, setPickedRole] = useState<string>("");
+  const [pickedRoles, setPickedRoles] = useState<string[]>([]);
   const [pickedTechCat, setPickedTechCat] = useState<string>("");
   const [search, setSearch] = useState("");
 
@@ -71,12 +72,8 @@ function ScaleDetail() {
     
     let filtered = base;
     if (pickerType === "technical") {
-      const currentTechCat = (techCatsQ.data as any)?.categories?.find((c: any) => c.id === pickedTechCat);
-      const techCatName = currentTechCat?.name;
-      
       filtered = base.filter(u => 
-        (u.technical_roles?.length ?? 0) > 0 && 
-        (!techCatName || u.technical_roles.includes(techCatName))
+        (u.technical_roles?.length ?? 0) > 0
       );
     }
 
@@ -104,11 +101,18 @@ function ScaleDetail() {
         detailQ.refetch();
       } catch (e: any) { toast.error(e.message || "Erro"); }
     } else {
-      if (!pickedUser || !pickedTechCat) return toast.error("Escolha colaborador e função técnica.");
+      if (!pickedUser || pickedRoles.length === 0) return toast.error("Escolha colaborador e pelo menos uma função técnica.");
       try {
-        await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: pickedTechCat } });
+        // Find categories for labels
+        const techCats = (techCatsQ.data as any)?.categories ?? [];
+        
+        // Execute assignments for each selected role
+        await Promise.all(pickedRoles.map(catId => 
+          assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } })
+        ));
+        
         toast.success("Colaborador técnico escalado!");
-        setPicker(false); setPickedUser(""); setPickedTechCat(""); setSearch("");
+        setPicker(false); setPickedUser(""); setPickedRoles([]); setSearch("");
         detailQ.refetch();
       } catch (e: any) { toast.error(e.message || "Erro"); }
     }
@@ -210,10 +214,11 @@ function ScaleDetail() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Escalados */}
+        {(!s.title.toLowerCase().includes("técnica") || assignments.length > 0) && (
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-xl">Músicos e Vozes</h2>
-            {canManageSchedule && (
+            {canManageSchedule && !s.title.toLowerCase().includes("técnica") && (
               <button onClick={() => { setPickerType("worship"); setPicker(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary-foreground">
                 <UserPlus className="h-3.5 w-3.5" /> Escalar
               </button>
@@ -246,12 +251,13 @@ function ScaleDetail() {
             </div>
           )}
         </section>
+        )}
 
-        {/* Equipe Técnica */}
+        {(s.title.toLowerCase().includes("técnica") || techAssignments.length > 0) && (
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-xl">Equipe Técnica</h2>
-            {canManageSchedule && (
+            {canManageSchedule && (s.title.toLowerCase().includes("técnica") || techAssignments.length > 0) && (
               <button onClick={() => { setPickerType("technical"); setPicker(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-white">
                 <Settings2 className="h-3.5 w-3.5" /> Escalar Técnica
               </button>
@@ -283,6 +289,7 @@ function ScaleDetail() {
             </div>
           )}
         </section>
+        )}
 
         {/* Repertório */}
         <section className="rounded-2xl border border-border bg-card p-6">
@@ -324,7 +331,7 @@ function ScaleDetail() {
               {filteredUsers.map((u) => {
                 const isAv = availableSet.has(u.id);
                 return (
-                  <button key={u.id} type="button" onClick={() => { setPickedUser(u.id); setPickedRole(""); }}
+                  <button key={u.id} type="button" onClick={() => { setPickedUser(u.id); setPickedRole(""); setPickedRoles([]); }}
                     className={`w-full text-left px-3 py-2 border-b border-border last:border-0 hover:bg-accent ${pickedUser === u.id ? "bg-gold-soft" : ""}`}>
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
@@ -361,14 +368,20 @@ function ScaleDetail() {
               </>
             ) : (
               <div className="mb-4">
-                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Função Técnica</label>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Funções Técnicas</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {((techCatsQ.data as any)?.categories ?? []).map((c: any) => (
-                    <button key={c.id} type="button" onClick={() => setPickedTechCat(c.id)}
-                      className={`rounded-full px-3 py-1 text-[11px] border ${pickedTechCat === c.id ? "bg-slate-700 text-white border-slate-700" : "border-border text-muted-foreground hover:text-foreground"}`}>
-                      {c.name}
-                    </button>
-                  ))}
+                  {((techCatsQ.data as any)?.categories ?? []).map((c: any) => {
+                    const selected = pickedRoles.includes(c.id);
+                    return (
+                      <button key={c.id} type="button" 
+                        onClick={() => setPickedRoles(prev => 
+                          selected ? prev.filter(id => id !== c.id) : [...prev, c.id]
+                        )}
+                        className={`rounded-full px-3 py-1 text-[11px] border transition-colors ${selected ? "bg-slate-700 text-white border-slate-700" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                        {c.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

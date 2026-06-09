@@ -324,14 +324,13 @@ export const assignTechnicalUser = createServerFn({ method: "POST" })
 
     const { error } = await supabase
       .from("technical_team_assignments")
-      .insert({ 
+      .upsert({ 
         worship_schedule_id: data.scheduleId, 
         user_id: data.userId, 
         category_id: data.categoryId 
-      } as any);
+      }, { onConflict: "worship_schedule_id,user_id,category_id" });
 
     if (error) {
-      if (error.code === "23505") throw new Error("Esse colaborador já está escalado para essa função técnica.");
       throwSafe("assign technical user", error);
     }
 
