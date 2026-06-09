@@ -45,6 +45,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
         roles: z.array(z.enum(ROLE_VALUES)).max(4),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
+        technicalRoles: z.array(z.string().max(64)).max(10).optional(),
       })
       .parse(input)
   )
@@ -70,6 +71,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
         church_name: data.churchName || null,
         instruments: data.instruments ?? [],
         vocal_types: data.vocalTypes ?? [],
+        technical_roles: data.technicalRoles ?? [],
       } as any)
       .eq("id", newId);
 
@@ -297,6 +299,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         roles: z.array(z.enum(ROLE_VALUES)).max(4),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
+        technicalRoles: z.array(z.string().max(64)).max(10).optional(),
       })
       .parse(input)
   )
@@ -313,6 +316,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         church_name: data.churchName || null,
         instruments: data.instruments ?? [],
         vocal_types: data.vocalTypes ?? [],
+        technical_roles: data.technicalRoles ?? [],
       } as any)
       .eq("id", data.userId);
 
