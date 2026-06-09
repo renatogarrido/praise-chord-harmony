@@ -5,9 +5,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight, Calendar as CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listSchedules, createSchedule, deleteSchedule, getSchedule } from "@/lib/worship-schedule.functions";
+import { listSchedules, createSchedule, deleteSchedule, getSchedule, listAllChurches } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -23,14 +25,53 @@ export const Route = createFileRoute("/_authenticated/app/technical-scale")({
 });
 
 function TechnicalScalePage() {
-  const { canManageSchedule } = useAuth();
+  const { isAdmin, canManageSchedule, user } = useAuth();
   const nav = useNavigate();
   const list = useServerFn(listSchedules);
   const create = useServerFn(createSchedule);
   const del = useServerFn(deleteSchedule);
   const gen = useServerFn(generateMonthlySchedules);
+  const listChurches = useServerFn(listAllChurches);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules", "technical"], queryFn: () => list() });
+  
+  const profQ = useQuery({ 
+    queryKey: ["my-profile-church", user?.id], 
+    queryFn: () => supabase.from("profiles").select("church_name").eq("id", user?.id || "").maybeSingle(),
+    enabled: !!user?.id
+  });
+  
+  const userRolesQ = useQuery({ 
+    queryKey: ["user-roles", user?.id], 
+    queryFn: () => supabase.from("user_roles").select("role").eq("user_id", user?.id || ""),
+    enabled: !!user?.id
+  });
+
+  const roles = (userRolesQ.data as any)?.data ?? [];
+  const roleNames = roles.map((r: any) => r.role as string);
+  const isNacional = roleNames.includes("lider_nacional");
+  const isEstadual = roleNames.includes("lider_estadual");
+  const isLocal = roleNames.includes("lider_local");
+  const myChurch = (profQ.data as any)?.data?.church_name;
+
+  const churchesQ = useQuery({ 
+    queryKey: ["all-churches-picker-tech"], 
+    queryFn: () => listChurches(),
+    enabled: canManageSchedule && (isAdmin || isNacional || isEstadual)
+  });
+
+  const filteredChurches = useMemo(() => {
+    const all = (churchesQ.data as any)?.churches ?? [];
+    if (isAdmin || isNacional) return all;
+    if (isEstadual) {
+      const myChurchObj = all.find((c: any) => c.name === myChurch);
+      if (myChurchObj?.estadual) {
+        return all.filter((c: any) => c.estadual === myChurchObj.estadual);
+      }
+      return myChurch ? all.filter((c: any) => c.name === myChurch) : [];
+    }
+    return [];
+  }, [churchesQ.data, isAdmin, isNacional, isEstadual, myChurch]);
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -64,7 +105,7 @@ function TechnicalScalePage() {
       toast.success("Escala manual criada!");
       setOpen(false);
       refetch();
-      setTitle(""); setDate(""); setChurchName("");
+      setTitle(""); setDate(""); setTime("19:00"); setChurchName("");
       // Navega para a escala recém criada mantendo o contexto técnico
       nav({ to: "/app/scale/$id", params: { id: (r as any).id }, search: { from: "technical" } });
     } catch (err: any) { toast.error(err.message || "Erro"); }
