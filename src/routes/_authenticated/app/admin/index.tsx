@@ -35,6 +35,7 @@ function Dashboard() {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [stats, setStats] = useState({
     users: 0,
@@ -114,14 +115,15 @@ function Dashboard() {
         supabase.from("monthly_availability").select("month, year").gte("year", year - 1),
       ]);
 
-      const profiles = uRes.data ?? [];
-      const totalUsers = profiles.length;
+      const profs = uRes.data ?? [];
+      setProfiles(profs);
+      const totalUsers = profs.length;
       const filledUserIds = new Set((avRes.data ?? []).map((r: any) => r.user_id));
       
       const filledNames: string[] = [];
       const missingNames: string[] = [];
 
-      profiles.forEach(p => {
+      profs.forEach(p => {
         if (filledUserIds.has(p.id)) {
           filledNames.push(p.full_name || "Sem Nome");
         } else {
@@ -195,7 +197,7 @@ function Dashboard() {
       const labelByValue = new Map<string, string>();
       (vocCats.data ?? []).forEach((v: any) => labelByValue.set(v.value, v.label));
       const voiceCounts = new Map<string, number>();
-      profiles.forEach((p: any) => {
+      profs.forEach((p: any) => {
         (p.vocal_types ?? []).forEach((vt: string) => {
           voiceCounts.set(vt, (voiceCounts.get(vt) ?? 0) + 1);
         });
@@ -352,10 +354,10 @@ function Dashboard() {
                 
                 // Simplified view for National/State leaders, detailed for Local/Admin
                 const isSimplified = (isNacional || isEstadual) && !isAdmin;
+                const isTech = s.title.toLowerCase().includes("técnica");
 
                 return (
                   <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
-                    const isTech = s.title.toLowerCase().includes("técnica");
                     nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
                   }}>
                     <div className="flex justify-between items-start mb-2">
