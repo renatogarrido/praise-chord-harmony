@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Music2, Album, BarChart3, ListMusic, Church, CalendarCheck, Award, Mic2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Users, Music2, Album, BarChart3, ListMusic, Church, CalendarCheck, Award, Mic2, CheckCircle2, AlertCircle, Calendar, ArrowRight, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
@@ -28,8 +31,11 @@ const PIE_COLORS = ["#9b87f5", "#7E69AB", "#D6BCFA", "#6E59A5", "#E9D8FD", "#B79
 
 function Dashboard() {
   const { user } = useAuth();
+  const nav = useNavigate();
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [stats, setStats] = useState({
     users: 0,
     songs: 0,
@@ -232,8 +238,27 @@ function Dashboard() {
       });
       setTopSongs([...counts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(([id, v]) => ({ id, ...v })));
       setTopUsers([...userCounts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 10).map(([id, v]) => ({ id, ...v })));
+      // 4. Fetch schedules
+      setLoadingSchedules(true);
+      const { data: schedData } = await supabase
+        .from("worship_schedules")
+        .select("*, worship_schedule_assignments(*), technical_team_assignments(*)")
+        .order("service_date", { ascending: true });
+      setSchedules(schedData ?? []);
+      setLoadingSchedules(false);
     })();
   }, [user]);
+
+  const todaySchedules = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return schedules.filter(s => s.service_date.startsWith(today));
+  }, [schedules]);
+
+  const upcomingSchedules = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return schedules.filter(s => new Date(s.service_date) >= now);
+  }, [schedules]);
 
   const cards = [
     { label: "Usuários", value: stats.users, icon: Users },
@@ -271,6 +296,83 @@ function Dashboard() {
         <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">{isAdmin ? "Administração" : "Liderança"}</p>
         <h1 className="font-serif text-4xl md:text-5xl">Dashboard</h1>
       </header>
+
+      <div className="grid gap-6 mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-2xl border border-border bg-card p-6"
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <Calendar className="h-5 w-5 text-gold" />
+            <h2 className="font-serif text-2xl">Escalas de Hoje</h2>
+          </div>
+          {loadingSchedules ? (
+            <p className="text-sm text-muted-foreground">Carregando escalas...</p>
+          ) : todaySchedules.length === 0 ? (
+            <div className="text-center py-8 rounded-xl border border-dashed border-border bg-muted/5">
+              <Clock className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhuma escala para hoje.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {todaySchedules.map(s => (
+                <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium text-sm text-gold group-hover:text-gold-hover transition-colors">{s.title}</h3>
+                    <Badge variant="outline" className="text-[10px]">
+                      {new Date(s.service_date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
+                      {s.worship_schedule_assignments?.length || 0} Músicos
+                    </Badge>
+                    <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                      {s.technical_team_assignments?.length || 0} Técnica
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-2xl border border-border bg-card p-6"
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <ListMusic className="h-5 w-5 text-gold" />
+            <h2 className="font-serif text-2xl">Próximas Escalas</h2>
+          </div>
+          {loadingSchedules ? (
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          ) : upcomingSchedules.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma escala programada.</p>
+          ) : (
+            <div className="space-y-3">
+              {upcomingSchedules.slice(0, 10).map(s => (
+                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium group-hover:text-gold transition-colors">{s.title}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1 capitalize">
+                      {new Date(s.service_date).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-gold group-hover:translate-x-1 transition-all" />
+                </div>
+              ))}
+              {upcomingSchedules.length > 10 && (
+                <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest pt-4">E mais {upcomingSchedules.length - 10} escalas programadas</p>
+              )}
+            </div>
+          )}
+        </motion.div>
+      </div>
 
       {isAdmin && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
