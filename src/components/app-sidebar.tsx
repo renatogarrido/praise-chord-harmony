@@ -28,14 +28,17 @@ const profileLinks = [
 
 const adminLinks = [
   { to: "/app/admin", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/admin/support", label: "Suporte", icon: LifeBuoy },
+  { to: "/app/admin/settings", label: "Personalização", icon: Settings },
+];
+
+const registrationLinks = [
   { to: "/app/admin/albums", label: "Álbuns", icon: Album },
   { to: "/app/admin/songs", label: "Cifras", icon: Music2 },
   { to: "/app/admin/users", label: "Usuários", icon: Users },
   { to: "/app/admin/churches", label: "Igrejas", icon: Church },
   { to: "/app/admin/instruments", label: "Instrumentos", icon: Guitar },
   { to: "/app/admin/vocals", label: "Vozes", icon: Mic2 },
-  { to: "/app/admin/support", label: "Suporte", icon: LifeBuoy },
-  { to: "/app/admin/settings", label: "Personalização", icon: Settings },
   { to: "/app/admin/technical-categories", label: "Equipe Técnica", icon: Settings },
 ];
 
@@ -43,6 +46,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAdmin, canViewUsers, canManageLocalLeaders, canManageSchedule, signOut } = useAuth();
   const [scaleOpen, setScaleOpen] = useState(pathname.includes("/app/scale") || pathname === "/app/technical-scale" || pathname === "/app/availability");
+  const [registrationOpen, setRegistrationOpen] = useState(pathname.includes("/app/admin/") && !["/app/admin/support", "/app/admin/settings"].includes(pathname));
   const { app_name, logo_url } = useAppSettings();
 
   const isLeader = canViewUsers || canManageSchedule;
@@ -140,6 +144,33 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 {l.label}
               </NavLink>
             ))}
+
+            <div className="space-y-1">
+              <button
+                onClick={() => setRegistrationOpen(!registrationOpen)}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  registrationOpen ? "text-gold font-medium" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <ListMusic className="h-4 w-4" />
+                  <span>Cadastros</span>
+                </div>
+                <ChevronDown className={`h-3 w-3 transition-transform ${registrationOpen ? "rotate-180" : ""}`} />
+              </button>
+              
+              {registrationOpen && (
+                <div className="ml-4 pl-4 border-l border-border/50 space-y-1 mt-1">
+                  {registrationLinks.map((l) => (
+                    <NavLink key={l.to} to={l.to} icon={l.icon}
+                      active={pathname.startsWith(l.to)}
+                      onClick={onNavigate}>
+                      {l.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           </Section>
         )}
       </nav>
