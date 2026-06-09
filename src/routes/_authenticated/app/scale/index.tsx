@@ -146,9 +146,20 @@ function ScalePage() {
       
       if (error) throw error;
       
+      if (created && selectedSongs.length > 0) {
+        const inserts = selectedSongs.map((songId, index) => ({
+          setlist_id: created.id,
+          song_id: songId,
+          position: index + 1
+        }));
+        await supabase.from("setlist_songs").insert(inserts);
+      }
+      
       toast.success("Repertório criado!");
       setNewSetlistName("");
       setShowNewSetlistForm(false);
+      setSelectedSongs([]);
+      setSongSearch("");
       await setlistsQ.refetch();
       if (created) {
         setSetlistId(created.id);
@@ -158,6 +169,14 @@ function ScalePage() {
     } finally {
       setBusySetlist(false);
     }
+  };
+
+  const toggleSongSelection = (songId: string) => {
+    setSelectedSongs(prev => 
+      prev.includes(songId) 
+        ? prev.filter(id => id !== songId) 
+        : [...prev, songId]
+    );
   };
 
   const schedules: any[] = ((data as any)?.schedules ?? []).filter((s: any) => 
