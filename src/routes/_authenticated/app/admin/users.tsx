@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
+import { useInstrumentGroups, useVocalGroups, useTechnicalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
@@ -30,8 +30,10 @@ function AdminUsers() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
+  const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
   const { groups: instrumentGroups, reload: reloadInstruments } = useInstrumentGroups();
   const { groups: vocalGroups, reload: reloadVocals } = useVocalGroups();
+  const { groups: technicalGroups, reload: reloadTechnical } = useTechnicalGroups();
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
@@ -119,6 +121,7 @@ function AdminUsers() {
     ));
     setInstruments(user.instruments ?? []);
     setVocalTypes(user.vocal_types ?? []);
+    setTechnicalRoles(user.technical_roles ?? []);
     setEditingId(user.id);
     setIsDialogOpen(true);
   };
@@ -160,6 +163,7 @@ function AdminUsers() {
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
+            technicalRoles,
           },
         });
         toast.success("Usuário atualizado com sucesso!");
@@ -173,6 +177,7 @@ function AdminUsers() {
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
+            technicalRoles,
           },
         });
         toast.success("Usuário criado com sucesso!");
@@ -183,6 +188,7 @@ function AdminUsers() {
       setSelectedRoles([]);
       setInstruments([]);
       setVocalTypes([]);
+      setTechnicalRoles([]);
       setEditingId(null);
       load();
     } catch (error: any) {
@@ -214,7 +220,7 @@ function AdminUsers() {
           </Button>
           {isAdmin && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              if (open) { reloadInstruments(); reloadVocals(); }
+              if (open) { reloadInstruments(); reloadVocals(); reloadTechnical(); }
               setIsDialogOpen(open);
               if (!open) {
                 setEditingId(null);
@@ -222,6 +228,7 @@ function AdminUsers() {
                 setSelectedRoles([]);
                 setInstruments([]);
                 setVocalTypes([]);
+                setTechnicalRoles([]);
               }
             }}>
               <DialogTrigger asChild>
@@ -315,6 +322,15 @@ function AdminUsers() {
                   value={vocalTypes}
                   onChange={setVocalTypes}
                   placeholder="Escolher tipo vocal…"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Equipe Técnica</Label>
+                <MusicianMultiSelect
+                  groups={technicalGroups}
+                  value={technicalRoles}
+                  onChange={setTechnicalRoles}
+                  placeholder="Escolher funções técnicas…"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4">
