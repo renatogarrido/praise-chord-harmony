@@ -603,16 +603,6 @@ function ScaleDetail() {
                     </div>
                   </div>
                 ) : (
-                      className="rounded-full border border-border p-2"
-                      onClick={() => {
-                        setShowNewSetlistForm(false);
-                        setNewSetlistName("");
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
                   <select value={editSetlist} onChange={(e) => setEditSetlist(e.target.value)}
                     className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
                     <option value="">— Sem repertório —</option>
