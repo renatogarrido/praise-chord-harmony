@@ -57,7 +57,7 @@ function TechnicalScalePage() {
     try {
       const isoDate = new Date(`${date}T${time || "19:00"}:00`).toISOString();
       const r = await create({ data: {
-        title: title.trim(),
+        title: title.trim().toLowerCase().includes("técnica") ? title.trim() : `${title.trim()} (Técnica)`,
         serviceDate: isoDate,
         churchName: churchName.trim() || null,
       }});
