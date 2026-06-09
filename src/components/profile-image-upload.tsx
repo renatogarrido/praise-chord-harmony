@@ -22,6 +22,7 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   const [isUploading, setIsUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
