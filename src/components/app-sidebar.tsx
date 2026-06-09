@@ -57,7 +57,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
   const [registrationOpen, setRegistrationOpen] = useState(pathname.includes("/app/admin/") && !["/app/admin/support", "/app/admin/settings"].includes(pathname));
   const { app_name, logo_url } = useAppSettings();
-  const [profile, setProfile] = useState<{ avatar_url?: string; full_name?: string } | null>(null);
+  const [profile, setProfile] = useState<{ avatar_url?: string | null; full_name?: string | null } | null>(null);
 
   useEffect(() => {
     if (!user) return;
