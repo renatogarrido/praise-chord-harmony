@@ -67,6 +67,25 @@ function ScaleDetail() {
   const [showNewSetlistForm, setShowNewSetlistForm] = useState(false);
   const [newSetlistName, setNewSetlistName] = useState("");
   const [busySetlist, setBusySetlist] = useState(false);
+  const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
+  const [songSearch, setSongSearch] = useState("");
+
+  const allSongsQ = useQuery({
+    queryKey: ["all-songs-picker-detail"],
+    queryFn: async () => {
+      const { data } = await supabase.from("songs").select("id, title, original_key").order("title");
+      return data ?? [];
+    },
+    enabled: showNewSetlistForm
+  });
+
+  const filteredSongsList = useMemo(() => {
+    const s = songSearch.toLowerCase().trim();
+    const songs = allSongsQ.data ?? [];
+    if (!s) return songs.slice(0, 10);
+    return songs.filter(song => song.title.toLowerCase().includes(s)).slice(0, 15);
+  }, [allSongsQ.data, songSearch]);
+
   const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => listSetlistsFn(), enabled: editOpen || showNewSetlistForm });
   const techCatsQ = useQuery({ queryKey: ["technical-categories"], queryFn: () => listTechCats(), enabled: picker && pickerType === "technical" });
 
@@ -211,9 +230,20 @@ function ScaleDetail() {
       
       if (error) throw error;
       
+      if (created && selectedSongs.length > 0) {
+        const inserts = selectedSongs.map((songId, index) => ({
+          setlist_id: created.id,
+          song_id: songId,
+          position: index + 1
+        }));
+        await supabase.from("setlist_songs").insert(inserts);
+      }
+      
       toast.success("Repertório criado!");
       setNewSetlistName("");
       setShowNewSetlistForm(false);
+      setSelectedSongs([]);
+      setSongSearch("");
       await setlistsQ.refetch();
       if (created) {
         setEditSetlist(created.id);
@@ -223,6 +253,14 @@ function ScaleDetail() {
     } finally {
       setBusySetlist(false);
     }
+  };
+
+  const toggleSongSelection = (songId: string) => {
+    setSelectedSongs(prev => 
+      prev.includes(songId) 
+        ? prev.filter(id => id !== songId) 
+        : [...prev, songId]
+    );
   };
 
   if (detailQ.isLoading) return <div className="p-12 text-sm text-muted-foreground">Carregando…</div>;
