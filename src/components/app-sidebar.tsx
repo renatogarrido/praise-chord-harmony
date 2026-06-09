@@ -44,8 +44,15 @@ const registrationLinks = [
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search });
+  const searchFrom = (search as any)?.from;
   const { user, isAdmin, canViewUsers, canManageLocalLeaders, canManageSchedule, signOut } = useAuth();
-  const [scaleOpen, setScaleOpen] = useState(pathname.includes("/app/scale") || pathname === "/app/technical-scale" || pathname === "/app/availability");
+  const [scaleOpen, setScaleOpen] = useState(
+    pathname.includes("/app/scale") || 
+    pathname === "/app/technical-scale" || 
+    pathname === "/app/availability" ||
+    searchFrom === "technical"
+  );
   const [registrationOpen, setRegistrationOpen] = useState(pathname.includes("/app/admin/") && !["/app/admin/support", "/app/admin/settings"].includes(pathname));
   const { app_name, logo_url } = useAppSettings();
 
@@ -91,7 +98,16 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             {scaleOpen && (
               <div className="ml-4 pl-4 border-l border-border/50 space-y-1 mt-1">
                 {scaleLinks.map((l) => (
-                  <NavLink key={l.to} to={l.to} icon={l.icon} active={pathname === l.to || pathname.startsWith(l.to + "/")} onClick={onNavigate}>
+                  <NavLink 
+                    key={l.to} 
+                    to={l.to} 
+                    icon={l.icon} 
+                    active={
+                      (pathname === l.to || pathname.startsWith(l.to + "/")) && 
+                      (!pathname.startsWith("/app/scale/") || (l.to === "/app/technical-scale" ? searchFrom === "technical" : searchFrom !== "technical"))
+                    } 
+                    onClick={onNavigate}
+                  >
                     {l.label}
                   </NavLink>
                 ))}
