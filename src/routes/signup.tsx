@@ -61,7 +61,7 @@ function SignupPage() {
           church_name: churchName.trim().slice(0, 255) || null,
           instruments,
           vocal_types: vocalTypes,
-          technical_roles: technicalRoles,
+          technical_roles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
         } as any)
         .eq("id", userId);
     }
@@ -128,7 +128,7 @@ function SignupPage() {
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Técnica</label>
               <div className="mt-2">
                 <MusicianMultiSelect
-                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
+                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.id })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
                   placeholder="Escolher funções técnicas…"

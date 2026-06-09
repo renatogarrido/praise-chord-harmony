@@ -122,17 +122,31 @@ function AdminUsers() {
     ));
     setInstruments(user.instruments ?? []);
     setVocalTypes(user.vocal_types ?? []);
-    setTechnicalRoles(user.technical_roles ?? []);
+    
     setEditingId(user.id);
     
-    // Load technical categories if editing
+    // Load technical categories if editing and map technical roles
     setIsLoadingTech(true);
-    import("@/integrations/supabase/client").then(({ supabase }) => {
-      supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
-        setIsLoadingTech(false);
-        if (data) setTechnicalCategories(data as any);
-      });
-    }).catch(() => setIsLoadingTech(false));
+    try {
+      const { supabase: supabaseClient } = await import("@/integrations/supabase/client");
+      const { data: cats } = await supabaseClient.from("technical_categories").select("id, name").order("sort_order");
+      setIsLoadingTech(false);
+      
+      if (cats) {
+        setTechnicalCategories(cats as any);
+        // Map names back to IDs for the multi-select
+        const mappedRoles = (user.technical_roles ?? []).map((name: string) => 
+          cats.find(c => c.name === name)?.id || name
+        );
+        setTechnicalRoles(mappedRoles);
+      } else {
+        setTechnicalRoles(user.technical_roles ?? []);
+      }
+    } catch (e) {
+      console.error(e);
+      setIsLoadingTech(false);
+      setTechnicalRoles(user.technical_roles ?? []);
+    }
     
     setIsDialogOpen(true);
   };
@@ -174,7 +188,7 @@ function AdminUsers() {
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
-            technicalRoles,
+            technicalRoles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
           },
         });
         toast.success("Usuário atualizado com sucesso!");
@@ -188,7 +202,7 @@ function AdminUsers() {
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
-            technicalRoles,
+            technicalRoles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
           },
         });
         toast.success("Usuário criado com sucesso!");
@@ -355,7 +369,7 @@ function AdminUsers() {
               <div className="space-y-2">
                 <Label>Equipe Técnica</Label>
                 <MusicianMultiSelect
-                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
+                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.id })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
                   placeholder={isLoadingTech ? "Carregando funções..." : "Escolher funções técnicas…"}
