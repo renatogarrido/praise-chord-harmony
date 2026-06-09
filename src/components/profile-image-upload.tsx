@@ -60,6 +60,7 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
       const signedUrl = signedData.signedUrl;
       console.log("[ProfileImage] Signed URL generated:", signedUrl);
 
+      setPreviewUrl(signedUrl);
       onImageUploaded(signedUrl);
       toast.success("Foto atualizada!");
     } catch (error: any) {
