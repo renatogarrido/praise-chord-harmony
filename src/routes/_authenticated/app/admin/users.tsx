@@ -124,6 +124,16 @@ function AdminUsers() {
     setVocalTypes(user.vocal_types ?? []);
     setTechnicalRoles(user.technical_roles ?? []);
     setEditingId(user.id);
+    
+    // Load technical categories if editing
+    setIsLoadingTech(true);
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
+        setIsLoadingTech(false);
+        if (data) setTechnicalCategories(data as any);
+      });
+    }).catch(() => setIsLoadingTech(false));
+    
     setIsDialogOpen(true);
   };
 
