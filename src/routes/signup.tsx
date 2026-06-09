@@ -61,6 +61,7 @@ function SignupPage() {
         .from("profiles")
         .update({
           full_name: name.trim().slice(0, 255),
+          avatar_url: avatarUrl || null,
           church_name: churchName.trim().slice(0, 255) || null,
           instruments,
           vocal_types: vocalTypes,
