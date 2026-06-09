@@ -2,7 +2,9 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut, LifeBuoy, UserCircle, Guitar, Mic2, Church, CalendarDays, CalendarCheck, Headphones, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppSettings } from "@/hooks/use-app-settings";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const libraryLinks = [
   { to: "/app/albums", label: "Álbuns", icon: Library },
@@ -55,6 +57,36 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
   const [registrationOpen, setRegistrationOpen] = useState(pathname.includes("/app/admin/") && !["/app/admin/support", "/app/admin/settings"].includes(pathname));
   const { app_name, logo_url } = useAppSettings();
+  const [profile, setProfile] = useState<{ avatar_url?: string; full_name?: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url, full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (data) setProfile(data);
+    };
+    fetchProfile();
+
+    // Subscribe to profile changes
+    const channel = supabase
+      .channel("profile-sidebar")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        (payload) => {
+          setProfile(payload.new as any);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const isLeader = canViewUsers || canManageSchedule;
 
@@ -193,9 +225,12 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="border-t border-border/50 p-5">
         <div className="flex items-center gap-3 mb-3">
-          <div className="grid size-9 place-items-center rounded-full border border-gold/30 bg-gold-soft text-[11px] font-semibold text-gold">
-            {(user?.email?.[0] || "?").toUpperCase()}
-          </div>
+          <Avatar className="h-9 w-9 border border-gold/30">
+            <AvatarImage src={profile?.avatar_url} className="object-cover" />
+            <AvatarFallback className="bg-gold-soft text-[11px] font-semibold text-gold">
+              {(profile?.full_name?.[0] || user?.email?.[0] || "?").toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium">{user?.email}</p>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70">{isAdmin ? "Admin" : "Membro"}</p>
