@@ -56,7 +56,6 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
 
       onImageUploaded(publicUrl);
       toast.success("Foto atualizada!");
-      toast.success("Foto atualizada!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
       toast.error("Erro ao fazer upload: " + (error?.message || "desconhecido"));
