@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public Read Access to Avatars" ON storage.objects;
