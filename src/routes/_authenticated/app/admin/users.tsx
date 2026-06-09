@@ -294,7 +294,14 @@ function AdminUsers() {
                 <ProfileImageUpload 
                   userId={editingId || "new-user"} 
                   currentImageUrl={formData.avatarUrl} 
-                  onImageUploaded={(url) => setFormData({ ...formData, avatarUrl: url })}
+                  onImageUploaded={(url) => {
+                    setFormData(prev => ({ ...prev, avatarUrl: url }));
+                    if (editingId) {
+                      import("@/integrations/supabase/client").then(({ supabase }) => {
+                        supabase.from("profiles").update({ avatar_url: url } as any).eq("id", editingId);
+                      });
+                    }
+                  }}
                   name={formData.fullName || formData.email}
                 />
               </div>
