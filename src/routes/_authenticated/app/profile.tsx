@@ -42,6 +42,18 @@ function ProfilePage() {
       ]);
 
       if (error) toast.error(error.message);
+
+      if (data?.avatar_url && data.avatar_url.includes('/storage/v1/object/public/avatars/')) {
+        // Se a URL for pública mas o bucket for privado, tentamos obter uma signed URL
+        const path = data.avatar_url.split('/storage/v1/object/public/avatars/')[1].split('?')[0];
+        const { data: signedData } = await supabase.storage
+          .from('avatars')
+          .createSignedUrl(path, 31536000);
+        
+        if (signedData?.signedUrl) {
+          data.avatar_url = signedData.signedUrl;
+        }
+      }
       
       let cats: {id: string, name: string}[] = [];
       if (techCats) {
