@@ -99,9 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-
-
-    const initializeAuth = async () => {
       try {
         const { data: { session: s }, error } = await supabase.auth.getSession();
         if (error) throw error;
@@ -195,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkRolesAndProfile]);
 
   useEffect(() => {
     if (!session?.user) {
