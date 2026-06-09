@@ -23,6 +23,7 @@ function SignupPage() {
   const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [tempUserId] = useState(() => `temp-${Math.random().toString(36).substring(2, 15)}`);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const { groups: instrumentGroups } = useInstrumentGroups();
   const { groups: vocalGroups } = useVocalGroups();
@@ -40,6 +41,9 @@ function SignupPage() {
     e.preventDefault();
     if (!churchName.trim()) {
       return toast.error("Selecione sua igreja.");
+    }
+    if (!acceptedTerms) {
+      return toast.error("Você precisa aceitar os termos da LGPD para continuar.");
     }
     setLoading(true);
     const { data: signUpData, error } = await supabase.auth.signUp({
@@ -66,6 +70,8 @@ function SignupPage() {
           instruments,
           vocal_types: vocalTypes,
           technical_roles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
+          accepted_terms: true,
+          terms_accepted_at: new Date().toISOString(),
         } as any)
         .eq("id", userId);
     }
@@ -146,6 +152,19 @@ function SignupPage() {
                   placeholder="Escolher funções técnicas…"
                 />
               </div>
+            </div>
+            <div className="flex items-start gap-3 py-2">
+              <input 
+                type="checkbox" 
+                id="lgpd" 
+                required 
+                checked={acceptedTerms} 
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-border text-gold focus:ring-gold"
+              />
+              <label htmlFor="lgpd" className="text-[11px] leading-tight text-muted-foreground">
+                Aceito os <span className="text-gold font-medium">termos de uso e política de privacidade</span> de acordo com a LGPD. Meus dados serão utilizados exclusivamente para o funcionamento do sistema.
+              </label>
             </div>
             <button type="submit" disabled={loading}
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-gold py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
