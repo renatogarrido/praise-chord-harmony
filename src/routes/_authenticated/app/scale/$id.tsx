@@ -71,12 +71,18 @@ function ScaleDetail() {
     
     let filtered = base;
     if (pickerType === "technical") {
-      filtered = base.filter(u => (u.technical_roles?.length ?? 0) > 0);
+      const currentTechCat = (techCatsQ.data as any)?.categories?.find((c: any) => c.id === pickedTechCat);
+      const techCatName = currentTechCat?.name;
+      
+      filtered = base.filter(u => 
+        (u.technical_roles?.length ?? 0) > 0 && 
+        (!techCatName || u.technical_roles.includes(techCatName))
+      );
     }
 
     if (!s) return filtered;
     return filtered.filter((u) => (u.full_name ?? "").toLowerCase().includes(s) || (u.church_name ?? "").toLowerCase().includes(s));
-  }, [users, search, availableSet, pickerType]);
+  }, [users, search, availableSet, pickerType, pickedTechCat, techCatsQ.data]);
 
 
   const pickedUserObj = users.find((u) => u.id === pickedUser);
