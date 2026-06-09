@@ -55,48 +55,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastActivityRef.current = Date.now();
   }, []);
 
+  const checkRolesAndProfile = useCallback(async (userId: string) => {
+    try {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      const roles = (roleData ?? []).map((r: any) => r.role as string);
+      const admin = roles.includes("admin");
+      const viewUsers = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
+      const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
+      const manageSchedule = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("accepted_terms")
+        .eq("id", userId)
+        .single();
+
+      return { 
+        admin, 
+        viewUsers, 
+        canManage, 
+        manageSchedule,
+        acceptedTerms: profile?.accepted_terms ?? false
+      };
+    } catch {
+      return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, acceptedTerms: true };
+    }
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
+      setIsAdmin(admin);
+      setCanViewUsers(viewUsers);
+      setCanManageLocalLeaders(canManage);
+      setCanManageSchedule(manageSchedule);
+      setAcceptedTerms(acceptedTerms);
+    }
+  }, [checkRolesAndProfile]);
+
   useEffect(() => {
-    const checkRolesAndProfile = async (userId: string) => {
-      try {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId);
-        const roles = (roleData ?? []).map((r: any) => r.role as string);
-        const admin = roles.includes("admin");
-        const viewUsers = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
-        const canManage = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual");
-        const manageSchedule = admin || roles.includes("lider_nacional") || roles.includes("lider_estadual") || roles.includes("lider_local");
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("accepted_terms")
-          .eq("id", userId)
-          .single();
-
-        return { 
-          admin, 
-          viewUsers, 
-          canManage, 
-          manageSchedule,
-          acceptedTerms: profile?.accepted_terms ?? false
-        };
-      } catch {
-        return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, acceptedTerms: true };
-      }
-    };
-
-    const refreshProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
-        setIsAdmin(admin);
-        setCanViewUsers(viewUsers);
-        setCanManageLocalLeaders(canManage);
-        setCanManageSchedule(manageSchedule);
-        setAcceptedTerms(acceptedTerms);
-      }
-    };
+    const initializeAuth = async () => {
 
 
     const initializeAuth = async () => {
