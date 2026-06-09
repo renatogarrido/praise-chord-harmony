@@ -9,7 +9,8 @@ import {
 } from "@/lib/worship-schedule.functions";
 import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/$id")({ 
@@ -26,7 +27,7 @@ function ScaleDetail() {
   const { id } = useParams({ from: "/_authenticated/app/scale/$id" });
   const { from } = useSearch({ from: "/_authenticated/app/scale/$id" });
   const nav = useNavigate();
-  const { canManageSchedule } = useAuth();
+  const { canManageSchedule, user } = useAuth();
   const get = useServerFn(getSchedule);
   const list = useServerFn(listAssignableUsers);
   const assign = useServerFn(assignUser);
@@ -63,7 +64,10 @@ function ScaleDetail() {
   const [editChurch, setEditChurch] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editSetlist, setEditSetlist] = useState("");
-  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => listSetlistsFn(), enabled: editOpen });
+  const [showNewSetlistForm, setShowNewSetlistForm] = useState(false);
+  const [newSetlistName, setNewSetlistName] = useState("");
+  const [busySetlist, setBusySetlist] = useState(false);
+  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => listSetlistsFn(), enabled: editOpen || showNewSetlistForm });
   const techCatsQ = useQuery({ queryKey: ["technical-categories"], queryFn: () => listTechCats(), enabled: picker && pickerType === "technical" });
 
   const detail = detailQ.data as any;
@@ -193,6 +197,32 @@ function ScaleDetail() {
       setEditOpen(false);
       detailQ.refetch();
     } catch (e: any) { toast.error(e.message || "Erro"); }
+  };
+  
+  const handleCreateSetlist = async () => {
+    if (!newSetlistName.trim() || !user) return;
+    setBusySetlist(true);
+    try {
+      const { data: created, error } = await supabase
+        .from("setlists")
+        .insert({ user_id: user.id, name: newSetlistName.trim() })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success("Repertório criado!");
+      setNewSetlistName("");
+      setShowNewSetlistForm(false);
+      await setlistsQ.refetch();
+      if (created) {
+        setEditSetlist(created.id);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar repertório");
+    } finally {
+      setBusySetlist(false);
+    }
   };
 
   if (detailQ.isLoading) return <div className="p-12 text-sm text-muted-foreground">Carregando…</div>;
@@ -451,14 +481,66 @@ function ScaleDetail() {
                   className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Repertório</label>
-                <select value={editSetlist} onChange={(e) => setEditSetlist(e.target.value)}
-                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
-                  <option value="">— Sem repertório —</option>
-                  {((setlistsQ.data as any)?.setlists ?? []).map((sl: any) => (
-                    <option key={sl.id} value={sl.id}>{sl.name}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Repertório</label>
+                  {!showNewSetlistForm && (
+                    <button 
+                      type="button" 
+                      className="text-[10px] uppercase tracking-wider text-gold hover:text-gold/80 flex items-center gap-1"
+                      onClick={() => setShowNewSetlistForm(true)}
+                    >
+                      <Plus className="h-3 w-3" /> Novo
+                    </button>
+                  )}
+                </div>
+                
+                {showNewSetlistForm ? (
+                  <div className="flex gap-2">
+                    <input 
+                      value={newSetlistName} 
+                      onChange={(e) => setNewSetlistName(e.target.value)}
+                      placeholder="Nome do repertório"
+                      className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm focus:border-gold/50 focus:outline-none"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCreateSetlist();
+                        }
+                        if (e.key === 'Escape') {
+                          setShowNewSetlistForm(false);
+                          setNewSetlistName("");
+                        }
+                      }}
+                    />
+                    <button 
+                      type="button" 
+                      className="rounded-full bg-gold p-2 text-primary-foreground disabled:opacity-50"
+                      onClick={handleCreateSetlist}
+                      disabled={busySetlist}
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button 
+                      type="button" 
+                      className="rounded-full border border-border p-2"
+                      onClick={() => {
+                        setShowNewSetlistForm(false);
+                        setNewSetlistName("");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <select value={editSetlist} onChange={(e) => setEditSetlist(e.target.value)}
+                    className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
+                    <option value="">— Sem repertório —</option>
+                    {((setlistsQ.data as any)?.setlists ?? []).map((sl: any) => (
+                      <option key={sl.id} value={sl.id}>{sl.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Observações</label>
