@@ -85,6 +85,14 @@ function SignupPage() {
         <div className="rounded-2xl border border-border bg-card p-8">
           <h1 className="font-serif text-2xl mb-6">Criar conta</h1>
           <form onSubmit={submit} className="space-y-4">
+            <div className="flex justify-center mb-6">
+              <ProfileImageUpload 
+                userId={tempUserId} 
+                currentImageUrl={avatarUrl} 
+                onImageUploaded={(url) => setAvatarUrl(url)}
+                name={name || "Novo Usuário"}
+              />
+            </div>
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Nome</label>
               <input required value={name} onChange={(e) => setName(e.target.value)}
