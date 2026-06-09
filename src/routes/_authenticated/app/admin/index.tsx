@@ -237,11 +237,7 @@ function Dashboard() {
 
   const cards = [
     { label: "Usuários", value: stats.users, icon: Users },
-    { label: "Cifras", value: stats.songs, icon: Music2 },
-    { label: "Álbuns", value: stats.albums, icon: Album },
     { label: "Acessos", value: stats.accesses, icon: BarChart3 },
-    { label: "Repertórios", value: stats.setlists, icon: ListMusic },
-    { label: "Igrejas", value: stats.churches, icon: Church },
     { label: "Disp. preenchida", value: stats.availFilled, icon: CalendarCheck },
     { label: "Disp. pendente", value: stats.availMissing, icon: CalendarCheck },
   ];
