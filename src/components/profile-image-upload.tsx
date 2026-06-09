@@ -36,7 +36,10 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
 
       const { error: uploadError, data } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) throw uploadError;
 
