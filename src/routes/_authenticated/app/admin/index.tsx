@@ -317,27 +317,44 @@ function Dashboard() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {todaySchedules.map(s => (
-                <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
-                  const isTech = s.title.toLowerCase().includes("técnica");
-                  nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
-                }}>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-sm text-gold group-hover:text-gold-hover transition-colors">{s.title}</h3>
-                    <Badge variant="outline" className="text-[10px]">
-                      {new Date(s.service_date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </Badge>
+              {todaySchedules.map(s => {
+                const isNacional = userRoles.includes("lider_nacional");
+                const isEstadual = userRoles.includes("lider_estadual");
+                const isLocal = userRoles.includes("lider_local");
+                const isAdmin = userRoles.includes("admin");
+                
+                // Simplified view for National/State leaders, detailed for Local/Admin
+                const isSimplified = (isNacional || isEstadual) && !isAdmin;
+
+                return (
+                  <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
+                    const isTech = s.title.toLowerCase().includes("técnica");
+                    nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
+                  }}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-sm text-gold group-hover:text-gold-hover transition-colors truncate">{s.title}</h3>
+                        {s.church_name && (
+                          <p className="text-[10px] text-muted-foreground truncate">{s.church_name}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-[10px] ml-2 shrink-0">
+                        {new Date(s.service_date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </Badge>
+                    </div>
+                    {!isSimplified && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
+                          {s.worship_schedule_assignments?.length || 0} Músicos
+                        </Badge>
+                        <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                          {s.technical_team_assignments?.length || 0} Técnica
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
-                      {s.worship_schedule_assignments?.length || 0} Músicos
-                    </Badge>
-                    <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
-                      {s.technical_team_assignments?.length || 0} Técnica
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </motion.div>
