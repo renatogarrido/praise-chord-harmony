@@ -36,6 +36,7 @@ const adminLinks = [
   { to: "/app/admin/vocals", label: "Vozes", icon: Mic2 },
   { to: "/app/admin/support", label: "Suporte", icon: LifeBuoy },
   { to: "/app/admin/settings", label: "Personalização", icon: Settings },
+  { to: "/app/admin/technical-categories", label: "Equipe Técnica", icon: Settings },
 ];
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
