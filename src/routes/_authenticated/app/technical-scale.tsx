@@ -114,6 +114,8 @@ function TechnicalScalePage() {
                   {busy ? "Gerando..." : "Gerar Escala Automática"}
                 </Button>
 
+              </div>
+
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
