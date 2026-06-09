@@ -127,9 +127,12 @@ function AdminUsers() {
     
     // Load technical categories if editing
     setIsLoadingTech(true);
-    const { data, error } = await supabase.from("technical_categories").select("id, name").order("sort_order");
-    setIsLoadingTech(false);
-    if (data) setTechnicalCategories(data as any);
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
+        setIsLoadingTech(false);
+        if (data) setTechnicalCategories(data as any);
+      });
+    }).catch(() => setIsLoadingTech(false));
     
     setIsDialogOpen(true);
   };
