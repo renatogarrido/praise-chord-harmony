@@ -47,14 +47,19 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
         throw uploadError;
       }
 
-      const { data: publicData } = supabase.storage
+      const { data: signedData, error: signError } = await supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 31536000); // 1 ano de validade
 
-      const publicUrl = publicData.publicUrl;
-      console.log("[ProfileImage] Public URL generated:", publicUrl);
+      if (signError) {
+        console.error("[ProfileImage] Error signing URL:", signError);
+        throw signError;
+      }
 
-      onImageUploaded(publicUrl);
+      const signedUrl = signedData.signedUrl;
+      console.log("[ProfileImage] Signed URL generated:", signedUrl);
+
+      onImageUploaded(signedUrl);
       toast.success("Foto atualizada!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
