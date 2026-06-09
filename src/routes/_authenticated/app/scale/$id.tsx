@@ -45,6 +45,7 @@ function ScaleDetail() {
   const [pickerType, setPickerType] = useState<"worship" | "technical">("worship");
   const [pickedUser, setPickedUser] = useState<string>("");
   const [pickedRole, setPickedRole] = useState<string>("");
+  const [pickedRoles, setPickedRoles] = useState<string[]>([]);
   const [pickedTechCat, setPickedTechCat] = useState<string>("");
   const [search, setSearch] = useState("");
 
@@ -71,12 +72,8 @@ function ScaleDetail() {
     
     let filtered = base;
     if (pickerType === "technical") {
-      const currentTechCat = (techCatsQ.data as any)?.categories?.find((c: any) => c.id === pickedTechCat);
-      const techCatName = currentTechCat?.name;
-      
       filtered = base.filter(u => 
-        (u.technical_roles?.length ?? 0) > 0 && 
-        (!techCatName || u.technical_roles.includes(techCatName))
+        (u.technical_roles?.length ?? 0) > 0
       );
     }
 
@@ -104,11 +101,18 @@ function ScaleDetail() {
         detailQ.refetch();
       } catch (e: any) { toast.error(e.message || "Erro"); }
     } else {
-      if (!pickedUser || !pickedTechCat) return toast.error("Escolha colaborador e função técnica.");
+      if (!pickedUser || pickedRoles.length === 0) return toast.error("Escolha colaborador e pelo menos uma função técnica.");
       try {
-        await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: pickedTechCat } });
+        // Find categories for labels
+        const techCats = (techCatsQ.data as any)?.categories ?? [];
+        
+        // Execute assignments for each selected role
+        await Promise.all(pickedRoles.map(catId => 
+          assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } })
+        ));
+        
         toast.success("Colaborador técnico escalado!");
-        setPicker(false); setPickedUser(""); setPickedTechCat(""); setSearch("");
+        setPicker(false); setPickedUser(""); setPickedRoles([]); setSearch("");
         detailQ.refetch();
       } catch (e: any) { toast.error(e.message || "Erro"); }
     }
@@ -324,7 +328,7 @@ function ScaleDetail() {
               {filteredUsers.map((u) => {
                 const isAv = availableSet.has(u.id);
                 return (
-                  <button key={u.id} type="button" onClick={() => { setPickedUser(u.id); setPickedRole(""); }}
+                  <button key={u.id} type="button" onClick={() => { setPickedUser(u.id); setPickedRole(""); setPickedRoles([]); }}
                     className={`w-full text-left px-3 py-2 border-b border-border last:border-0 hover:bg-accent ${pickedUser === u.id ? "bg-gold-soft" : ""}`}>
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
