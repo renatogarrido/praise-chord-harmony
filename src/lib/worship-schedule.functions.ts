@@ -362,3 +362,16 @@ export const listTechnicalCategories = createServerFn({ method: "GET" })
     if (error) throwSafe("list technical categories", error);
     return { categories: data ?? [] };
   });
+
+// ---------- LIST ALL CHURCHES (for picker) ----------
+export const listAllChurches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("churches")
+      .select("id, name, estadual")
+      .order("name");
+    if (error) throwSafe("list all churches", error);
+    return { churches: data ?? [] };
+  });
