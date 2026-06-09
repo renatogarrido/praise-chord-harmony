@@ -51,12 +51,19 @@ export const getSchedule = createServerFn({ method: "POST" })
     if (error) throwSafe("get schedule", error);
     if (!schedule) throw new Error("Escala não encontrada.");
 
-    const { data: assignments } = await supabase
-      .from("worship_schedule_assignments")
-      .select("id, user_id, role_label")
-      .eq("schedule_id", data.id);
+    const [assignmentsRes, techAssignmentsRes] = await Promise.all([
+      supabase.from("worship_schedule_assignments").select("id, user_id, role_label").eq("schedule_id", data.id),
+      supabase.from("technical_team_assignments").select("id, user_id, category_id, instrument_categories(name)").eq("worship_schedule_id", data.id)
+    ]);
 
-    const userIds = (assignments ?? []).map((a: any) => a.user_id);
+    const assignments = assignmentsRes.data ?? [];
+    const techAssignments = techAssignmentsRes.data ?? [];
+
+    const userIds = Array.from(new Set([
+      ...(assignments).map((a: any) => a.user_id),
+      ...(techAssignments).map((a: any) => a.user_id)
+    ]));
+
     let profileMap = new Map<string, { full_name: string | null; church_name: string | null }>();
     if (userIds.length > 0) {
       const { data: profs, error: profsError } = await supabaseAdmin
@@ -80,10 +87,16 @@ export const getSchedule = createServerFn({ method: "POST" })
 
     return {
       schedule,
-      assignments: (assignments ?? []).map((a: any) => ({
+      assignments: (assignments).map((a: any) => ({
         ...a,
         full_name: profileMap.get(a.user_id)?.full_name ?? null,
         church_name: profileMap.get(a.user_id)?.church_name ?? null,
+      })),
+      techAssignments: (techAssignments).map((a: any) => ({
+        ...a,
+        full_name: profileMap.get(a.user_id)?.full_name ?? null,
+        church_name: profileMap.get(a.user_id)?.church_name ?? null,
+        role_label: (a.instrument_categories as any)?.name ?? "Técnico",
       })),
       setlistSongs,
     };
