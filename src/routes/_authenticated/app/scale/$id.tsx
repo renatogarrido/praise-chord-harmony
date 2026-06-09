@@ -68,14 +68,24 @@ function ScaleDetail() {
       if (aAv !== bAv) return aAv - bAv;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-    if (!s) return base;
-    return base.filter((u) => (u.full_name ?? "").toLowerCase().includes(s) || (u.church_name ?? "").toLowerCase().includes(s));
-  }, [users, search, availableSet]);
+    
+    let filtered = base;
+    if (pickerType === "technical") {
+      filtered = base.filter(u => (u.technical_roles?.length ?? 0) > 0);
+    }
+
+    if (!s) return filtered;
+    return filtered.filter((u) => (u.full_name ?? "").toLowerCase().includes(s) || (u.church_name ?? "").toLowerCase().includes(s));
+  }, [users, search, availableSet, pickerType]);
 
 
   const pickedUserObj = users.find((u) => u.id === pickedUser);
   const availableRoles: string[] = pickedUserObj
-    ? Array.from(new Set([...(pickedUserObj.instruments ?? []), ...(pickedUserObj.vocal_types ?? [])])).filter(Boolean)
+    ? Array.from(new Set([
+        ...(pickedUserObj.instruments ?? []), 
+        ...(pickedUserObj.vocal_types ?? []),
+        ...(pickedUserObj.technical_roles ?? [])
+      ])).filter(Boolean)
     : [];
 
   const doAssign = async () => {

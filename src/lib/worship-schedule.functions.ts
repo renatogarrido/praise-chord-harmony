@@ -53,7 +53,7 @@ export const getSchedule = createServerFn({ method: "POST" })
 
     const [assignmentsRes, techAssignmentsRes] = await Promise.all([
       supabase.from("worship_schedule_assignments").select("id, user_id, role_label").eq("schedule_id", data.id),
-      supabase.from("technical_team_assignments").select("id, user_id, category_id, instrument_categories(name)").eq("worship_schedule_id", data.id)
+      supabase.from("technical_team_assignments").select("id, user_id, category_id, technical_categories(name)").eq("worship_schedule_id", data.id)
     ]);
 
     const assignments = assignmentsRes.data ?? [];
@@ -96,7 +96,7 @@ export const getSchedule = createServerFn({ method: "POST" })
         ...a,
         full_name: profileMap.get(a.user_id)?.full_name ?? null,
         church_name: profileMap.get(a.user_id)?.church_name ?? null,
-        role_label: (a.instrument_categories as any)?.name ?? "Técnico",
+        role_label: (a.technical_categories as any)?.name ?? "Técnico",
       })),
       setlistSongs,
     };
@@ -202,7 +202,7 @@ export const listAssignableUsers = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, full_name, church_name, instruments, vocal_types")
+      .select("id, full_name, church_name, instruments, vocal_types, technical_roles")
       .order("full_name", { ascending: true });
     if (error) throwSafe("list assignable users", error);
     return { users: data ?? [] };
@@ -356,9 +356,8 @@ export const listTechnicalCategories = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { data, error } = await supabase
-      .from("instrument_categories")
+      .from("technical_categories")
       .select("id, name")
-      .in("name", ["Som", "Iluminação", "Telão"])
       .order("name");
     if (error) throwSafe("list technical categories", error);
     return { categories: data ?? [] };
