@@ -35,6 +35,7 @@ function Dashboard() {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [profilesList, setProfilesList] = useState<any[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [stats, setStats] = useState({
     users: 0,
@@ -114,14 +115,15 @@ function Dashboard() {
         supabase.from("monthly_availability").select("month, year").gte("year", year - 1),
       ]);
 
-      const profiles = uRes.data ?? [];
-      const totalUsers = profiles.length;
+      const profs = uRes.data ?? [];
+      setProfilesList(profs);
+      const totalUsers = profs.length;
       const filledUserIds = new Set((avRes.data ?? []).map((r: any) => r.user_id));
       
       const filledNames: string[] = [];
       const missingNames: string[] = [];
 
-      profiles.forEach(p => {
+      profs.forEach(p => {
         if (filledUserIds.has(p.id)) {
           filledNames.push(p.full_name || "Sem Nome");
         } else {
@@ -195,7 +197,7 @@ function Dashboard() {
       const labelByValue = new Map<string, string>();
       (vocCats.data ?? []).forEach((v: any) => labelByValue.set(v.value, v.label));
       const voiceCounts = new Map<string, number>();
-      profiles.forEach((p: any) => {
+      profs.forEach((p: any) => {
         (p.vocal_types ?? []).forEach((vt: string) => {
           voiceCounts.set(vt, (voiceCounts.get(vt) ?? 0) + 1);
         });
@@ -352,10 +354,10 @@ function Dashboard() {
                 
                 // Simplified view for National/State leaders, detailed for Local/Admin
                 const isSimplified = (isNacional || isEstadual) && !isAdmin;
+                const isTech = s.title.toLowerCase().includes("técnica");
 
                 return (
                   <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
-                    const isTech = s.title.toLowerCase().includes("técnica");
                     nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
                   }}>
                     <div className="flex justify-between items-start mb-2">
@@ -371,12 +373,34 @@ function Dashboard() {
                     </div>
                     {!isSimplified && (
                       <div className="flex flex-wrap gap-1 mt-3">
-                        <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
-                          {s.worship_schedule_assignments?.length || 0} Músicos
-                        </Badge>
-                        <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
-                          {s.technical_team_assignments?.length || 0} Técnica
-                        </Badge>
+                        {isTech ? (
+                          <>
+                            <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '10229a18-0bf0-4519-90c6-a4e825f4f4df').length || 0} Técnico de som
+                            </Badge>
+                            <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '1937ff02-5ecf-4985-83a3-968e1d9db8ba').length || 0} Iluminação
+                            </Badge>
+                            <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '5f26bc5d-f944-487f-9e9d-845e48610b93').length || 0} Telão
+                            </Badge>
+                          </>
+                        ) : (
+                          <>
+                            <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
+                              {s.worship_schedule_assignments?.filter((a: any) => {
+                                const p = profilesList.find(pr => pr.id === a.user_id);
+                                return p && (p.instruments?.length || 0) > 0;
+                              }).length || 0} Músicos
+                            </Badge>
+                            <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
+                              {s.worship_schedule_assignments?.filter((a: any) => {
+                                const p = profilesList.find(pr => pr.id === a.user_id);
+                                return p && (p.vocal_types?.length || 0) > 0;
+                              }).length || 0} Vozes
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
