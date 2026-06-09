@@ -376,10 +376,10 @@ function Dashboard() {
                         {isTech ? (
                           <>
                             <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
-                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '10229a18-0bf0-4519-90c6-a4e825f4f4df').length || 0} Som
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '10229a18-0bf0-4519-90c6-a4e825f4f4df').length || 0} Técnico de som
                             </Badge>
                             <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
-                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '1937ff02-5ecf-4985-83a3-968e1d9db8ba').length || 0} Luz
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '1937ff02-5ecf-4985-83a3-968e1d9db8ba').length || 0} Iluminação
                             </Badge>
                             <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
                               {s.technical_team_assignments?.filter((a: any) => a.category_id === '5f26bc5d-f944-487f-9e9d-845e48610b93').length || 0} Telão
