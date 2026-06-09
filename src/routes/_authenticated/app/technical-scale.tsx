@@ -321,6 +321,7 @@ function TechnicalScalePage() {
                           ))}
                         </select>
                       )}
+                    </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
                       <Button type="submit" className="bg-gold text-white">Criar</Button>
