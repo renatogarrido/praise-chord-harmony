@@ -139,7 +139,7 @@ function ProfilePage() {
         <div className="space-y-2">
           <Label>Equipe Técnica</Label>
           <MusicianMultiSelect
-            groups={[{ id: "tech", name: "Funções Técnicas", instruments: technicalCategories.map(c => ({ id: c.id, label: c.name, value: c.name })) }]}
+            groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
             value={technicalRoles}
             onChange={setTechnicalRoles}
             placeholder="Escolher funções técnicas…"
