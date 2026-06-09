@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
+import { useInstrumentGroups, useVocalGroups, useTechnicalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
 
 export const Route = createFileRoute("/signup")({ component: SignupPage });
@@ -19,9 +19,11 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
+  const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { groups: instrumentGroups } = useInstrumentGroups();
   const { groups: vocalGroups } = useVocalGroups();
+  const { groups: technicalGroups } = useTechnicalGroups();
 
   useEffect(() => { if (!authLoading && session) navigate({ to: "/app/albums" }); }, [authLoading, session, navigate]);
 
@@ -53,6 +55,7 @@ function SignupPage() {
           church_name: churchName.trim().slice(0, 255) || null,
           instruments,
           vocal_types: vocalTypes,
+          technical_roles: technicalRoles,
         } as any)
         .eq("id", userId);
     }
@@ -112,6 +115,17 @@ function SignupPage() {
                   value={vocalTypes}
                   onChange={setVocalTypes}
                   placeholder="Escolher tipo vocal…"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Técnica</label>
+              <div className="mt-2">
+                <MusicianMultiSelect
+                  groups={technicalGroups}
+                  value={technicalRoles}
+                  onChange={setTechnicalRoles}
+                  placeholder="Escolher funções técnicas…"
                 />
               </div>
             </div>

@@ -2,14 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { MusicianGroup } from "@/lib/musician-roles";
 
-type Kind = "instrument" | "vocal";
+type Kind = "instrument" | "vocal" | "technical";
 
 export function useTaxonomyGroups(kind: Kind) {
   const [groups, setGroups] = useState<MusicianGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const catTable = kind === "instrument" ? "instrument_categories" : "vocal_categories";
-  const itemTable = kind === "instrument" ? "instruments" : "vocals";
+  const catTable = kind === "instrument" ? "instrument_categories" : kind === "vocal" ? "vocal_categories" : "technical_categories";
+  const itemTable = kind === "instrument" ? "instruments" : kind === "vocal" ? "vocals" : "technical_roles";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,4 +46,8 @@ export function useInstrumentGroups() {
 
 export function useVocalGroups() {
   return useTaxonomyGroups("vocal");
+}
+
+export function useTechnicalGroups() {
+  return useTaxonomyGroups("technical");
 }

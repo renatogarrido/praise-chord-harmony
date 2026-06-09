@@ -11,6 +11,7 @@ const userLinks = [
   { to: "/app/vocal-practice", label: "Vozes por Naipe", icon: Headphones },
   { to: "/app/scale", label: "Escala", icon: CalendarDays },
   { to: "/app/availability", label: "Disponibilidade", icon: CalendarCheck },
+  { to: "/app/technical-scale", label: "Escala Técnica", icon: Settings },
   { to: "/app/history", label: "Recentes", icon: Clock },
   { to: "/app/profile", label: "Meu Perfil", icon: UserCircle },
   { to: "/app/support", label: "Suporte", icon: LifeBuoy },
