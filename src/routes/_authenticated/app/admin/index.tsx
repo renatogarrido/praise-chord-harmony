@@ -237,11 +237,7 @@ function Dashboard() {
 
   const cards = [
     { label: "Usuários", value: stats.users, icon: Users },
-    { label: "Cifras", value: stats.songs, icon: Music2 },
-    { label: "Álbuns", value: stats.albums, icon: Album },
     { label: "Acessos", value: stats.accesses, icon: BarChart3 },
-    { label: "Repertórios", value: stats.setlists, icon: ListMusic },
-    { label: "Igrejas", value: stats.churches, icon: Church },
     { label: "Disp. preenchida", value: stats.availFilled, icon: CalendarCheck },
     { label: "Disp. pendente", value: stats.availMissing, icon: CalendarCheck },
   ];
@@ -262,6 +258,8 @@ function Dashboard() {
     itemStyle: { color: GOLD },
   };
 
+  const isAdmin = userRoles.includes("admin");
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -270,62 +268,65 @@ function Dashboard() {
       className="px-6 md:px-12 py-8 md:py-12 max-w-6xl mx-auto"
     >
       <header className="mb-10">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Administração</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">{isAdmin ? "Administração" : "Liderança"}</p>
         <h1 className="font-serif text-4xl md:text-5xl">Dashboard</h1>
       </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        {cards.map((c, i) => (
-          <motion.div 
-            key={c.label} 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.1 }}
-            whileHover={{ scale: 1.05 }}
-            className="rounded-2xl border border-border bg-card p-6 transition-colors hover:border-gold/50 cursor-default"
-          >
-            <c.icon className="h-5 w-5 text-gold mb-3" />
-            <p className="text-3xl font-serif">{c.value}</p>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{c.label}</p>
-          </motion.div>
-        ))}
-      </div>
+      {isAdmin && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {cards.map((c, i) => (
+            <motion.div 
+              key={c.label} 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ scale: 1.05 }}
+              className="rounded-2xl border border-border bg-card p-6 transition-colors hover:border-gold/50 cursor-default"
+            >
+              <c.icon className="h-5 w-5 text-gold mb-3" />
+              <p className="text-3xl font-serif">{c.value}</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{c.label}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        {/* Tendência de acessos */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="rounded-2xl border border-border bg-card p-6"
-        >
-          <h2 className="font-serif text-xl mb-5">Acessos nos últimos 14 dias</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={accessTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip {...tooltipStyle} />
-                <Bar 
-                  dataKey="n" 
-                  name="Acessos" 
-                  fill={GOLD} 
-                  radius={[6, 6, 0, 0]} 
-                  isAnimationActive={true}
-                  animationDuration={1500}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+        {isAdmin && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="rounded-2xl border border-border bg-card p-6"
+          >
+            <h2 className="font-serif text-xl mb-5">Acessos nos últimos 14 dias</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={accessTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar 
+                    dataKey="n" 
+                    name="Acessos" 
+                    fill={GOLD} 
+                    radius={[6, 6, 0, 0]} 
+                    isAnimationActive={true}
+                    animationDuration={1500}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
 
         {/* Disponibilidade por Mês */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
-          className="rounded-2xl border border-border bg-card p-6"
+          className={`rounded-2xl border border-border bg-card p-6 ${!isAdmin ? 'md:col-span-2' : ''}`}
         >
           <h2 className="font-serif text-xl mb-5 text-gold">Disponibilidade por mês</h2>
           <div className="h-64">
@@ -349,40 +350,41 @@ function Dashboard() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        {/* Vozes por naipe */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-2xl border border-border bg-card p-6"
-        >
-          <div className="flex items-center gap-2 mb-5">
-            <Mic2 className="h-4 w-4 text-gold" />
-            <h2 className="font-serif text-xl">Vozes por naipe</h2>
-          </div>
-          {voices.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
-          ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={voices} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="label" width={90} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip {...tooltipStyle} />
-                  <Bar dataKey="n" name="Usuários" fill={GOLD} radius={[0, 6, 6, 0]} isAnimationActive={true} />
-                </BarChart>
-              </ResponsiveContainer>
+        {isAdmin && (
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+            className="rounded-2xl border border-border bg-card p-6"
+          >
+            <div className="flex items-center gap-2 mb-5">
+              <Mic2 className="h-4 w-4 text-gold" />
+              <h2 className="font-serif text-xl">Vozes por naipe</h2>
             </div>
-          )}
-        </motion.div>
+            {voices.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={voices} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <YAxis type="category" dataKey="label" width={90} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip {...tooltipStyle} />
+                    <Bar dataKey="n" name="Usuários" fill={GOLD} radius={[0, 6, 6, 0]} isAnimationActive={true} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Disponibilidade do mês */}
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="rounded-2xl border border-border bg-card p-6"
+          className={`rounded-2xl border border-border bg-card p-6 ${!isAdmin ? 'md:col-span-2' : ''}`}
         >
           <div className="flex items-center gap-2 mb-5">
             <CalendarCheck className="h-4 w-4 text-gold" />
@@ -453,58 +455,60 @@ function Dashboard() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        {/* Badges */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="rounded-2xl border border-border bg-card p-6"
-        >
-          <div className="flex items-center gap-2 mb-5">
-            <Award className="h-4 w-4 text-gold" />
-            <h2 className="font-serif text-xl">Badges concedidos</h2>
-          </div>
-          {badges.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum badge concedido ainda.</p>
-          ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={badges} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} interval={0} />
-                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip {...tooltipStyle} />
-                  <Bar dataKey="n" name="Conquistas" fill={GOLD} radius={[6, 6, 0, 0]} isAnimationActive={true} />
-                </BarChart>
-              </ResponsiveContainer>
+        {isAdmin && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="rounded-2xl border border-border bg-card p-6"
+          >
+            <div className="flex items-center gap-2 mb-5">
+              <Award className="h-4 w-4 text-gold" />
+              <h2 className="font-serif text-xl">Badges concedidos</h2>
             </div>
-          )}
-        </motion.div>
+            {badges.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum badge concedido ainda.</p>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={badges} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} interval={0} />
+                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip {...tooltipStyle} />
+                    <Bar dataKey="n" name="Conquistas" fill={GOLD} radius={[6, 6, 0, 0]} isAnimationActive={true} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </motion.div>
+        )}
 
-        {/* Top cifras */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="rounded-2xl border border-border bg-card p-6"
-        >
-          <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
-          {topSongs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
-          ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topSongs} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="title" width={110} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip {...tooltipStyle} />
-                  <Bar dataKey="n" name="Acessos" fill={GOLD} radius={[0, 6, 6, 0]} isAnimationActive={true} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </motion.div>
+        {isAdmin && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="rounded-2xl border border-border bg-card p-6"
+          >
+            <h2 className="font-serif text-xl mb-5">Cifras mais acessadas</h2>
+            {topSongs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem dados de acesso ainda.</p>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topSongs} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <YAxis type="category" dataKey="title" width={110} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip {...tooltipStyle} />
+                    <Bar dataKey="n" name="Acessos" fill={GOLD} radius={[0, 6, 6, 0]} isAnimationActive={true} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Top usuários */}

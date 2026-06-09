@@ -9,13 +9,13 @@ export const Route = createFileRoute("/login")({ component: LoginPage });
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { session, loading: authLoading, isAdmin } = useAuth();
+  const { session, loading: authLoading, isAdmin, canViewUsers, canManageSchedule } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && session) navigate({ to: isAdmin ? "/app/admin/" : "/app/albums" });
+    if (!authLoading && session) navigate({ to: (isAdmin || canViewUsers || canManageSchedule) ? "/app/admin/" : "/app/albums" });
   }, [authLoading, session, isAdmin, navigate]);
 
   const submit = async (e: React.FormEvent) => {
