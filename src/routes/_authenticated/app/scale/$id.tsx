@@ -116,6 +116,7 @@ function ScaleDetail() {
         
         // Execute assignments sequentially to avoid potential race conditions or middleware issues
         // Execute assignments sequentially to avoid potential race conditions
+        const techCats = (techCatsQ.data as any)?.categories ?? [];
         for (const catId of pickedRoles) {
           try {
             await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } });
