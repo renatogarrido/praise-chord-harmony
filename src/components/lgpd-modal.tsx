@@ -67,7 +67,7 @@ export function LGPDModal() {
             Você pode solicitar a exclusão de sua conta e dados a qualquer momento através do suporte ou de sua liderança local.
           </p>
           <p className="text-xs text-muted-foreground pt-2 italic">
-            Ao clicar em "Aceitar e Continuar", você concorda com o processamento desses dados para as finalidades descritas acima.
+            Ao clicar em "Aceitar e Continuar", você concorda com nossos <Link to="/public/terms" className="text-gold underline font-medium" target="_blank">termos de uso e política de privacidade</Link>.
           </p>
         </div>
 
