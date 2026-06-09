@@ -388,14 +388,16 @@ function Dashboard() {
                         ) : (
                           <>
                             <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
-                              {s.worship_schedule_assignments?.filter((a: any) => 
-                                (profiles.find(p => p.id === a.user_id)?.instruments?.length || 0) > 0
-                              ).length || 0} Músicos
+                              {s.worship_schedule_assignments?.filter((a: any) => {
+                                const p = profiles.find(pr => pr.id === a.user_id);
+                                return p && (p.instruments?.length || 0) > 0;
+                              }).length || 0} Músicos
                             </Badge>
                             <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
-                              {s.worship_schedule_assignments?.filter((a: any) => 
-                                (profiles.find(p => p.id === a.user_id)?.vocal_types?.length || 0) > 0
-                              ).length || 0} Vozes
+                              {s.worship_schedule_assignments?.filter((a: any) => {
+                                const p = profiles.find(pr => pr.id === a.user_id);
+                                return p && (p.vocal_types?.length || 0) > 0;
+                              }).length || 0} Vozes
                             </Badge>
                           </>
                         )}
