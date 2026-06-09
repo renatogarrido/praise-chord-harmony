@@ -113,7 +113,17 @@ function ProfilePage() {
           <ProfileImageUpload 
             userId={user?.id ?? ""} 
             currentImageUrl={avatarUrl} 
-            onImageUploaded={setAvatarUrl}
+            onImageUploaded={(url) => {
+              setAvatarUrl(url);
+              // Auto-save when image is uploaded in profile page
+              supabase
+                .from("profiles")
+                .update({ avatar_url: url } as any)
+                .eq("id", user?.id)
+                .then(({ error }) => {
+                  if (error) toast.error("Erro ao salvar foto no perfil: " + error.message);
+                });
+            }}
             name={fullName || user?.email}
           />
         </div>
