@@ -32,8 +32,10 @@ const adminLinks = [
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user, isAdmin, canViewUsers, canManageLocalLeaders, signOut } = useAuth();
+  const { user, isAdmin, canViewUsers, canManageLocalLeaders, canManageSchedule, signOut } = useAuth();
   const { app_name, logo_url } = useAppSettings();
+
+  const isLeader = canViewUsers || canManageSchedule;
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-border/50 bg-sidebar/80 backdrop-blur-xl">
@@ -67,13 +69,20 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </Section>
         )}
 
-        {!isAdmin && canViewUsers && (
+        {!isAdmin && isLeader && (
           <Section label="Administração">
-            <NavLink to="/app/admin/users" icon={Users}
-              active={pathname.startsWith("/app/admin/users")}
+            <NavLink to="/app/admin" icon={LayoutDashboard}
+              active={pathname === "/app/admin"}
               onClick={onNavigate}>
-              Usuários
+              Dashboard
             </NavLink>
+            {canViewUsers && (
+              <NavLink to="/app/admin/users" icon={Users}
+                active={pathname.startsWith("/app/admin/users")}
+                onClick={onNavigate}>
+                Usuários
+              </NavLink>
+            )}
           </Section>
         )}
 
