@@ -44,7 +44,10 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
         .from('avatars')
         .getPublicUrl(filePath);
 
-      onImageUploaded(publicUrl);
+      // Add a cache-busting timestamp to the URL
+      const finalUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+
+      onImageUploaded(finalUrl);
       toast.success("Foto atualizada!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
