@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   getSchedule, assignUser, unassignUser, listAssignableUsers, deleteSchedule,
-  updateSchedule, listMySetlists,
+  updateSchedule, listMySetlists, assignTechnicalUser, unassignTechnicalUser,
+  listTechnicalCategories,
 } from "@/lib/worship-schedule.functions";
 import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/$id")({ component: ScaleDetail });
@@ -22,6 +23,9 @@ function ScaleDetail() {
   const list = useServerFn(listAssignableUsers);
   const assign = useServerFn(assignUser);
   const unassign = useServerFn(unassignUser);
+  const assignTech = useServerFn(assignTechnicalUser);
+  const unassignTech = useServerFn(unassignTechnicalUser);
+  const listTechCats = useServerFn(listTechnicalCategories);
   const del = useServerFn(deleteSchedule);
   const update = useServerFn(updateSchedule);
   const listSetlistsFn = useServerFn(listMySetlists);
@@ -38,8 +42,10 @@ function ScaleDetail() {
 
 
   const [picker, setPicker] = useState(false);
+  const [pickerType, setPickerType] = useState<"worship" | "technical">("worship");
   const [pickedUser, setPickedUser] = useState<string>("");
   const [pickedRole, setPickedRole] = useState<string>("");
+  const [pickedTechCat, setPickedTechCat] = useState<string>("");
   const [search, setSearch] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
@@ -49,6 +55,7 @@ function ScaleDetail() {
   const [editNotes, setEditNotes] = useState("");
   const [editSetlist, setEditSetlist] = useState("");
   const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => listSetlistsFn(), enabled: editOpen });
+  const techCatsQ = useQuery({ queryKey: ["technical-categories"], queryFn: () => listTechCats(), enabled: picker && pickerType === "technical" });
 
   const detail = detailQ.data as any;
   const users: any[] = (usersQ.data as any)?.users ?? [];
@@ -72,18 +79,34 @@ function ScaleDetail() {
     : [];
 
   const doAssign = async () => {
-    if (!pickedUser || !pickedRole.trim()) return toast.error("Escolha usuário e função.");
-    try {
-      await assign({ data: { scheduleId: id, userId: pickedUser, roleLabel: pickedRole.trim() } });
-      toast.success("Escalado! Notificação enviada.");
-      setPicker(false); setPickedUser(""); setPickedRole(""); setSearch("");
-      detailQ.refetch();
-    } catch (e: any) { toast.error(e.message || "Erro"); }
+    if (pickerType === "worship") {
+      if (!pickedUser || !pickedRole.trim()) return toast.error("Escolha usuário e função.");
+      try {
+        await assign({ data: { scheduleId: id, userId: pickedUser, roleLabel: pickedRole.trim() } });
+        toast.success("Escalado! Notificação enviada.");
+        setPicker(false); setPickedUser(""); setPickedRole(""); setSearch("");
+        detailQ.refetch();
+      } catch (e: any) { toast.error(e.message || "Erro"); }
+    } else {
+      if (!pickedUser || !pickedTechCat) return toast.error("Escolha colaborador e função técnica.");
+      try {
+        await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: pickedTechCat } });
+        toast.success("Colaborador técnico escalado!");
+        setPicker(false); setPickedUser(""); setPickedTechCat(""); setSearch("");
+        detailQ.refetch();
+      } catch (e: any) { toast.error(e.message || "Erro"); }
+    }
   };
 
-  const doUnassign = async (aid: string) => {
-    if (!confirm("Remover este músico da escala?")) return;
-    try { await unassign({ data: { assignmentId: aid } }); toast.success("Removido."); detailQ.refetch(); }
+  const doUnassign = async (aid: string, type: "worship" | "technical") => {
+    const msg = type === "worship" ? "Remover este músico da escala?" : "Remover este colaborador técnico?";
+    if (!confirm(msg)) return;
+    try { 
+      if (type === "worship") await unassign({ data: { assignmentId: aid } });
+      else await unassignTech({ data: { assignmentId: aid } });
+      toast.success("Removido."); 
+      detailQ.refetch(); 
+    }
     catch (e: any) { toast.error(e.message || "Erro"); }
   };
 
@@ -129,10 +152,15 @@ function ScaleDetail() {
 
   const s = detail.schedule;
   const assignments: any[] = detail.assignments ?? [];
+  const techAssignments: any[] = detail.techAssignments ?? [];
   const setlistSongs: any[] = detail.setlistSongs ?? [];
 
   // Group assignments by role for nicer display
   const grouped = assignments.reduce((acc: Record<string, any[]>, a) => {
+    (acc[a.role_label] ||= []).push(a); return acc;
+  }, {});
+
+  const techGrouped = techAssignments.reduce((acc: Record<string, any[]>, a) => {
     (acc[a.role_label] ||= []).push(a); return acc;
   }, {});
 
@@ -168,9 +196,9 @@ function ScaleDetail() {
         {/* Escalados */}
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-serif text-xl">Equipe escalada</h2>
+            <h2 className="font-serif text-xl">Músicos e Vozes</h2>
             {canManageSchedule && (
-              <button onClick={() => setPicker(true)} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary-foreground">
+              <button onClick={() => { setPickerType("worship"); setPicker(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary-foreground">
                 <UserPlus className="h-3.5 w-3.5" /> Escalar
               </button>
             )}
@@ -190,7 +218,44 @@ function ScaleDetail() {
                           {a.church_name && <p className="text-[10px] text-muted-foreground truncate">{a.church_name}</p>}
                         </div>
                         {canManageSchedule && (
-                          <button onClick={() => doUnassign(a.id)} className="p-1 text-muted-foreground hover:text-destructive">
+                          <button onClick={() => doUnassign(a.id, "worship")} className="p-1 text-muted-foreground hover:text-destructive">
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Equipe Técnica */}
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-serif text-xl">Equipe Técnica</h2>
+            {canManageSchedule && (
+              <button onClick={() => { setPickerType("technical"); setPicker(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-white">
+                <Settings2 className="h-3.5 w-3.5" /> Escalar Técnica
+              </button>
+            )}
+          </div>
+          {techAssignments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Ninguém escalado para técnica.</p>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(techGrouped).map(([role, list]) => (
+                <div key={role}>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 font-bold">{role}</p>
+                  <div className="space-y-1.5">
+                    {(list as any[]).map((a) => (
+                      <div key={a.id} className="flex items-center justify-between rounded-lg bg-background border border-border px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="text-sm truncate font-medium">{a.full_name ?? "Sem nome"}</p>
+                        </div>
+                        {canManageSchedule && (
+                          <button onClick={() => doUnassign(a.id, "technical")} className="p-1 text-muted-foreground hover:text-destructive">
                             <X className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -234,7 +299,7 @@ function ScaleDetail() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setPicker(false)}>
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-2xl">Escalar músico / vocal</h3>
+              <h3 className="font-serif text-2xl">{pickerType === "worship" ? "Escalar músico / vocal" : "Escalar equipe técnica"}</h3>
               <button onClick={() => setPicker(false)} className="p-1"><X className="h-4 w-4" /></button>
             </div>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou igreja…"
@@ -262,23 +327,39 @@ function ScaleDetail() {
               {filteredUsers.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhum usuário.</p>}
             </div>
 
-            <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Função</label>
-            {availableRoles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {availableRoles.map((r) => (
-                  <button key={r} type="button" onClick={() => setPickedRole(r)}
-                    className={`rounded-full px-3 py-1 text-[11px] border ${pickedRole === r ? "bg-gold text-primary-foreground border-gold" : "border-border text-muted-foreground hover:text-foreground"}`}>
-                    {r}
-                  </button>
-                ))}
+            {pickerType === "worship" ? (
+              <>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Função</label>
+                {availableRoles.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {availableRoles.map((r) => (
+                      <button key={r} type="button" onClick={() => setPickedRole(r)}
+                        className={`rounded-full px-3 py-1 text-[11px] border ${pickedRole === r ? "bg-gold text-primary-foreground border-gold" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <input value={pickedRole} onChange={(e) => setPickedRole(e.target.value)} placeholder="Ex: Violão, Vocal Soprano…"
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm mb-4 focus:border-gold/50 focus:outline-none" />
+              </>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Função Técnica</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {((techCatsQ.data as any)?.categories ?? []).map((c: any) => (
+                    <button key={c.id} type="button" onClick={() => setPickedTechCat(c.id)}
+                      className={`rounded-full px-3 py-1 text-[11px] border ${pickedTechCat === c.id ? "bg-slate-700 text-white border-slate-700" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-            <input value={pickedRole} onChange={(e) => setPickedRole(e.target.value)} placeholder="Ex: Violão, Vocal Soprano…"
-              className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm mb-4 focus:border-gold/50 focus:outline-none" />
             <div className="flex justify-end gap-2">
               <button onClick={() => setPicker(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest">Cancelar</button>
               <button onClick={doAssign} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
-                <Plus className="h-3.5 w-3.5" /> Escalar
+                <Plus className="h-3.5 w-3.5" /> {pickerType === "worship" ? "Escalar" : "Escalar Técnica"}
               </button>
             </div>
           </div>
