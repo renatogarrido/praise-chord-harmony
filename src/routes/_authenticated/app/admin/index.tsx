@@ -371,12 +371,32 @@ function Dashboard() {
                     </div>
                     {!isSimplified && (
                       <div className="flex flex-wrap gap-1 mt-3">
-                        <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
-                          {s.worship_schedule_assignments?.length || 0} Músicos
-                        </Badge>
-                        <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
-                          {s.technical_team_assignments?.length || 0} Técnica
-                        </Badge>
+                        {isTech ? (
+                          <>
+                            <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '10229a18-0bf0-4519-90c6-a4e825f4f4df').length || 0} Som
+                            </Badge>
+                            <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '1937ff02-5ecf-4985-83a3-968e1d9db8ba').length || 0} Luz
+                            </Badge>
+                            <Badge variant="secondary" className="text-[9px] bg-slate-500/10 text-slate-500 border-none">
+                              {s.technical_team_assignments?.filter((a: any) => a.category_id === '5f26bc5d-f944-487f-9e9d-845e48610b93').length || 0} Telão
+                            </Badge>
+                          </>
+                        ) : (
+                          <>
+                            <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
+                              {s.worship_schedule_assignments?.filter((a: any) => 
+                                (profiles.find(p => p.id === a.user_id)?.instruments?.length || 0) > 0
+                              ).length || 0} Músicos
+                            </Badge>
+                            <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
+                              {s.worship_schedule_assignments?.filter((a: any) => 
+                                (profiles.find(p => p.id === a.user_id)?.vocal_types?.length || 0) > 0
+                              ).length || 0} Vozes
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
