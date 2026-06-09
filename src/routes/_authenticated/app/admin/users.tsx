@@ -33,7 +33,7 @@ function AdminUsers() {
   const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
   const { groups: instrumentGroups, reload: reloadInstruments } = useInstrumentGroups();
   const { groups: vocalGroups, reload: reloadVocals } = useVocalGroups();
-  const { groups: technicalGroups, reload: reloadTechnical } = useTechnicalGroups();
+  const [technicalCategories, setTechnicalCategories] = useState<{ id: string, name: string }[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
@@ -220,7 +220,15 @@ function AdminUsers() {
           </Button>
           {isAdmin && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              if (open) { reloadInstruments(); reloadVocals(); reloadTechnical(); }
+              if (open) { 
+                reloadInstruments(); 
+                reloadVocals(); 
+                import("@/integrations/supabase/client").then(({ supabase }) => {
+                  supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
+                    if (data) setTechnicalCategories(data as any);
+                  });
+                });
+              }
               setIsDialogOpen(open);
               if (!open) {
                 setEditingId(null);
@@ -327,7 +335,7 @@ function AdminUsers() {
               <div className="space-y-2">
                 <Label>Equipe Técnica</Label>
                 <MusicianMultiSelect
-                  groups={technicalGroups}
+                  groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
                   placeholder="Escolher funções técnicas…"
