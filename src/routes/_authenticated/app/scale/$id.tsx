@@ -213,6 +213,7 @@ function ScaleDetail() {
   }, {});
 
   const isTechnical = s.title.toLowerCase().includes("técnica") || from === "technical";
+  const backUrl = from === "technical" ? "/app/technical-scale" : "/app/scale";
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
