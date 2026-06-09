@@ -62,7 +62,11 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: { ideal: 400 }, height: { ideal: 400 } } 
+        video: { 
+          facingMode: "user", 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 } 
+        } 
       });
       setCameraStream(stream);
       setShowCamera(true);
