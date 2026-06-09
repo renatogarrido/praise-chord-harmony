@@ -174,7 +174,7 @@ function AdminUsers() {
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
-            technicalRoles,
+            technicalRoles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
           },
         });
         toast.success("Usuário atualizado com sucesso!");
@@ -188,7 +188,7 @@ function AdminUsers() {
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
-            technicalRoles,
+            technicalRoles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
           },
         });
         toast.success("Usuário criado com sucesso!");
