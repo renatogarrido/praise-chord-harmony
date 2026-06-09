@@ -111,14 +111,14 @@ function ScaleDetail() {
     } else {
       if (!pickedUser || pickedRoles.length === 0) return toast.error("Escolha colaborador e pelo menos uma função técnica.");
       try {
-        // Find categories for labels
-        const techCats = (techCatsQ.data as any)?.categories ?? [];
-        
-        // Execute assignments sequentially to avoid potential race conditions or middleware issues
-        // Execute assignments sequentially to avoid potential race conditions or middleware issues
+        const categories = (techCatsQ.data as any)?.categories ?? [];
         for (const catId of pickedRoles) {
-          console.log(`Assigning tech cat ${catId} to user ${pickedUser} for schedule ${id}`);
-          await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } });
+          try {
+            await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } });
+          } catch (innerErr: any) {
+            console.error(`Error assigning role ${catId}:`, innerErr);
+            throw new Error(`Erro na função ${categories.find((c: any) => c.id === catId)?.name || 'técnica'}: ${innerErr.message}`);
+          }
         }
         
         toast.success("Colaborador técnico escalado!");
