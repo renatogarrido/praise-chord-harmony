@@ -10,7 +10,7 @@ import {
 import { listAvailableUserIdsFor } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2, Check, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/scale/$id")({ 
@@ -533,34 +533,76 @@ function ScaleDetail() {
                 </div>
                 
                 {showNewSetlistForm ? (
-                  <div className="flex gap-2">
-                    <input 
-                      value={newSetlistName} 
-                      onChange={(e) => setNewSetlistName(e.target.value)}
-                      placeholder="Nome do repertório"
-                      className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm focus:border-gold/50 focus:outline-none"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleCreateSetlist();
-                        }
-                        if (e.key === 'Escape') {
+                  <div className="space-y-3 p-3 border rounded-xl bg-muted/30">
+                    <div className="flex gap-2">
+                      <input 
+                        value={newSetlistName} 
+                        onChange={(e) => setNewSetlistName(e.target.value)}
+                        placeholder="Nome do repertório"
+                        className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm focus:border-gold/50 focus:outline-none"
+                        autoFocus
+                      />
+                      <button 
+                        type="button" 
+                        className="rounded-full bg-gold p-2 text-primary-foreground disabled:opacity-50"
+                        onClick={handleCreateSetlist}
+                        disabled={busySetlist}
+                      >
+                        {busySetlist ? <Music2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="p-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
                           setShowNewSetlistForm(false);
                           setNewSetlistName("");
-                        }
-                      }}
-                    />
-                    <button 
-                      type="button" 
-                      className="rounded-full bg-gold p-2 text-primary-foreground disabled:opacity-50"
-                      onClick={handleCreateSetlist}
-                      disabled={busySetlist}
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button 
-                      type="button" 
+                          setSelectedSongs([]);
+                          setSongSearch("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <input 
+                          value={songSearch}
+                          onChange={(e) => setSongSearch(e.target.value)}
+                          placeholder="Buscar músicas..."
+                          className="w-full rounded-full border border-border bg-background pl-9 pr-4 py-1.5 text-xs focus:border-gold/50 focus:outline-none"
+                        />
+                      </div>
+                      
+                      <div className="max-h-32 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                        {filteredSongsList.map((song: any) => (
+                          <div 
+                            key={song.id}
+                            onClick={() => toggleSongSelection(song.id)}
+                            className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors text-xs ${
+                              selectedSongs.includes(song.id) 
+                                ? "bg-gold/10 border-gold/40" 
+                                : "bg-background hover:bg-muted"
+                            }`}
+                          >
+                            <span className="truncate">{song.title}</span>
+                            {selectedSongs.includes(song.id) && <Check className="h-3 w-3 text-gold" />}
+                          </div>
+                        ))}
+                        {filteredSongsList.length === 0 && (
+                          <p className="text-[10px] text-center text-muted-foreground py-2">Nenhuma música encontrada.</p>
+                        )}
+                      </div>
+                      
+                      {selectedSongs.length > 0 && (
+                        <p className="text-[10px] text-gold font-medium">
+                          {selectedSongs.length} {selectedSongs.length === 1 ? 'música selecionada' : 'músicas selecionadas'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
                       className="rounded-full border border-border p-2"
                       onClick={() => {
                         setShowNewSetlistForm(false);
