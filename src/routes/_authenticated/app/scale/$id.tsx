@@ -214,6 +214,7 @@ function ScaleDetail() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Escalados */}
+        {(!s.title.toLowerCase().includes("técnica") || assignments.length > 0) && (
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-xl">Músicos e Vozes</h2>
@@ -250,8 +251,9 @@ function ScaleDetail() {
             </div>
           )}
         </section>
+        )}
 
-        {/* Equipe Técnica */}
+        {(s.title.toLowerCase().includes("técnica") || techAssignments.length > 0) && (
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-xl">Equipe Técnica</h2>
@@ -287,6 +289,7 @@ function ScaleDetail() {
             </div>
           )}
         </section>
+        )}
 
         {/* Repertório */}
         <section className="rounded-2xl border border-border bg-card p-6">
