@@ -106,10 +106,10 @@ function ScaleDetail() {
         // Find categories for labels
         const techCats = (techCatsQ.data as any)?.categories ?? [];
         
-        // Execute assignments for each selected role
-        await Promise.all(pickedRoles.map(catId => 
-          assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } })
-        ));
+        // Execute assignments sequentially to avoid potential race conditions or middleware issues
+        for (const catId of pickedRoles) {
+          await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } });
+        }
         
         toast.success("Colaborador técnico escalado!");
         setPicker(false); setPickedUser(""); setPickedRoles([]); setSearch("");
