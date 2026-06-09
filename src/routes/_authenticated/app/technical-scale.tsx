@@ -92,6 +92,12 @@ function TechnicalScalePage() {
     return d >= now;
   }).sort((a, b) => new Date(a.service_date).getTime() - new Date(b.service_date).getTime());
 
+  useEffect(() => {
+    if (open && isLocal && !isAdmin && !isNacional && !isEstadual && myChurch) {
+      setChurchName(myChurch);
+    }
+  }, [open, isLocal, isAdmin, isNacional, isEstadual, myChurch]);
+
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date) return toast.error("Preencha título e data.");
