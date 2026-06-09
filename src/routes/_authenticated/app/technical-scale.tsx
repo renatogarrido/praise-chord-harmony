@@ -235,7 +235,10 @@ function TechnicalScalePage() {
                                 variant="link" 
                                 size="sm" 
                                 className="h-auto p-0 text-xs text-gold mt-2"
-                                onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id }, search: { from: "technical" } })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  nav({ to: "/app/scale/$id", params: { id: s.id }, search: { from: "technical" } });
+                                }}
                               >
                                 Abrir escala completa <ArrowRight className="w-3 h-3 ml-1" />
                               </Button>

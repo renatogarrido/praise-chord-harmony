@@ -112,16 +112,23 @@ function ScaleDetail() {
       if (!pickedUser || pickedRoles.length === 0) return toast.error("Escolha colaborador e pelo menos uma função técnica.");
       try {
         const categories = (techCatsQ.data as any)?.categories ?? [];
+        console.log("Categorias carregadas:", categories);
+        console.log("IDs selecionados:", pickedRoles);
         
-        // Execute assignments sequentially to avoid race conditions or potential bulk issues
-        // and to give clear feedback if one fails.
         for (const catId of pickedRoles) {
-          const catName = categories.find((c: any) => c.id === catId)?.name || 'técnica';
+          const category = categories.find((c: any) => c.id === catId);
+          const catName = category?.name || 'técnica';
+          
+          if (!category) {
+            console.error(`Categoria não encontrada localmente para o ID: ${catId}`);
+            throw new Error(`Erro: A função "${catId}" não é válida.`);
+          }
+
           try {
+            console.log(`Tentando escalar: user=${pickedUser}, category=${catId} (${catName})`);
             await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } });
           } catch (innerErr: any) {
-            console.error(`Error assigning role ${catName} (${catId}):`, innerErr);
-            // Don't swallow the error, throw it to be caught by the outer catch
+            console.error(`Erro ao escalar função ${catName} (${catId}):`, innerErr);
             throw new Error(`Erro na função ${catName}: ${innerErr.message || 'Tente novamente.'}`);
           }
         }
@@ -206,11 +213,12 @@ function ScaleDetail() {
   }, {});
 
   const isTechnical = s.title.toLowerCase().includes("técnica") || from === "technical";
+  const backUrl = from === "technical" ? "/app/technical-scale" : "/app/scale";
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
-      <Link to={isTechnical ? "/app/technical-scale" : "/app/scale"} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> {isTechnical ? "Escala Técnica" : "Escala"}
+      <Link to={backUrl} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold mb-6">
+        <ArrowLeft className="h-3.5 w-3.5" /> {from === "technical" ? "Escala Técnica" : "Escala de Louvor"}
       </Link>
 
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
