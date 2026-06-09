@@ -138,12 +138,13 @@ export const listAvailableUserIdsFor = createServerFn({ method: "POST" })
   });
 
 // ---------- AUTO-GENERATE MONTH (Sundays × 4 services) ----------
-export const generateMonthlySundays = createServerFn({ method: "POST" })
+export const generateMonthlySchedules = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
     z.object({
       year: z.number().int().min(2024).max(2100),
       month: z.number().int().min(1).max(12),
+      includeWeekdays: z.boolean().default(false),
       churchName: z.string().max(255).optional().nullable(),
       sundaySetlists: z
         .record(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.string().uuid().nullable())
@@ -227,12 +228,15 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       return !!ch && allowedChurchNames.includes(ch);
     });
 
-    // 3. Build list of Sundays in the month
-    const sundays: Date[] = [];
+    // 3. Build list of days to generate in the month
+    const targetDates: Date[] = [];
     const last = new Date(data.year, data.month, 0).getDate();
     for (let d = 1; d <= last; d++) {
       const dt = new Date(data.year, data.month - 1, d);
-      if (dt.getDay() === 0) sundays.push(dt);
+      const dow = dt.getDay(); // 0=Sun
+      if (dow === 0 || data.includeWeekdays) {
+        targetDates.push(dt);
+      }
     }
 
     // Resolve setlist names (admin client — setlists are owner-scoped via RLS)
@@ -255,23 +259,38 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
     let createdSchedules = 0;
     let createdAssignments = 0;
 
-    for (const sun of sundays) {
-      const ymd = `${sun.getFullYear()}-${String(sun.getMonth() + 1).padStart(2, "0")}-${String(sun.getDate()).padStart(2, "0")}`;
+    for (const day of targetDates) {
+      const ymd = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
       const sundaySetlist = setlistNameByDate.get(ymd) ?? null;
+      const dow = day.getDay();
 
-      // Map service time -> [userIds] FOR THIS SUNDAY
+      // Map service time -> [userIds] FOR THIS DATE
       const byService = new Map<string, string[]>();
-      for (const t of SUNDAY_SERVICES) byService.set(t, []);
-      for (const a of scopedAvs) {
-        const list = sundayTimesFor((a as any).sunday_services, ymd);
-        for (const t of list) {
-          if (byService.has(t)) byService.get(t)!.push(a.user_id);
+      
+      if (dow === 0) {
+        // SUNDAY SERVICES
+        for (const t of SUNDAY_SERVICES) byService.set(t, []);
+        for (const a of scopedAvs) {
+          const list = sundayTimesFor((a as any).sunday_services, ymd);
+          for (const t of list) {
+            if (byService.has(t)) byService.get(t)!.push(a.user_id);
+          }
+        }
+      } else {
+        // WEEKDAY SERVICES (using user preferred time start)
+        for (const a of scopedAvs) {
+          const wk = (a as any).weekdays ?? {};
+          const slot = wk[String(dow)];
+          if (slot && slot.start) {
+            if (!byService.has(slot.start)) byService.set(slot.start, []);
+            byService.get(slot.start)!.push(a.user_id);
+          }
         }
       }
 
-      for (const time of SUNDAY_SERVICES) {
+      for (const [time, userIds] of byService.entries()) {
         const [hh, mm] = time.split(":").map(Number);
-        const serviceDate = new Date(sun);
+        const serviceDate = new Date(day);
         serviceDate.setHours(hh, mm, 0, 0);
         const iso = serviceDate.toISOString();
 
@@ -294,7 +313,7 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
               .eq("id", scheduleId);
           }
         } else {
-          const title = `Culto ${time} — ${sun.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}`;
+          const title = `Culto ${time} — ${day.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}`;
           const { data: ins, error: insErr } = await supabase
             .from("worship_schedules")
             .insert({
@@ -352,5 +371,5 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
       }
     }
 
-    return { createdSchedules, createdAssignments, sundayCount: sundays.length };
+    return { createdSchedules, createdAssignments, dayCount: targetDates.length };
   });

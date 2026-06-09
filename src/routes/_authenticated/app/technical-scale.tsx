@@ -3,16 +3,20 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Settings, Users, Calendar, Music2, Plus, Trash2, Wand2, ArrowRight } from "lucide-react";
+import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listSchedules, createSchedule, deleteSchedule } from "@/lib/worship-schedule.functions";
-import { generateMonthlySundays } from "@/lib/availability.functions";
+import { listSchedules, createSchedule, deleteSchedule, getSchedule } from "@/lib/worship-schedule.functions";
+import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/app/technical-scale")({
   component: TechnicalScalePage,
@@ -24,7 +28,7 @@ function TechnicalScalePage() {
   const list = useServerFn(listSchedules);
   const create = useServerFn(createSchedule);
   const del = useServerFn(deleteSchedule);
-  const gen = useServerFn(generateMonthlySundays);
+  const gen = useServerFn(generateMonthlySchedules);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules", "technical"], queryFn: () => list() });
 
@@ -34,6 +38,8 @@ function TechnicalScalePage() {
   const [time, setTime] = useState("19:00");
   const [churchName, setChurchName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [includeWeekdays, setIncludeWeekdays] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const schedules: any[] = (data as any)?.schedules ?? [];
   const upcoming = schedules.filter((s) => new Date(s.service_date) >= new Date());
@@ -55,11 +61,11 @@ function TechnicalScalePage() {
   };
 
   const handleGenerate = async () => {
-    if (!confirm("Isso gerará as escalas para os domingos do mês atual com base na disponibilidade. Continuar?")) return;
+    if (!confirm(`Isso gerará as escalas para ${includeWeekdays ? "todos os dias" : "os domingos"} do mês atual com base na disponibilidade. Continuar?`)) return;
     setBusy(true);
     try {
       const now = new Date();
-      const r: any = await gen({ data: { year: now.getFullYear(), month: now.getMonth() + 1 } });
+      const r: any = await gen({ data: { year: now.getFullYear(), month: now.getMonth() + 1, includeWeekdays } });
       toast.success(`Geradas ${r.createdSchedules} escalas técnicas automáticas.`);
       refetch();
     } catch (e: any) {
@@ -82,22 +88,33 @@ function TechnicalScalePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
           <div>
             <h1 className="font-serif text-4xl text-gold mb-2">Escala Técnica</h1>
             <p className="text-muted-foreground">Gerenciamento da equipe de som, iluminação e telão.</p>
           </div>
           {canManageSchedule && (
-            <div className="flex flex-wrap gap-3">
-              <Button 
-                variant="outline" 
-                className="gap-2 border-gold/40 text-gold hover:bg-gold/10"
-                onClick={handleGenerate}
-                disabled={busy}
-              >
-                <Wand2 className="h-4 w-4" />
-                {busy ? "Gerando..." : "Gerar Escala Automática"}
-              </Button>
+            <div className="flex flex-col gap-3 items-end">
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center space-x-2 mr-4 bg-card/40 p-2 rounded-lg border border-border/30">
+                  <Checkbox 
+                    id="includeWeekdays" 
+                    checked={includeWeekdays} 
+                    onCheckedChange={(checked) => setIncludeWeekdays(!!checked)}
+                  />
+                  <Label htmlFor="includeWeekdays" className="text-xs cursor-pointer">Segunda a Sábado</Label>
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 border-gold/40 text-gold hover:bg-gold/10"
+                  onClick={handleGenerate}
+                  disabled={busy}
+                >
+                  <Wand2 className="h-4 w-4" />
+                  {busy ? "Gerando..." : "Gerar Escala Automática"}
+                </Button>
+
+              </div>
 
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
@@ -138,6 +155,90 @@ function TechnicalScalePage() {
               </Dialog>
             </div>
           )}
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-[350px_1fr] mb-12">
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
+            <CardHeader>
+              <CardTitle className="text-lg font-serif flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gold" />
+                Calendário de Escalas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 flex justify-center pb-4">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(val) => setSelectedDate(val)}
+                className="rounded-md"
+                locale={undefined} // Falls back to default, pt-BR would be nice if imported
+              />
+            </CardContent>
+          </Card>
+
+          <div className="space-y-6">
+            <Card className="bg-card/30 backdrop-blur-sm border-border/30 border-dashed">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-serif">
+                  {selectedDate ? (
+                    `Escalados para: ${selectedDate.toLocaleDateString("pt-BR", { dateStyle: "long" })}`
+                  ) : "Selecione uma data"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[280px]">
+                  {selectedDate ? (() => {
+                    const dateStr = selectedDate.toISOString().split("T")[0];
+                    const daySchedules = schedules.filter(s => s.service_date.startsWith(dateStr));
+                    
+                    if (daySchedules.length === 0) {
+                      return <p className="text-sm text-muted-foreground text-center py-10">Nenhuma escala para este dia.</p>;
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {daySchedules.map(s => {
+                          // Note: the listSchedules fn doesn't include technical assignments in the main list yet,
+                          // but for simplicity in this view we can show what we have or just link to detail.
+                          // Actually, I should probably update listSchedules to include technical info if I want it here.
+                          return (
+                            <div key={s.id} className="border-b border-border/50 pb-4 last:border-0 last:pb-0">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-gold">{s.title}</h4>
+                                <Badge variant="outline" className="text-[10px] capitalize">
+                                  {new Date(s.service_date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {/* For now showing names if assignments are loaded */}
+                                {s.worship_schedule_assignments?.length > 0 ? (
+                                  s.worship_schedule_assignments.map((a: any) => (
+                                    <Badge key={a.id} variant="secondary" className="bg-secondary/50 text-[10px]">
+                                      {a.role_label}: {a.user_id.slice(0, 5)}...
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Ver detalhes para lista completa</span>
+                                )}
+                              </div>
+                              <Button 
+                                variant="link" 
+                                size="sm" 
+                                className="h-auto p-0 text-xs text-gold mt-2"
+                                onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}
+                              >
+                                Abrir escala completa <ArrowRight className="w-3 h-3 ml-1" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })() : null}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-10">

@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listSchedules, createSchedule, deleteSchedule, listMySetlists } from "@/lib/worship-schedule.functions";
-import { generateMonthlySundays } from "@/lib/availability.functions";
+import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarDays, Plus, Trash2, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -186,7 +186,7 @@ function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
 }
 
 function GenerateMonthButton({ onDone }: { onDone: () => void }) {
-  const gen = useServerFn(generateMonthlySundays);
+  const gen = useServerFn(generateMonthlySchedules);
   const setlistsFn = useServerFn(listMySetlists);
   const today = new Date();
   const [open, setOpen] = useState(false);
@@ -231,8 +231,8 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
       // Strip empty selections
       const payloadSetlists: Record<string, string> = {};
       for (const [k, v] of Object.entries(sundaySetlists)) if (v) payloadSetlists[k] = v;
-      const r: any = await gen({ data: { year, month, churchName: null, sundaySetlists: payloadSetlists } });
-      toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.sundayCount} domingos.`);
+      const r: any = await gen({ data: { year, month, churchName: null, sundaySetlists: payloadSetlists, includeWeekdays: false } });
+      toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.dayCount} dias.`);
       setOpen(false);
       setSundaySetlists({});
       onDone();
