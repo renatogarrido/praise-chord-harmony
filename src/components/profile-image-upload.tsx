@@ -28,33 +28,41 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   const uploadFile = async (file: File) => {
     try {
       setIsUploading(true);
-      
-      // Optimize image if possible or just upload
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${fileName}`;
+
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      console.log("[ProfileImage] Uploading to:", fileName, "size:", file.size);
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
+        .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: true,
+          contentType: file.type || 'image/jpeg',
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("[ProfileImage] Upload error:", uploadError);
+        throw uploadError;
+      }
 
-      // Create a long-lived signed URL (1 year) since the bucket is private
       const { data: signed, error: signErr } = await supabase.storage
         .from('avatars')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
-      if (signErr || !signed?.signedUrl) throw signErr || new Error('Falha ao gerar URL');
+      if (signErr || !signed?.signedUrl) {
+        console.error("[ProfileImage] Sign error:", signErr);
+        throw signErr || new Error('Falha ao gerar URL');
+      }
+
+      console.log("[ProfileImage] Signed URL generated:", signed.signedUrl);
 
       onImageUploaded(signed.signedUrl);
       toast.success("Foto atualizada!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
-      toast.error("Erro ao fazer upload da imagem.");
+      toast.error("Erro ao fazer upload: " + (error?.message || "desconhecido"));
     } finally {
       setIsUploading(false);
     }
@@ -121,7 +129,7 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative group">
-        <Avatar className="h-24 w-24 border-2 border-gold/20">
+        <Avatar key={currentImageUrl || 'empty'} className="h-24 w-24 border-2 border-gold/20">
           <AvatarImage src={currentImageUrl || undefined} className="object-cover" />
           <AvatarFallback className="bg-gold-soft text-gold text-2xl font-serif">
             {name ? name[0].toUpperCase() : "?"}
