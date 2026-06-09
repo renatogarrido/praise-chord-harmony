@@ -217,8 +217,8 @@ function ScaleDetail() {
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
-      <Link to={isTechnical ? "/app/technical-scale" : "/app/scale"} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> {isTechnical ? "Escala Técnica" : "Escala"}
+      <Link to={backUrl} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold mb-6">
+        <ArrowLeft className="h-3.5 w-3.5" /> {from === "technical" ? "Escala Técnica" : "Escala de Louvor"}
       </Link>
 
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
