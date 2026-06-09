@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { useInstrumentGroups, useVocalGroups, useTechnicalGroups } from "@/hooks/use-instrument-groups";
+import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
+import { ProfileImageUpload } from "@/components/profile-image-upload";
 
 export const Route = createFileRoute("/signup")({ component: SignupPage });
 
@@ -20,6 +21,8 @@ function SignupPage() {
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [tempUserId] = useState(() => `temp-${Math.random().toString(36).substring(2, 15)}`);
   const [loading, setLoading] = useState(false);
   const { groups: instrumentGroups } = useInstrumentGroups();
   const { groups: vocalGroups } = useVocalGroups();
@@ -58,6 +61,7 @@ function SignupPage() {
         .from("profiles")
         .update({
           full_name: name.trim().slice(0, 255),
+          avatar_url: avatarUrl || null,
           church_name: churchName.trim().slice(0, 255) || null,
           instruments,
           vocal_types: vocalTypes,
@@ -81,6 +85,14 @@ function SignupPage() {
         <div className="rounded-2xl border border-border bg-card p-8">
           <h1 className="font-serif text-2xl mb-6">Criar conta</h1>
           <form onSubmit={submit} className="space-y-4">
+            <div className="flex justify-center mb-6">
+              <ProfileImageUpload 
+                userId={tempUserId} 
+                currentImageUrl={avatarUrl} 
+                onImageUploaded={(url) => setAvatarUrl(url)}
+                name={name || "Novo Usuário"}
+              />
+            </div>
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Nome</label>
               <input required value={name} onChange={(e) => setName(e.target.value)}

@@ -292,7 +292,7 @@ function AdminUsers() {
             <form onSubmit={handleSaveUser} className="space-y-4 pt-4">
               <div className="flex justify-center pb-4 border-b border-border">
                 <ProfileImageUpload 
-                  userId={editingId || "new-user"} 
+                  userId={editingId || `new-${Math.random().toString(36).substring(2, 10)}`} 
                   currentImageUrl={formData.avatarUrl} 
                   onImageUploaded={async (url) => {
                     setFormData(prev => ({ ...prev, avatarUrl: url }));
