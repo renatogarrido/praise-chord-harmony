@@ -75,12 +75,27 @@ export const VOCAL_GROUPS: MusicianGroup[] = [
   },
 ];
 
+export const TECHNICAL_GROUPS: MusicianGroup[] = [
+  {
+    label: "Equipe Técnica",
+    options: [
+      { value: "tecnico_som", label: "Técnico de Som" },
+      { value: "iluminacao", label: "Iluminação" },
+      { value: "telao", label: "Telão" },
+    ],
+  },
+];
+
 const allInstruments = INSTRUMENT_GROUPS.flatMap((g) => g.options);
 const allVocals = VOCAL_GROUPS.flatMap((g) => g.options);
+const allTechnical = TECHNICAL_GROUPS.flatMap((g) => g.options);
 
 export function instrumentLabel(value: string) {
   return allInstruments.find((o) => o.value === value)?.label ?? value;
 }
 export function vocalLabel(value: string) {
   return allVocals.find((o) => o.value === value)?.label ?? value;
+}
+export function technicalLabel(value: string) {
+  return allTechnical.find((o) => o.value === value)?.label ?? value;
 }
