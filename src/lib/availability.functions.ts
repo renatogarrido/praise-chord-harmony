@@ -203,16 +203,17 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
     if (avErr) throwSafe("read monthly availability", avErr);
 
     const allIds = Array.from(new Set((avsRaw ?? []).map((a: any) => a.user_id)));
-    let profileMap = new Map<string, { instruments: string[]; vocal_types: string[]; church_name: string | null }>();
+    let profileMap = new Map<string, { instruments: string[]; vocal_types: string[]; technical_roles: string[]; church_name: string | null }>();
     if (allIds.length > 0) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id, instruments, vocal_types, church_name")
+        .select("id, instruments, vocal_types, technical_roles, church_name")
         .in("id", allIds);
       (profs ?? []).forEach((p: any) =>
         profileMap.set(p.id, {
           instruments: p.instruments ?? [],
           vocal_types: p.vocal_types ?? [],
+          technical_roles: p.technical_roles ?? [],
           church_name: p.church_name ?? null,
         })
       );
@@ -314,20 +315,39 @@ export const generateMonthlySundays = createServerFn({ method: "POST" })
 
         // Auto-assign available users by their profile roles
         const userIds = byService.get(time) ?? [];
-        for (const uid of userIds) {
+        
+        // Fetch technical categories for auto-assignment
+        const { data: techCats } = await supabase.from("technical_categories").select("id, value");
+        const techCatMap = new Map((techCats ?? []).map((c: any) => [c.value, c.id]));
 
+        for (const uid of userIds) {
           const prof = profileMap.get(uid);
-          const roles = Array.from(
+          
+          // 1. Assign worship roles (instruments/vocals)
+          const worshipRoles = Array.from(
             new Set([...(prof?.instruments ?? []), ...(prof?.vocal_types ?? [])])
           ).filter(Boolean);
-          if (roles.length === 0) continue;
-          for (const role of roles) {
-            // ignore unique conflicts silently
-            const { error: aerr } = await supabase
+          for (const role of worshipRoles) {
+            await supabase
               .from("worship_schedule_assignments")
               .insert({ schedule_id: scheduleId, user_id: uid, role_label: role } as any);
-            if (!aerr) createdAssignments++;
           }
+
+          // 2. Assign technical roles
+          const techRoles = prof?.technical_roles ?? [];
+          for (const roleVal of techRoles) {
+            const catId = techCatMap.get(roleVal);
+            if (catId) {
+              await supabase
+                .from("technical_team_assignments")
+                .insert({ 
+                  worship_schedule_id: scheduleId, 
+                  user_id: uid, 
+                  category_id: catId 
+                } as any);
+            }
+          }
+          createdAssignments++;
         }
       }
     }
