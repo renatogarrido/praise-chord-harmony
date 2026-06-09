@@ -40,15 +40,25 @@ function ProfilePage() {
       ]);
 
       if (error) toast.error(error.message);
+      
+      let cats: {id: string, name: string}[] = [];
+      if (techCats) {
+        setTechnicalCategories(techCats);
+        cats = techCats;
+      }
+
       if (data) {
         setFullName(data.full_name ?? "");
         setChurchName(data.church_name ?? "");
         setInstruments((data as any).instruments ?? []);
         setVocalTypes((data as any).vocal_types ?? []);
-        setTechnicalRoles((data as any).technical_roles ?? []);
-      }
-      if (techCats) {
-        setTechnicalCategories(techCats);
+        
+        // Map names back to IDs for the multi-select if they exist in technicalCategories
+        const rawRoles = (data as any).technical_roles ?? [];
+        const mappedRoles = rawRoles.map((name: string) => 
+          cats.find(c => c.name === name)?.id || name
+        );
+        setTechnicalRoles(mappedRoles);
       }
       setLoading(false);
     })();
@@ -65,7 +75,7 @@ function ProfilePage() {
         church_name: churchName.trim().slice(0, 255) || null,
         instruments,
         vocal_types: vocalTypes,
-        technical_roles: technicalRoles,
+        technical_roles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
       } as any)
       .eq("id", user.id);
     setSaving(false);
@@ -139,7 +149,7 @@ function ProfilePage() {
         <div className="space-y-2">
           <Label>Equipe Técnica</Label>
           <MusicianMultiSelect
-            groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
+            groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.id })) }]}
             value={technicalRoles}
             onChange={setTechnicalRoles}
             placeholder={loading ? "Carregando..." : "Escolher funções técnicas…"}
