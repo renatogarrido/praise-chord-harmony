@@ -21,8 +21,8 @@ export const Route = createFileRoute("/_authenticated/app/admin/")({ component: 
 type VoiceRow = { label: string; n: number };
 type BadgeRow = { name: string; icon: string; n: number };
 
-const GOLD = "#C5A059";
-const PIE_COLORS = ["#C5A059", "#8B6F3F", "#E0C896", "#5F4A2A", "#F2E0B8", "#A88550"];
+const GOLD = "#9b87f5"; // Primário (Roxo suave/Vibrant Indigo)
+const PIE_COLORS = ["#9b87f5", "#7E69AB", "#D6BCFA", "#6E59A5", "#E9D8FD", "#B794F4"];
 
 function Dashboard() {
   const [stats, setStats] = useState({
