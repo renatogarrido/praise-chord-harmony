@@ -400,6 +400,7 @@ export type Database = {
           full_name: string | null
           id: string
           instruments: string[]
+          technical_roles: string[] | null
           updated_at: string
           vocal_types: string[]
         }
@@ -410,6 +411,7 @@ export type Database = {
           full_name?: string | null
           id: string
           instruments?: string[]
+          technical_roles?: string[] | null
           updated_at?: string
           vocal_types?: string[]
         }
@@ -420,6 +422,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           instruments?: string[]
+          technical_roles?: string[] | null
           updated_at?: string
           vocal_types?: string[]
         }
