@@ -328,7 +328,7 @@ export const assignTechnicalUser = createServerFn({ method: "POST" })
         worship_schedule_id: data.scheduleId, 
         user_id: data.userId, 
         category_id: data.categoryId 
-      }, { onConflict: "worship_schedule_id,user_id,category_id" });
+      }, { onConflict: ["worship_schedule_id", "user_id", "category_id"] as any });
 
     if (error) {
       throwSafe("assign technical user", error);
