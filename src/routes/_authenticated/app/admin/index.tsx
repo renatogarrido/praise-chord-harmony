@@ -35,7 +35,7 @@ function Dashboard() {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [schedules, setSchedules] = useState<any[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [profilesList, setProfilesList] = useState<any[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [stats, setStats] = useState({
     users: 0,
@@ -116,7 +116,7 @@ function Dashboard() {
       ]);
 
       const profs = uRes.data ?? [];
-      setProfiles(profs);
+      setProfilesList(profs);
       const totalUsers = profs.length;
       const filledUserIds = new Set((avRes.data ?? []).map((r: any) => r.user_id));
       
@@ -389,13 +389,13 @@ function Dashboard() {
                           <>
                             <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
                               {s.worship_schedule_assignments?.filter((a: any) => {
-                                const p = profiles.find(pr => pr.id === a.user_id);
+                                const p = profilesList.find(pr => pr.id === a.user_id);
                                 return p && (p.instruments?.length || 0) > 0;
                               }).length || 0} Músicos
                             </Badge>
                             <Badge variant="secondary" className="text-[9px] bg-gold/10 text-gold border-none">
                               {s.worship_schedule_assignments?.filter((a: any) => {
-                                const p = profiles.find(pr => pr.id === a.user_id);
+                                const p = profilesList.find(pr => pr.id === a.user_id);
                                 return p && (p.vocal_types?.length || 0) > 0;
                               }).length || 0} Vozes
                             </Badge>
