@@ -14,6 +14,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PublicTermsRouteImport } from './routes/public/terms'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as PublicSetlistTokenRouteImport } from './routes/public/setlist.$token'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -73,6 +74,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicTermsRoute = PublicTermsRouteImport.update({
+  id: '/public/terms',
+  path: '/public/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
@@ -287,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/public/terms': typeof PublicTermsRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/availability': typeof AuthenticatedAppAvailabilityRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
@@ -329,6 +336,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/public/terms': typeof PublicTermsRoute
   '/app/availability': typeof AuthenticatedAppAvailabilityRoute
   '/app/favorites': typeof AuthenticatedAppFavoritesRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/public/terms': typeof PublicTermsRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/availability': typeof AuthenticatedAppAvailabilityRoute
   '/_authenticated/app/favorites': typeof AuthenticatedAppFavoritesRoute
@@ -415,6 +424,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/public/terms'
     | '/app/admin'
     | '/app/availability'
     | '/app/favorites'
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/public/terms'
     | '/app/availability'
     | '/app/favorites'
     | '/app/history'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/public/terms'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/availability'
     | '/_authenticated/app/favorites'
@@ -542,6 +554,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  PublicTermsRoute: typeof PublicTermsRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   PublicSetlistTokenRoute: typeof PublicSetlistTokenRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -586,6 +599,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public/terms': {
+      id: '/public/terms'
+      path: '/public/terms'
+      fullPath: '/public/terms'
+      preLoaderRoute: typeof PublicTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
@@ -941,6 +961,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  PublicTermsRoute: PublicTermsRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   PublicSetlistTokenRoute: PublicSetlistTokenRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
