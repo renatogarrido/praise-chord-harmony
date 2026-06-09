@@ -193,6 +193,7 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [busy, setBusy] = useState(false);
+  const [includeWeekdays, setIncludeWeekdays] = useState(false);
   const [sundaySetlists, setSundaySetlists] = useState<Record<string, string>>({});
 
   const setlistsQ = useQuery({
