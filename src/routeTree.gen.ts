@@ -18,6 +18,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as PublicSetlistTokenRouteImport } from './routes/public/setlist.$token'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAppVocalPracticeRouteImport } from './routes/_authenticated/app/vocal-practice'
+import { Route as AuthenticatedAppTechnicalScaleRouteImport } from './routes/_authenticated/app/technical-scale'
 import { Route as AuthenticatedAppSupportRouteImport } from './routes/_authenticated/app/support'
 import { Route as AuthenticatedAppScaleRouteImport } from './routes/_authenticated/app/scale'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
@@ -92,6 +93,12 @@ const AuthenticatedAppVocalPracticeRoute =
   AuthenticatedAppVocalPracticeRouteImport.update({
     id: '/app/vocal-practice',
     path: '/app/vocal-practice',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppTechnicalScaleRoute =
+  AuthenticatedAppTechnicalScaleRouteImport.update({
+    id: '/app/technical-scale',
+    path: '/app/technical-scale',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAppSupportRoute = AuthenticatedAppSupportRouteImport.update({
@@ -280,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/scale': typeof AuthenticatedAppScaleRouteWithChildren
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/app/technical-scale': typeof AuthenticatedAppTechnicalScaleRoute
   '/app/vocal-practice': typeof AuthenticatedAppVocalPracticeRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
@@ -318,6 +326,7 @@ export interface FileRoutesByTo {
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/app/technical-scale': typeof AuthenticatedAppTechnicalScaleRoute
   '/app/vocal-practice': typeof AuthenticatedAppVocalPracticeRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
@@ -360,6 +369,7 @@ export interface FileRoutesById {
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/scale': typeof AuthenticatedAppScaleRouteWithChildren
   '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
+  '/_authenticated/app/technical-scale': typeof AuthenticatedAppTechnicalScaleRoute
   '/_authenticated/app/vocal-practice': typeof AuthenticatedAppVocalPracticeRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/public/setlist/$token': typeof PublicSetlistTokenRoute
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/scale'
     | '/app/support'
+    | '/app/technical-scale'
     | '/app/vocal-practice'
     | '/lovable/email/suppression'
     | '/public/setlist/$token'
@@ -440,6 +451,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/profile'
     | '/app/support'
+    | '/app/technical-scale'
     | '/app/vocal-practice'
     | '/lovable/email/suppression'
     | '/public/setlist/$token'
@@ -481,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profile'
     | '/_authenticated/app/scale'
     | '/_authenticated/app/support'
+    | '/_authenticated/app/technical-scale'
     | '/_authenticated/app/vocal-practice'
     | '/lovable/email/suppression'
     | '/public/setlist/$token'
@@ -588,6 +601,13 @@ declare module '@tanstack/react-router' {
       path: '/app/vocal-practice'
       fullPath: '/app/vocal-practice'
       preLoaderRoute: typeof AuthenticatedAppVocalPracticeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/technical-scale': {
+      id: '/_authenticated/app/technical-scale'
+      path: '/app/technical-scale'
+      fullPath: '/app/technical-scale'
+      preLoaderRoute: typeof AuthenticatedAppTechnicalScaleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/support': {
@@ -855,6 +875,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
   AuthenticatedAppScaleRoute: typeof AuthenticatedAppScaleRouteWithChildren
   AuthenticatedAppSupportRoute: typeof AuthenticatedAppSupportRoute
+  AuthenticatedAppTechnicalScaleRoute: typeof AuthenticatedAppTechnicalScaleRoute
   AuthenticatedAppVocalPracticeRoute: typeof AuthenticatedAppVocalPracticeRoute
   AuthenticatedAppAlbumsAlbumIdRoute: typeof AuthenticatedAppAlbumsAlbumIdRoute
   AuthenticatedAppLeaderLocalLeadersRoute: typeof AuthenticatedAppLeaderLocalLeadersRoute
@@ -873,6 +894,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
   AuthenticatedAppScaleRoute: AuthenticatedAppScaleRouteWithChildren,
   AuthenticatedAppSupportRoute: AuthenticatedAppSupportRoute,
+  AuthenticatedAppTechnicalScaleRoute: AuthenticatedAppTechnicalScaleRoute,
   AuthenticatedAppVocalPracticeRoute: AuthenticatedAppVocalPracticeRoute,
   AuthenticatedAppAlbumsAlbumIdRoute: AuthenticatedAppAlbumsAlbumIdRoute,
   AuthenticatedAppLeaderLocalLeadersRoute:
