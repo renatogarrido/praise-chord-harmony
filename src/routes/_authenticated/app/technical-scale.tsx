@@ -150,7 +150,11 @@ function TechnicalScalePage() {
     try {
       const { data: created, error } = await supabase
         .from("setlists")
-        .insert({ user_id: user.id, name: newSetlistName.trim() })
+        .insert({ 
+          user_id: user.id, 
+          name: newSetlistName.trim(),
+          church_name: churchName.trim() || null
+        })
         .select()
         .single();
       

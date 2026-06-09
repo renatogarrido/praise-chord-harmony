@@ -224,7 +224,11 @@ function ScaleDetail() {
     try {
       const { data: created, error } = await supabase
         .from("setlists")
-        .insert({ user_id: user.id, name: newSetlistName.trim() })
+        .insert({ 
+          user_id: user.id, 
+          name: newSetlistName.trim(),
+          church_name: editChurch.trim() || null
+        })
         .select()
         .single();
       
