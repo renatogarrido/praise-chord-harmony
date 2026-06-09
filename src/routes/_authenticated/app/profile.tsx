@@ -142,7 +142,8 @@ function ProfilePage() {
             groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
             value={technicalRoles}
             onChange={setTechnicalRoles}
-            placeholder="Escolher funções técnicas…"
+            placeholder={loading ? "Carregando..." : "Escolher funções técnicas…"}
+            emptyText={loading ? "Carregando..." : "Nenhuma função técnica cadastrada."}
           />
         </div>
 

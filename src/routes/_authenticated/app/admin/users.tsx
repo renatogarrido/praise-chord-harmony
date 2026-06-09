@@ -34,6 +34,7 @@ function AdminUsers() {
   const { groups: instrumentGroups, reload: reloadInstruments } = useInstrumentGroups();
   const { groups: vocalGroups, reload: reloadVocals } = useVocalGroups();
   const [technicalCategories, setTechnicalCategories] = useState<{ id: string, name: string }[]>([]);
+  const [isLoadingTech, setIsLoadingTech] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: "",
@@ -223,10 +224,19 @@ function AdminUsers() {
               if (open) { 
                 reloadInstruments(); 
                 reloadVocals(); 
+                setIsLoadingTech(true);
                 import("@/integrations/supabase/client").then(({ supabase }) => {
-                  supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
+                  supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data, error }) => {
+                    setIsLoadingTech(false);
+                    if (error) {
+                      console.error("Error loading technical categories:", error);
+                      toast.error("Erro ao carregar funções técnicas");
+                    }
                     if (data) setTechnicalCategories(data as any);
                   });
+                }).catch(err => {
+                  console.error("Failed to load supabase client", err);
+                  setIsLoadingTech(false);
                 });
               }
               setIsDialogOpen(open);
@@ -338,7 +348,8 @@ function AdminUsers() {
                   groups={[{ label: "Funções Técnicas", options: technicalCategories.map(c => ({ label: c.name, value: c.name })) }]}
                   value={technicalRoles}
                   onChange={setTechnicalRoles}
-                  placeholder="Escolher funções técnicas…"
+                  placeholder={isLoadingTech ? "Carregando funções..." : "Escolher funções técnicas…"}
+                  emptyText={isLoadingTech ? "Carregando..." : "Nenhuma função técnica cadastrada."}
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4">
