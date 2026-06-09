@@ -56,7 +56,10 @@ function AdminTechnicalCategories() {
   const remove = async (c: Cat) => {
     if (!confirm(`Excluir a função "${c.name}"?`)) return;
     const { error } = await supabase.from("technical_categories").delete().eq("id", c.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("Delete error:", error);
+      return toast.error("Erro ao excluir: " + error.message);
+    }
     toast.success("Excluído.");
     load();
   };
