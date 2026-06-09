@@ -223,8 +223,10 @@ function AdminUsers() {
               if (open) { 
                 reloadInstruments(); 
                 reloadVocals(); 
-                supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
-                  if (data) setTechnicalCategories(data);
+                import("@/integrations/supabase/client").then(({ supabase }) => {
+                  supabase.from("technical_categories").select("id, name").order("sort_order").then(({ data }) => {
+                    if (data) setTechnicalCategories(data as any);
+                  });
                 });
               }
               setIsDialogOpen(open);
