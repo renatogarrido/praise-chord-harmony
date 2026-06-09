@@ -155,7 +155,12 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
         />
       </div>
 
-      <Dialog open={showCamera} onOpenChange={(open) => !open && stopCamera()}>
+      <Dialog 
+        open={showCamera} 
+        onOpenChange={(open) => {
+          if (!open) stopCamera();
+        }}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Tirar Foto</DialogTitle>
