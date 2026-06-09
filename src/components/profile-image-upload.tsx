@@ -62,12 +62,19 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: { ideal: 400 }, height: { ideal: 400 } } 
+        video: { 
+          facingMode: "user", 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 } 
+        } 
       });
       setCameraStream(stream);
       setShowCamera(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(console.error);
+        };
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
@@ -152,7 +159,12 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
         />
       </div>
 
-      <Dialog open={showCamera} onOpenChange={(open) => !open && stopCamera()}>
+      <Dialog 
+        open={showCamera} 
+        onOpenChange={(open) => {
+          if (!open) stopCamera();
+        }}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Tirar Foto</DialogTitle>
