@@ -307,3 +307,59 @@ export const listMySetlists = createServerFn({ method: "GET" })
     if (error) throwSafe("list setlists", error);
     return { setlists: data ?? [] };
   });
+
+// ---------- TECHNICAL TEAM ASSIGN ----------
+export const assignTechnicalUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      scheduleId: z.string().uuid(),
+      userId: z.string().uuid(),
+      categoryId: z.string().uuid(),
+    }).parse(i)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    await assertCanManage(supabase, callerId);
+
+    const { error } = await supabase
+      .from("technical_team_assignments")
+      .insert({ 
+        worship_schedule_id: data.scheduleId, 
+        user_id: data.userId, 
+        category_id: data.categoryId 
+      } as any);
+
+    if (error) {
+      if (error.code === "23505") throw new Error("Esse colaborador já está escalado para essa função técnica.");
+      throwSafe("assign technical user", error);
+    }
+
+    return { ok: true };
+  });
+
+// ---------- TECHNICAL TEAM UNASSIGN ----------
+export const unassignTechnicalUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ assignmentId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCanManage(supabase, userId);
+    const { error } = await supabase.from("technical_team_assignments").delete().eq("id", data.assignmentId);
+    if (error) throwSafe("unassign technical user", error);
+    return { ok: true };
+  });
+
+// ---------- LIST TECHNICAL CATEGORIES ----------
+export const listTechnicalCategories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("instrument_categories")
+      .select("id, name")
+      .in("name", ["Som", "Iluminação", "Telão"])
+      .order("name");
+    if (error) throwSafe("list technical categories", error);
+    return { categories: data ?? [] };
+  });
