@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups, useTechnicalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
+import { ProfileImageUpload } from "@/components/profile-image-upload";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Route = createFileRoute("/_authenticated/app/admin/users")({ component: AdminUsers });
 
@@ -41,6 +43,7 @@ function AdminUsers() {
     password: "",
     fullName: "",
     churchName: "",
+    avatarUrl: "",
   });
 
   const toggleRole = (role: string) => {
@@ -116,6 +119,7 @@ function AdminUsers() {
       password: "",
       fullName: user.full_name || "",
       churchName: user.church_name || "",
+      avatarUrl: user.avatar_url || "",
     });
     setSelectedRoles((user.roles ?? []).filter((r: string) =>
       ["admin", "lider_nacional", "lider_estadual", "lider_local"].includes(r)
@@ -184,6 +188,7 @@ function AdminUsers() {
           data: {
             userId: editingId,
             fullName: formData.fullName,
+            avatarUrl: formData.avatarUrl,
             churchName: formData.churchName,
             roles: selectedRoles as any,
             instruments,
@@ -199,6 +204,7 @@ function AdminUsers() {
             password: formData.password,
             fullName: formData.fullName,
             churchName: formData.churchName,
+            avatarUrl: formData.avatarUrl,
             roles: selectedRoles as any,
             instruments,
             vocalTypes,
@@ -209,7 +215,7 @@ function AdminUsers() {
       }
 
       setIsDialogOpen(false);
-      setFormData({ email: "", password: "", fullName: "", churchName: "" });
+      setFormData({ email: "", password: "", fullName: "", churchName: "", avatarUrl: "" });
       setSelectedRoles([]);
       setInstruments([]);
       setVocalTypes([]);
@@ -266,7 +272,7 @@ function AdminUsers() {
               setIsDialogOpen(open);
               if (!open) {
                 setEditingId(null);
-                setFormData({ email: "", password: "", fullName: "", churchName: "" });
+                setFormData({ email: "", password: "", fullName: "", churchName: "", avatarUrl: "" });
                 setSelectedRoles([]);
                 setInstruments([]);
                 setVocalTypes([]);
@@ -284,6 +290,14 @@ function AdminUsers() {
               <DialogTitle>{editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSaveUser} className="space-y-4 pt-4">
+              <div className="flex justify-center pb-4 border-b border-border">
+                <ProfileImageUpload 
+                  userId={editingId || "new-user"} 
+                  currentImageUrl={formData.avatarUrl} 
+                  onImageUploaded={(url) => setFormData({ ...formData, avatarUrl: url })}
+                  name={formData.fullName || formData.email}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nome Completo</Label>
                 <Input
@@ -399,7 +413,12 @@ function AdminUsers() {
           );
           return (
             <div key={u.id} className="flex items-center gap-3 p-4">
-              <div className="grid size-10 place-items-center rounded-full bg-gold-soft text-gold text-sm font-semibold">{(u.full_name?.[0] || "?").toUpperCase()}</div>
+              <Avatar className="h-10 w-10 border border-gold/20">
+                <AvatarImage src={u.avatar_url || undefined} className="object-cover" />
+                <AvatarFallback className="bg-gold-soft text-gold text-sm font-semibold">
+                  {(u.full_name?.[0] || "?").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{u.full_name || "—"}</p>
                 {u.email && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}

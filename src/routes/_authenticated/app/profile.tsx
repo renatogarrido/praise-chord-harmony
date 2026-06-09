@@ -11,6 +11,7 @@ import { MusicianMultiSelect } from "@/components/musician-multi-select";
 import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
 import { BadgesPanel } from "@/components/badges-panel";
+import { ProfileImageUpload } from "@/components/profile-image-upload";
 
 export const Route = createFileRoute("/_authenticated/app/profile")({ component: ProfilePage });
 
@@ -19,6 +20,7 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [churchName, setChurchName] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
@@ -33,7 +35,7 @@ function ProfilePage() {
       const [{ data, error }, { data: techCats }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("full_name,church_name,instruments,vocal_types,technical_roles")
+          .select("full_name,avatar_url,church_name,instruments,vocal_types,technical_roles")
           .eq("id", user.id)
           .maybeSingle(),
         supabase.from("technical_categories").select("id, name").order("sort_order")
@@ -49,6 +51,7 @@ function ProfilePage() {
 
       if (data) {
         setFullName(data.full_name ?? "");
+        setAvatarUrl(data.avatar_url ?? "");
         setChurchName(data.church_name ?? "");
         setInstruments((data as any).instruments ?? []);
         setVocalTypes((data as any).vocal_types ?? []);
@@ -72,6 +75,7 @@ function ProfilePage() {
       .from("profiles")
       .update({
         full_name: fullName.trim().slice(0, 255),
+        avatar_url: avatarUrl,
         church_name: churchName.trim().slice(0, 255) || null,
         instruments,
         vocal_types: vocalTypes,
@@ -105,6 +109,14 @@ function ProfilePage() {
       </header>
 
       <form onSubmit={save} className="space-y-6 rounded-2xl border border-border bg-card p-6">
+        <div className="flex justify-center pb-4 border-b border-border mb-6">
+          <ProfileImageUpload 
+            userId={user?.id ?? ""} 
+            currentImageUrl={avatarUrl} 
+            onImageUploaded={setAvatarUrl}
+            name={fullName || user?.email}
+          />
+        </div>
         <div className="space-y-2">
           <Label>E-mail</Label>
           <Input value={user?.email ?? ""} disabled />
