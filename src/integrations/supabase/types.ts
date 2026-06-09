@@ -394,6 +394,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accepted_terms: boolean | null
           avatar_url: string | null
           church_name: string | null
           created_at: string
@@ -401,10 +402,12 @@ export type Database = {
           id: string
           instruments: string[]
           technical_roles: string[] | null
+          terms_accepted_at: string | null
           updated_at: string
           vocal_types: string[]
         }
         Insert: {
+          accepted_terms?: boolean | null
           avatar_url?: string | null
           church_name?: string | null
           created_at?: string
@@ -412,10 +415,12 @@ export type Database = {
           id: string
           instruments?: string[]
           technical_roles?: string[] | null
+          terms_accepted_at?: string | null
           updated_at?: string
           vocal_types?: string[]
         }
         Update: {
+          accepted_terms?: boolean | null
           avatar_url?: string | null
           church_name?: string | null
           created_at?: string
@@ -423,6 +428,7 @@ export type Database = {
           id?: string
           instruments?: string[]
           technical_roles?: string[] | null
+          terms_accepted_at?: string | null
           updated_at?: string
           vocal_types?: string[]
         }
