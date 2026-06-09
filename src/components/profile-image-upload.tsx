@@ -68,6 +68,9 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
       setShowCamera(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(console.error);
+        };
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
