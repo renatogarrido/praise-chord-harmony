@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight, Calendar as CalendarIcon, X, Check } from "lucide-react";
+import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight, Calendar as CalendarIcon, X, Check, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listSchedules, createSchedule, deleteSchedule, getSchedule, listAllChurches, listMySetlists } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
@@ -86,6 +86,24 @@ function TechnicalScalePage() {
   const [showNewSetlistForm, setShowNewSetlistForm] = useState(false);
   const [newSetlistName, setNewSetlistName] = useState("");
   const [busySetlist, setBusySetlist] = useState(false);
+  const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
+  const [songSearch, setSongSearch] = useState("");
+
+  const allSongsQ = useQuery({
+    queryKey: ["all-songs-picker-tech"],
+    queryFn: async () => {
+      const { data } = await supabase.from("songs").select("id, title, original_key").order("title");
+      return data ?? [];
+    },
+    enabled: showNewSetlistForm
+  });
+
+  const filteredSongs = useMemo(() => {
+    const s = songSearch.toLowerCase().trim();
+    const songs = allSongsQ.data ?? [];
+    if (!s) return songs.slice(0, 10);
+    return songs.filter(song => song.title.toLowerCase().includes(s)).slice(0, 15);
+  }, [allSongsQ.data, songSearch]);
 
   const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlistsFn(), enabled: canManageSchedule });
 
@@ -120,7 +138,7 @@ function TechnicalScalePage() {
       setOpen(false);
       refetch();
       setTitle(""); setDate(""); setTime("19:00"); setChurchName(""); setSetlistId("");
-      setShowNewSetlistForm(false); setNewSetlistName("");
+      setShowNewSetlistForm(false); setNewSetlistName(""); setSelectedSongs([]); setSongSearch("");
       // Navega para a escala recém criada mantendo o contexto técnico
       nav({ to: "/app/scale/$id", params: { id: (r as any).id }, search: { from: "technical" } });
     } catch (err: any) { toast.error(err.message || "Erro"); }
@@ -138,9 +156,20 @@ function TechnicalScalePage() {
       
       if (error) throw error;
       
+      if (created && selectedSongs.length > 0) {
+        const inserts = selectedSongs.map((songId, index) => ({
+          setlist_id: created.id,
+          song_id: songId,
+          position: index + 1
+        }));
+        await supabase.from("setlist_songs").insert(inserts);
+      }
+      
       toast.success("Repertório criado!");
       setNewSetlistName("");
       setShowNewSetlistForm(false);
+      setSelectedSongs([]);
+      setSongSearch("");
       await setlistsQ.refetch();
       if (created) {
         setSetlistId(created.id);
@@ -150,6 +179,14 @@ function TechnicalScalePage() {
     } finally {
       setBusySetlist(false);
     }
+  };
+
+  const toggleSongSelection = (songId: string) => {
+    setSelectedSongs(prev => 
+      prev.includes(songId) 
+        ? prev.filter(id => id !== songId) 
+        : [...prev, songId]
+    );
   };
 
   const handleGenerate = async () => {
@@ -269,45 +306,77 @@ function TechnicalScalePage() {
                       </div>
                       
                       {showNewSetlistForm ? (
-                        <div className="flex gap-2">
-                          <Input 
-                            value={newSetlistName} 
-                            onChange={(e) => setNewSetlistName(e.target.value)}
-                            placeholder="Nome do repertório"
-                            className="flex-1 h-9 text-sm"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleCreateSetlist();
-                              }
-                              if (e.key === 'Escape') {
+                        <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                          <div className="flex gap-2">
+                            <Input 
+                              value={newSetlistName} 
+                              onChange={(e) => setNewSetlistName(e.target.value)}
+                              placeholder="Nome do repertório"
+                              className="flex-1 h-9 text-sm bg-background"
+                              autoFocus
+                            />
+                            <Button 
+                              type="button" 
+                              size="sm" 
+                              className="bg-gold text-white h-9 px-3"
+                              onClick={handleCreateSetlist}
+                              disabled={busySetlist}
+                            >
+                              {busySetlist ? <Wand2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                            </Button>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-9 px-3"
+                              onClick={() => {
                                 setShowNewSetlistForm(false);
                                 setNewSetlistName("");
-                              }
-                            }}
-                          />
-                          <Button 
-                            type="button" 
-                            size="sm" 
-                            className="bg-gold text-white h-9 px-3"
-                            onClick={handleCreateSetlist}
-                            disabled={busySetlist}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-9 px-3"
-                            onClick={() => {
-                              setShowNewSetlistForm(false);
-                              setNewSetlistName("");
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                                setSelectedSongs([]);
+                                setSongSearch("");
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="relative">
+                              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                              <Input 
+                                value={songSearch}
+                                onChange={(e) => setSongSearch(e.target.value)}
+                                placeholder="Buscar músicas..."
+                                className="h-8 pl-8 text-xs bg-background"
+                              />
+                            </div>
+                            
+                            <div className="max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                              {filteredSongs.map((song: any) => (
+                                <div 
+                                  key={song.id}
+                                  onClick={() => toggleSongSelection(song.id)}
+                                  className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-colors text-xs ${
+                                    selectedSongs.includes(song.id) 
+                                      ? "bg-gold/10 border-gold/40" 
+                                      : "bg-background hover:bg-muted"
+                                  }`}
+                                >
+                                  <span className="truncate">{song.title}</span>
+                                  {selectedSongs.includes(song.id) && <Check className="h-3 w-3 text-gold" />}
+                                </div>
+                              ))}
+                              {filteredSongs.length === 0 && (
+                                <p className="text-[10px] text-center text-muted-foreground py-2">Nenhuma música encontrada.</p>
+                              )}
+                            </div>
+                            
+                            {selectedSongs.length > 0 && (
+                              <p className="text-[10px] text-gold font-medium">
+                                {selectedSongs.length} {selectedSongs.length === 1 ? 'música selecionada' : 'músicas selecionadas'}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <select 
