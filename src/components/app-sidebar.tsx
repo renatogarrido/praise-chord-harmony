@@ -226,7 +226,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-border/50 p-5">
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="h-9 w-9 border border-gold/30">
-            <AvatarImage src={profile?.avatar_url} className="object-cover" />
+            <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
             <AvatarFallback className="bg-gold-soft text-[11px] font-semibold text-gold">
               {(profile?.full_name?.[0] || user?.email?.[0] || "?").toUpperCase()}
             </AvatarFallback>
