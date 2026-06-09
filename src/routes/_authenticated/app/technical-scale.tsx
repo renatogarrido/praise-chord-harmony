@@ -169,7 +169,7 @@ function TechnicalScalePage() {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(val) => setSelectedDate(val)}
                 className="rounded-md"
                 locale={undefined} // Falls back to default, pt-BR would be nice if imported
               />
