@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight, Calendar as CalendarIcon } from "lucide-react";
+import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight, Calendar as CalendarIcon, X, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listSchedules, createSchedule, deleteSchedule, getSchedule, listAllChurches } from "@/lib/worship-schedule.functions";
+import { listSchedules, createSchedule, deleteSchedule, getSchedule, listAllChurches, listMySetlists } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,7 @@ function TechnicalScalePage() {
   const del = useServerFn(deleteSchedule);
   const gen = useServerFn(generateMonthlySchedules);
   const listChurches = useServerFn(listAllChurches);
+  const setlistsFn = useServerFn(listMySetlists);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules", "technical"], queryFn: () => list() });
   
@@ -81,6 +82,12 @@ function TechnicalScalePage() {
   const [busy, setBusy] = useState(false);
   const [includeWeekdays, setIncludeWeekdays] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [setlistId, setSetlistId] = useState<string>("");
+  const [showNewSetlistForm, setShowNewSetlistForm] = useState(false);
+  const [newSetlistName, setNewSetlistName] = useState("");
+  const [busySetlist, setBusySetlist] = useState(false);
+
+  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlistsFn(), enabled: canManageSchedule });
 
   const schedules: any[] = ((data as any)?.schedules ?? []).filter((s: any) => 
     s.title.toLowerCase().includes("técnica") || (s.technical_team_assignments?.length > 0)
@@ -107,14 +114,42 @@ function TechnicalScalePage() {
         title: title.trim().toLowerCase().includes("técnica") ? title.trim() : `${title.trim()} (Técnica)`,
         serviceDate: isoDate,
         churchName: churchName.trim() || null,
+        setlistId: setlistId || null,
       }});
       toast.success("Escala manual criada!");
       setOpen(false);
       refetch();
-      setTitle(""); setDate(""); setTime("19:00"); setChurchName("");
+      setTitle(""); setDate(""); setTime("19:00"); setChurchName(""); setSetlistId("");
+      setShowNewSetlistForm(false); setNewSetlistName("");
       // Navega para a escala recém criada mantendo o contexto técnico
       nav({ to: "/app/scale/$id", params: { id: (r as any).id }, search: { from: "technical" } });
     } catch (err: any) { toast.error(err.message || "Erro"); }
+  };
+
+  const handleCreateSetlist = async () => {
+    if (!newSetlistName.trim() || !user) return;
+    setBusySetlist(true);
+    try {
+      const { data: created, error } = await supabase
+        .from("setlists")
+        .insert({ user_id: user.id, name: newSetlistName.trim() })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success("Repertório criado!");
+      setNewSetlistName("");
+      setShowNewSetlistForm(false);
+      await setlistsQ.refetch();
+      if (created) {
+        setSetlistId(created.id);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar repertório");
+    } finally {
+      setBusySetlist(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -217,6 +252,75 @@ function TechnicalScalePage() {
                         <Input value={churchName} disabled className="bg-muted cursor-not-allowed" />
                       )}
                     </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Repertório</Label>
+                        {!showNewSetlistForm && (
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-gold hover:text-gold/80 p-0 flex items-center gap-1 text-[10px] uppercase tracking-wider"
+                            onClick={() => setShowNewSetlistForm(true)}
+                          >
+                            <Plus className="h-3 w-3" /> Novo
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {showNewSetlistForm ? (
+                        <div className="flex gap-2">
+                          <Input 
+                            value={newSetlistName} 
+                            onChange={(e) => setNewSetlistName(e.target.value)}
+                            placeholder="Nome do repertório"
+                            className="flex-1 h-9 text-sm"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleCreateSetlist();
+                              }
+                              if (e.key === 'Escape') {
+                                setShowNewSetlistForm(false);
+                                setNewSetlistName("");
+                              }
+                            }}
+                          />
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            className="bg-gold text-white h-9 px-3"
+                            onClick={handleCreateSetlist}
+                            disabled={busySetlist}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-9 px-3"
+                            onClick={() => {
+                              setShowNewSetlistForm(false);
+                              setNewSetlistName("");
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <select 
+                          value={setlistId} 
+                          onChange={(e) => setSetlistId(e.target.value)}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                        >
+                          <option value="">— Sem repertório —</option>
+                          {(setlistsQ.data as any)?.setlists?.map((s: any) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      )}
                     <div className="flex justify-end gap-3 pt-4">
                       <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
                       <Button type="submit" className="bg-gold text-white">Criar</Button>
