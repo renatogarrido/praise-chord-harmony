@@ -217,7 +217,7 @@ function ScaleDetail() {
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-xl">Músicos e Vozes</h2>
-            {canManageSchedule && (
+            {canManageSchedule && !s.title.toLowerCase().includes("técnica") && (
               <button onClick={() => { setPickerType("worship"); setPicker(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary-foreground">
                 <UserPlus className="h-3.5 w-3.5" /> Escalar
               </button>
@@ -255,7 +255,7 @@ function ScaleDetail() {
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-xl">Equipe Técnica</h2>
-            {canManageSchedule && (
+            {canManageSchedule && (s.title.toLowerCase().includes("técnica") || techAssignments.length > 0) && (
               <button onClick={() => { setPickerType("technical"); setPicker(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-white">
                 <Settings2 className="h-3.5 w-3.5" /> Escalar Técnica
               </button>
