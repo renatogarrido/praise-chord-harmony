@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/app/scale/$id")({
   component: ScaleDetail,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      from: (search.from as string) || undefined
+      from: (search.from as "technical" | "worship" | string) || undefined
     };
   }
 });
