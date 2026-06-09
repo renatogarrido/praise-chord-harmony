@@ -236,7 +236,7 @@ function TechnicalScalePage() {
                                 variant="link" 
                                 size="sm" 
                                 className="h-auto p-0 text-xs text-gold mt-2"
-                                onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}
+                                onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id }, search: { from: "technical" } })}
                               >
                                 Abrir escala completa <ArrowRight className="w-3 h-3 ml-1" />
                               </Button>
@@ -300,7 +300,7 @@ function TechnicalScalePage() {
                 <div 
                   key={s.id}
                   className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4 hover:border-gold/40 transition-colors group cursor-pointer"
-                  onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}
+                  onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id }, search: { from: "technical" } })}
                 >
                   <div className="flex-1">
                     <h3 className="font-serif text-xl group-hover:text-gold transition-colors">{s.title}</h3>
