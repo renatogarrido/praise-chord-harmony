@@ -184,7 +184,7 @@ function ScalePage() {
                 <ScrollArea className="h-[280px]">
                   {selectedDate ? (() => {
                     const dateStr = selectedDate.toISOString().split("T")[0];
-                    const daySchedules = schedules.filter(s => s.service_date.startsWith(dateStr));
+                    const daySchedules = schedules.filter(s => s.service_date.startsWith(dateStr) && (s.worship_schedule_assignments?.length > 0 || !s.title.toLowerCase().includes("técnica")));
                     
                     if (daySchedules.length === 0) {
                       return <p className="text-sm text-muted-foreground text-center py-10">Nenhuma escala para este dia.</p>;
@@ -274,7 +274,7 @@ function ScalePage() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {upcoming.map((s) => (
+              {upcoming.filter(s => s.worship_schedule_assignments?.length > 0 || !s.title.toLowerCase().includes("técnica")).map((s) => (
                 <div 
                   key={s.id}
                   className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4 hover:border-gold/40 transition-colors group cursor-pointer"
