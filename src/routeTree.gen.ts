@@ -43,6 +43,7 @@ import { Route as AuthenticatedAppLeaderLocalLeadersRouteImport } from './routes
 import { Route as AuthenticatedAppAlbumsAlbumIdRouteImport } from './routes/_authenticated/app/albums/$albumId'
 import { Route as AuthenticatedAppAdminVocalsRouteImport } from './routes/_authenticated/app/admin/vocals'
 import { Route as AuthenticatedAppAdminUsersRouteImport } from './routes/_authenticated/app/admin/users'
+import { Route as AuthenticatedAppAdminTechnicalCategoriesRouteImport } from './routes/_authenticated/app/admin/technical-categories'
 import { Route as AuthenticatedAppAdminSupportRouteImport } from './routes/_authenticated/app/admin/support'
 import { Route as AuthenticatedAppAdminSongsRouteImport } from './routes/_authenticated/app/admin/songs'
 import { Route as AuthenticatedAppAdminSettingsRouteImport } from './routes/_authenticated/app/admin/settings'
@@ -237,6 +238,12 @@ const AuthenticatedAppAdminUsersRoute =
     path: '/users',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminTechnicalCategoriesRoute =
+  AuthenticatedAppAdminTechnicalCategoriesRouteImport.update({
+    id: '/technical-categories',
+    path: '/technical-categories',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminSupportRoute =
   AuthenticatedAppAdminSupportRouteImport.update({
     id: '/support',
@@ -297,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
+  '/app/admin/technical-categories': typeof AuthenticatedAppAdminTechnicalCategoriesRoute
   '/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/app/admin/vocals': typeof AuthenticatedAppAdminVocalsRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
@@ -336,6 +344,7 @@ export interface FileRoutesByTo {
   '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
+  '/app/admin/technical-categories': typeof AuthenticatedAppAdminTechnicalCategoriesRoute
   '/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/app/admin/vocals': typeof AuthenticatedAppAdminVocalsRoute
   '/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
@@ -379,6 +388,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/_authenticated/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/_authenticated/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
+  '/_authenticated/app/admin/technical-categories': typeof AuthenticatedAppAdminTechnicalCategoriesRoute
   '/_authenticated/app/admin/users': typeof AuthenticatedAppAdminUsersRoute
   '/_authenticated/app/admin/vocals': typeof AuthenticatedAppAdminVocalsRoute
   '/_authenticated/app/albums/$albumId': typeof AuthenticatedAppAlbumsAlbumIdRoute
@@ -422,6 +432,7 @@ export interface FileRouteTypes {
     | '/app/admin/settings'
     | '/app/admin/songs'
     | '/app/admin/support'
+    | '/app/admin/technical-categories'
     | '/app/admin/users'
     | '/app/admin/vocals'
     | '/app/albums/$albumId'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/app/admin/settings'
     | '/app/admin/songs'
     | '/app/admin/support'
+    | '/app/admin/technical-categories'
     | '/app/admin/users'
     | '/app/admin/vocals'
     | '/app/albums/$albumId'
@@ -503,6 +515,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/settings'
     | '/_authenticated/app/admin/songs'
     | '/_authenticated/app/admin/support'
+    | '/_authenticated/app/admin/technical-categories'
     | '/_authenticated/app/admin/users'
     | '/_authenticated/app/admin/vocals'
     | '/_authenticated/app/albums/$albumId'
@@ -778,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/technical-categories': {
+      id: '/_authenticated/app/admin/technical-categories'
+      path: '/technical-categories'
+      fullPath: '/app/admin/technical-categories'
+      preLoaderRoute: typeof AuthenticatedAppAdminTechnicalCategoriesRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/support': {
       id: '/_authenticated/app/admin/support'
       path: '/support'
@@ -830,6 +850,7 @@ interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminSettingsRoute: typeof AuthenticatedAppAdminSettingsRoute
   AuthenticatedAppAdminSongsRoute: typeof AuthenticatedAppAdminSongsRoute
   AuthenticatedAppAdminSupportRoute: typeof AuthenticatedAppAdminSupportRoute
+  AuthenticatedAppAdminTechnicalCategoriesRoute: typeof AuthenticatedAppAdminTechnicalCategoriesRoute
   AuthenticatedAppAdminUsersRoute: typeof AuthenticatedAppAdminUsersRoute
   AuthenticatedAppAdminVocalsRoute: typeof AuthenticatedAppAdminVocalsRoute
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
@@ -842,6 +863,8 @@ const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
   AuthenticatedAppAdminSettingsRoute: AuthenticatedAppAdminSettingsRoute,
   AuthenticatedAppAdminSongsRoute: AuthenticatedAppAdminSongsRoute,
   AuthenticatedAppAdminSupportRoute: AuthenticatedAppAdminSupportRoute,
+  AuthenticatedAppAdminTechnicalCategoriesRoute:
+    AuthenticatedAppAdminTechnicalCategoriesRoute,
   AuthenticatedAppAdminUsersRoute: AuthenticatedAppAdminUsersRoute,
   AuthenticatedAppAdminVocalsRoute: AuthenticatedAppAdminVocalsRoute,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,

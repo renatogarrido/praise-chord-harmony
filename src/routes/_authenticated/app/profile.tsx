@@ -22,23 +22,33 @@ function ProfilePage() {
   const [churchName, setChurchName] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
+  const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
   const { groups: instrumentGroups } = useInstrumentGroups();
   const { groups: vocalGroups } = useVocalGroups();
+  const [technicalCategories, setTechnicalCategories] = useState<{ id: string, name: string }[]>([]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name,church_name,instruments,vocal_types")
-        .eq("id", user.id)
-        .maybeSingle();
+      const [{ data, error }, { data: techCats }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name,church_name,instruments,vocal_types,technical_roles")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase.from("technical_categories").select("id, name").order("sort_order")
+      ]);
+
       if (error) toast.error(error.message);
       if (data) {
         setFullName(data.full_name ?? "");
         setChurchName(data.church_name ?? "");
         setInstruments((data as any).instruments ?? []);
         setVocalTypes((data as any).vocal_types ?? []);
+        setTechnicalRoles((data as any).technical_roles ?? []);
+      }
+      if (techCats) {
+        setTechnicalCategories(techCats);
       }
       setLoading(false);
     })();
@@ -55,6 +65,7 @@ function ProfilePage() {
         church_name: churchName.trim().slice(0, 255) || null,
         instruments,
         vocal_types: vocalTypes,
+        technical_roles: technicalRoles,
       } as any)
       .eq("id", user.id);
     setSaving(false);
@@ -122,6 +133,16 @@ function ProfilePage() {
             value={vocalTypes}
             onChange={setVocalTypes}
             placeholder="Escolher tipo vocal…"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Equipe Técnica</Label>
+          <MusicianMultiSelect
+            groups={[{ id: "tech", name: "Funções Técnicas", instruments: technicalCategories.map(c => ({ id: c.id, label: c.name, value: c.name })) }]}
+            value={technicalRoles}
+            onChange={setTechnicalRoles}
+            placeholder="Escolher funções técnicas…"
           />
         </div>
 

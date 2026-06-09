@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 export const Route = createFileRoute("/_authenticated/app/admin/technical-categories")({ component: AdminTechnicalCategories });
 
-type Cat = { id: string; name: string; sort_order: number };
+type Cat = { id: string; name: string; sort_order: number | null };
 
 function AdminTechnicalCategories() {
   const [cats, setCats] = useState<Cat[]>([]);
@@ -24,7 +24,7 @@ function AdminTechnicalCategories() {
     setLoading(true);
     const { data, error } = await supabase.from("technical_categories").select("*").order("sort_order");
     if (error) toast.error(error.message);
-    setCats(data ?? []);
+    setCats(data as Cat[] ?? []);
     setLoading(false);
   };
 
