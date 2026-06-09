@@ -280,7 +280,7 @@ function ScalePage() {
                 <div 
                   key={s.id}
                   className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4 hover:border-gold/40 transition-colors group cursor-pointer"
-                  onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}
+                  onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id }, search: { from: "worship" } })}
                 >
                   <div className="flex-1">
                     <h3 className="font-serif text-xl group-hover:text-gold transition-colors">{s.title}</h3>
