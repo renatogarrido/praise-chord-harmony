@@ -684,7 +684,7 @@ export type Database = {
             foreignKeyName: "technical_team_assignments_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "instrument_categories"
+            referencedRelation: "technical_categories"
             referencedColumns: ["id"]
           },
           {
