@@ -1,13 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Plus, Trash2, Users, Wand2, Music2, ArrowRight, Calendar as CalendarIcon, ListMusic } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listSchedules, createSchedule, deleteSchedule, listMySetlists, listAllChurches } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -21,7 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 export const Route = createFileRoute("/_authenticated/app/scale/")({ component: ScalePage });
 
 function ScalePage() {
-  const { canManageSchedule, user } = useAuth();
+  const { isAdmin, canManageSchedule, user } = useAuth();
   const nav = useNavigate();
   const list = useServerFn(listSchedules);
   const create = useServerFn(createSchedule);
@@ -29,7 +30,6 @@ function ScalePage() {
   const setlistsFn = useServerFn(listMySetlists);
   const gen = useServerFn(generateMonthlySchedules);
   const listChurches = useServerFn(listAllChurches);
-  const { isAdmin, canManageSchedule, user } = useAuth();
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules"], queryFn: () => list() });
   const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlistsFn(), enabled: canManageSchedule });
@@ -60,6 +60,7 @@ function ScalePage() {
   const [churchName, setChurchName] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [busy, setBusy] = useState(false);
+  const [setlistId, setSetlistId] = useState<string>("");
 
   useEffect(() => {
     if (open && isLocal && !isAdmin && !isNacional && !isEstadual && myChurch) {
