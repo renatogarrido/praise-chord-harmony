@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { MusicianMultiSelect } from "@/components/musician-multi-select";
-import { useInstrumentGroups, useVocalGroups, useTechnicalGroups } from "@/hooks/use-instrument-groups";
+import { useInstrumentGroups, useVocalGroups } from "@/hooks/use-instrument-groups";
 import { ChurchSelect } from "@/components/church-select";
+import { ProfileImageUpload } from "@/components/profile-image-upload";
 
 export const Route = createFileRoute("/signup")({ component: SignupPage });
 
