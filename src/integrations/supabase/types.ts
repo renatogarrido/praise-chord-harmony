@@ -598,6 +598,62 @@ export type Database = {
         }
         Relationships: []
       }
+      technical_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      technical_roles: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          label: string
+          sort_order: number | null
+          value: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          label: string
+          sort_order?: number | null
+          value: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string
+          sort_order?: number | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_roles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "technical_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technical_team_assignments: {
         Row: {
           category_id: string
