@@ -42,7 +42,12 @@ function TechnicalScalePage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const schedules: any[] = (data as any)?.schedules ?? [];
-  const upcoming = schedules.filter((s) => new Date(s.service_date) >= new Date());
+  const upcoming = schedules.filter((s) => {
+    const d = new Date(s.service_date);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return d >= now;
+  }).sort((a, b) => new Date(a.service_date).getTime() - new Date(b.service_date).getTime());
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();

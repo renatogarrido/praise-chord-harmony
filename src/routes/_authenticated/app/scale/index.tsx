@@ -56,8 +56,18 @@ function ScalePage() {
   };
 
   const schedules: any[] = (data as any)?.schedules ?? [];
-  const upcoming = schedules.filter((s) => new Date(s.service_date) >= new Date());
-  const past = schedules.filter((s) => new Date(s.service_date) < new Date());
+  const upcoming = schedules.filter((s) => {
+    const d = new Date(s.service_date);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return d >= now;
+  }).sort((a, b) => new Date(a.service_date).getTime() - new Date(b.service_date).getTime());
+  const past = schedules.filter((s) => {
+    const d = new Date(s.service_date);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return d < now;
+  }).sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
