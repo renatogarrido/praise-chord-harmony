@@ -595,6 +595,55 @@ export type Database = {
         }
         Relationships: []
       }
+      technical_team_assignments: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          worship_schedule_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          worship_schedule_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          worship_schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_team_assignments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "instrument_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_team_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_team_assignments_worship_schedule_id_fkey"
+            columns: ["worship_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "worship_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           awarded_at: string
