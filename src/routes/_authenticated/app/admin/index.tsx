@@ -538,4 +538,3 @@ function Dashboard() {
     </motion.div>
   );
 }
-}
