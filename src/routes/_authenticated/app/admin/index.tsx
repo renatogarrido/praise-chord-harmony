@@ -82,10 +82,10 @@ function Dashboard() {
       let availQuery = supabase.from("monthly_availability").select("user_id").eq("month", month).eq("year", year);
 
       if (isLocal && !isAdmin && !isNacional && !isEstadual) {
-        userQuery = userQuery.eq("church_name", myProfile?.church_name);
-        churchQuery = churchQuery.eq("name", myProfile?.church_name);
+        userQuery = userQuery.eq("church_name", myProfile?.church_name || "");
+        churchQuery = churchQuery.eq("name", myProfile?.church_name || "");
       } else if (isEstadual && !isAdmin && !isNacional) {
-        const { data: churchInfo } = await supabase.from("churches").select("estadual").eq("name", myProfile?.church_name).maybeSingle();
+        const { data: churchInfo } = await supabase.from("churches").select("estadual").eq("name", myProfile?.church_name || "").maybeSingle();
         if (churchInfo?.estadual) {
           const { data: relatedChurches } = await supabase.from("churches").select("name").eq("estadual", churchInfo.estadual);
           const names = (relatedChurches ?? []).map(c => c.name);
