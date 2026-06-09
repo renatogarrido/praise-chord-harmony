@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Settings, Users, Calendar, Music2, Plus, Trash2, Wand2, ArrowRight } from "lucide-react";
+import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listSchedules, createSchedule, deleteSchedule, getSchedule } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
