@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight } from "lucide-react";
+import { Settings, Users, Music2, Plus, Trash2, Wand2, ArrowRight, Calendar as CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listSchedules, createSchedule, deleteSchedule, getSchedule } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
@@ -161,7 +161,7 @@ function TechnicalScalePage() {
           <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
             <CardHeader>
               <CardTitle className="text-lg font-serif flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gold" />
+                <CalendarIcon className="w-5 h-5 text-gold" />
                 Calendário de Escalas
               </CardTitle>
             </CardHeader>
@@ -255,7 +255,7 @@ function TechnicalScalePage() {
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Iluminação</CardTitle>
-              <Calendar className="w-4 h-4 text-gold" />
+              <CalendarIcon className="w-4 h-4 text-gold" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.luz || "--"}</div>
@@ -280,7 +280,7 @@ function TechnicalScalePage() {
             <div className="p-8 text-center text-muted-foreground">Carregando escalas...</div>
           ) : upcoming.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-12 text-center">
-              <Calendar className="mx-auto h-10 w-10 text-muted-foreground/40 mb-4" />
+              <CalendarIcon className="mx-auto h-10 w-10 text-muted-foreground/40 mb-4" />
               <p className="text-sm text-muted-foreground">Nenhuma escala técnica programada.</p>
             </div>
           ) : (
