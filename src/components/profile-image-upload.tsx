@@ -129,7 +129,7 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative group">
-        <Avatar className="h-24 w-24 border-2 border-gold/20">
+        <Avatar key={currentImageUrl || 'empty'} className="h-24 w-24 border-2 border-gold/20">
           <AvatarImage src={currentImageUrl || undefined} className="object-cover" />
           <AvatarFallback className="bg-gold-soft text-gold text-2xl font-serif">
             {name ? name[0].toUpperCase() : "?"}
