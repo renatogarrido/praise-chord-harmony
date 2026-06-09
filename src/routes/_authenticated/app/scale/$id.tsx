@@ -75,7 +75,11 @@ function ScaleDetail() {
 
   const pickedUserObj = users.find((u) => u.id === pickedUser);
   const availableRoles: string[] = pickedUserObj
-    ? Array.from(new Set([...(pickedUserObj.instruments ?? []), ...(pickedUserObj.vocal_types ?? [])])).filter(Boolean)
+    ? Array.from(new Set([
+        ...(pickedUserObj.instruments ?? []), 
+        ...(pickedUserObj.vocal_types ?? []),
+        ...(pickedUserObj.technical_roles ?? [])
+      ])).filter(Boolean)
     : [];
 
   const doAssign = async () => {
