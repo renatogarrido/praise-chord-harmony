@@ -113,16 +113,19 @@ function ProfilePage() {
           <ProfileImageUpload 
             userId={user?.id ?? ""} 
             currentImageUrl={avatarUrl} 
-            onImageUploaded={(url) => {
+            onImageUploaded={async (url) => {
               setAvatarUrl(url);
-              // Auto-save when image is uploaded in profile page
-              supabase
+              // Save to DB via update profile logic
+              const { error } = await supabase
                 .from("profiles")
                 .update({ avatar_url: url } as any)
-                .eq("id", user?.id || "")
-                .then(({ error }) => {
-                  if (error) toast.error("Erro ao salvar foto no perfil: " + error.message);
-                });
+                .eq("id", user?.id || "");
+              
+              if (error) {
+                toast.error("Erro ao salvar foto no banco: " + error.message);
+              } else {
+                toast.success("Foto salva no perfil!");
+              }
             }}
             name={fullName || user?.email}
           />
