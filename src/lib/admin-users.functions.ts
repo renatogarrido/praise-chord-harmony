@@ -42,6 +42,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
         password: z.string().min(6).max(128),
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
+        avatarUrl: z.string().url().optional(),
         roles: z.array(z.enum(ROLE_VALUES)).max(4),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
@@ -68,6 +69,7 @@ export const createUserAdmin = createServerFn({ method: "POST" })
       .from("profiles")
       .update({
         full_name: data.fullName,
+        avatar_url: data.avatarUrl || null,
         church_name: data.churchName || null,
         instruments: data.instruments ?? [],
         vocal_types: data.vocalTypes ?? [],
@@ -296,6 +298,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
         userId: z.string().uuid(),
         fullName: z.string().min(1).max(255),
         churchName: z.string().max(255).optional(),
+        avatarUrl: z.string().url().optional(),
         roles: z.array(z.enum(ROLE_VALUES)).max(4),
         instruments: z.array(z.string().max(64)).max(40).optional(),
         vocalTypes: z.array(z.string().max(64)).max(10).optional(),
@@ -313,6 +316,7 @@ export const updateUserAdmin = createServerFn({ method: "POST" })
       .from("profiles")
       .update({
         full_name: data.fullName,
+        avatar_url: data.avatarUrl || null,
         church_name: data.churchName || null,
         instruments: data.instruments ?? [],
         vocal_types: data.vocalTypes ?? [],
