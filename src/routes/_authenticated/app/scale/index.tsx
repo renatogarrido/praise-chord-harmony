@@ -231,7 +231,7 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
       // Strip empty selections
       const payloadSetlists: Record<string, string> = {};
       for (const [k, v] of Object.entries(sundaySetlists)) if (v) payloadSetlists[k] = v;
-      const r: any = await gen({ data: { year, month, churchName: null, sundaySetlists: payloadSetlists, includeWeekdays: false } });
+      const r: any = await gen({ data: { year, month, churchName: null, sundaySetlists: payloadSetlists, includeWeekdays } });
       toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.dayCount} dias.`);
       setOpen(false);
       setSundaySetlists({});
@@ -261,6 +261,17 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
             >
               {opts.map((o) => <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`} className="capitalize">{o.label}</option>)}
             </select>
+
+            <div className="flex items-center space-x-2 mb-5 bg-card/40 p-3 rounded-xl border border-border/30">
+              <input 
+                type="checkbox" 
+                id="genWeekdays" 
+                checked={includeWeekdays} 
+                onChange={(e) => setIncludeWeekdays(e.target.checked)}
+                className="rounded border-border text-gold focus:ring-gold"
+              />
+              <label htmlFor="genWeekdays" className="text-xs font-medium cursor-pointer">Incluir dias da semana (Segunda a Sábado)</label>
+            </div>
 
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Repertório de domingo</p>
             <div className="space-y-2 mb-2">
