@@ -174,9 +174,6 @@ function SignupPage() {
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Já tem conta? <Link to="/login" className="text-gold hover:underline">Entrar</Link>
           </p>
-          <p className="mt-3 text-center text-[10px] text-muted-foreground/70">
-            O primeiro usuário cadastrado torna-se admin automaticamente.
-          </p>
         </div>
       </div>
     </div>
