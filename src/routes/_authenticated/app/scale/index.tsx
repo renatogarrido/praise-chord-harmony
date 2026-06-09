@@ -2,14 +2,23 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { CalendarDays, Plus, Trash2, Users, Wand2, Music2, ArrowRight, Calendar as CalendarIcon, ListMusic } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listSchedules, createSchedule, deleteSchedule, listMySetlists } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { CalendarDays, Plus, Trash2, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/app/scale/")({ component: ScalePage });
-
 
 function ScalePage() {
   const { canManageSchedule, user } = useAuth();
@@ -17,10 +26,11 @@ function ScalePage() {
   const list = useServerFn(listSchedules);
   const create = useServerFn(createSchedule);
   const del = useServerFn(deleteSchedule);
-  const setlists = useServerFn(listMySetlists);
+  const setlistsFn = useServerFn(listMySetlists);
+  const gen = useServerFn(generateMonthlySchedules);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules"], queryFn: () => list() });
-  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlists(), enabled: canManageSchedule });
+  const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlistsFn(), enabled: canManageSchedule });
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -29,6 +39,8 @@ function ScalePage() {
   const [notes, setNotes] = useState("");
   const [churchName, setChurchName] = useState("");
   const [setlistId, setSetlistId] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [busy, setBusy] = useState(false);
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,143 +68,246 @@ function ScalePage() {
   };
 
   const schedules: any[] = (data as any)?.schedules ?? [];
+  
   const upcoming = schedules.filter((s) => {
     const d = new Date(s.service_date);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     return d >= now;
   }).sort((a, b) => new Date(a.service_date).getTime() - new Date(b.service_date).getTime());
-  const past = schedules.filter((s) => {
-    const d = new Date(s.service_date);
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return d < now;
-  }).sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
+
+  const stats = {
+    total: upcoming.length,
+    assigned: upcoming.filter(s => (s.worship_schedule_assignments ?? []).some((a: any) => a.user_id === user?.id)).length,
+    musicians: upcoming.reduce((acc, s) => acc + (s.worship_schedule_assignments?.length || 0), 0),
+  };
 
   return (
-    <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-gold mb-2">Ministério de Louvor</p>
-          <h1 className="font-serif text-4xl md:text-5xl">Escala</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Cultos, eventos e os músicos escalados para cada um.</p>
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
+          <div>
+            <h1 className="font-serif text-4xl text-gold mb-2">Escala de Louvor</h1>
+            <p className="text-muted-foreground">Cultos, eventos e músicos escalados.</p>
+          </div>
+          {canManageSchedule && (
+            <div className="flex flex-wrap gap-3">
+              <GenerateMonthButton onDone={() => refetch()} />
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gold hover:bg-gold/90 text-white gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nova Escala
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Criar Nova Escala</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={onCreate} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>Título do culto / evento *</Label>
+                      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Culto de Domingo" required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Data *</Label>
+                        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Hora</Label>
+                        <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Igreja</Label>
+                      <Input value={churchName} onChange={(e) => setChurchName(e.target.value)} placeholder="Ex: Renascer Local" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Repertório</Label>
+                      <select value={setlistId} onChange={(e) => setSetlistId(e.target.value)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50">
+                        <option value="">— Sem repertório —</option>
+                        {(setlistsQ.data as any)?.setlists?.map((s: any) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Observações</Label>
+                      <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                      <Button type="submit" className="bg-gold text-white">Criar</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
         </div>
-        {canManageSchedule && (
-          <div className="flex flex-wrap gap-2">
-            <GenerateMonthButton onDone={() => refetch()} />
-            <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground">
-              <Plus className="h-4 w-4" /> Nova escala
-            </button>
-          </div>
-        )}
-      </header>
 
+        <div className="grid gap-8 lg:grid-cols-[350px_1fr] mb-12">
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
+            <CardHeader>
+              <CardTitle className="text-lg font-serif flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-gold" />
+                Calendário de Escalas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 flex justify-center pb-4">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(val) => setSelectedDate(val)}
+                className="rounded-md"
+              />
+            </CardContent>
+          </Card>
 
-      {open && canManageSchedule && (
-        <form onSubmit={onCreate} className="mb-8 rounded-2xl border border-border bg-card p-6 grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <Label>Título do culto / evento *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Culto de Domingo à noite" />
+          <div className="space-y-6">
+            <Card className="bg-card/30 backdrop-blur-sm border-border/30 border-dashed">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-serif">
+                  {selectedDate ? (
+                    `Escalas em: ${selectedDate.toLocaleDateString("pt-BR", { dateStyle: "long" })}`
+                  ) : "Selecione uma data"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[280px]">
+                  {selectedDate ? (() => {
+                    const dateStr = selectedDate.toISOString().split("T")[0];
+                    const daySchedules = schedules.filter(s => s.service_date.startsWith(dateStr));
+                    
+                    if (daySchedules.length === 0) {
+                      return <p className="text-sm text-muted-foreground text-center py-10">Nenhuma escala para este dia.</p>;
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {daySchedules.map(s => (
+                          <div key={s.id} className="border-b border-border/50 pb-4 last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium text-gold">{s.title}</h4>
+                              <Badge variant="outline" className="text-[10px] capitalize">
+                                {new Date(s.service_date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                              </Badge>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {s.worship_schedule_assignments?.length > 0 ? (
+                                s.worship_schedule_assignments.map((a: any) => (
+                                  <Badge key={a.id} variant="secondary" className="bg-secondary/50 text-[10px]">
+                                    {a.role_label}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Ninguém escalado ainda</span>
+                              )}
+                            </div>
+                            <Button 
+                              variant="link" 
+                              size="sm" 
+                              className="h-auto p-0 text-xs text-gold"
+                              onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}
+                            >
+                              Ver Detalhes <ArrowRight className="w-3 h-3 ml-1" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })() : null}
+                </ScrollArea>
+              </CardContent>
+            </Card>
           </div>
-          <div>
-            <Label>Data *</Label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          </div>
-          <div>
-            <Label>Horário</Label>
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-          </div>
-          <div>
-            <Label>Igreja</Label>
-            <Input value={churchName} onChange={(e) => setChurchName(e.target.value)} placeholder="Ex: Renascer Local" />
-          </div>
-          <div>
-            <Label>Repertório</Label>
-            <select value={setlistId} onChange={(e) => setSetlistId(e.target.value)}
-              className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none">
-              <option value="">— Sem repertório —</option>
-              {(setlistsQ.data as any)?.setlists?.map((s: any) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3 mb-10">
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Próximos Cultos</CardTitle>
+              <CalendarIcon className="w-4 h-4 text-gold" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">Escalas programadas</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Minhas Escalações</CardTitle>
+              <Users className="w-4 h-4 text-gold" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.assigned}</div>
+              <p className="text-xs text-muted-foreground mt-1">Datas em que você toca/canta</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Total de Músicos</CardTitle>
+              <Music2 className="w-4 h-4 text-gold" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.musicians}</div>
+              <p className="text-xs text-muted-foreground mt-1">Escalações confirmadas</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="font-serif text-2xl mb-6">Lista de Escalas</h2>
+          {isLoading ? (
+            <div className="p-8 text-center text-muted-foreground">Carregando escalas...</div>
+          ) : upcoming.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-12 text-center">
+              <CalendarIcon className="mx-auto h-10 w-10 text-muted-foreground/40 mb-4" />
+              <p className="text-sm text-muted-foreground">Nenhuma escala programada.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {upcoming.map((s) => (
+                <div 
+                  key={s.id}
+                  className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4 hover:border-gold/40 transition-colors group cursor-pointer"
+                  onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}
+                >
+                  <div className="flex-1">
+                    <h3 className="font-serif text-xl group-hover:text-gold transition-colors">{s.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 capitalize">
+                      {new Date(s.service_date).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}
+                      {s.church_name ? ` · ${s.church_name}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {canManageSchedule && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-gold transition-all group-hover:translate-x-1" />
+                  </div>
+                </div>
               ))}
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <Label>Observações</Label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
-              className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />
-          </div>
-          <div className="md:col-span-2 flex gap-2 justify-end">
-            <button type="button" onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2.5 text-xs uppercase tracking-widest">Cancelar</button>
-            <button type="submit" className="rounded-full bg-gold px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-primary-foreground">Criar</button>
-          </div>
-        </form>
-      )}
-
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
-      ) : schedules.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-16 text-center">
-          <CalendarDays className="mx-auto h-10 w-10 text-muted-foreground/40" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            {canManageSchedule ? "Nenhuma escala criada ainda." : "Você ainda não está em nenhuma escala."}
-          </p>
+            </div>
+          )}
         </div>
-      ) : (
-        <>
-          <Group label="Próximas" items={upcoming} userId={user?.id} canManage={canManageSchedule} onDelete={onDelete} />
-          {past.length > 0 && <Group label="Anteriores" items={past} userId={user?.id} canManage={canManageSchedule} onDelete={onDelete} muted />}
-        </>
-      )}
+      </motion.div>
     </div>
   );
-}
-
-function Group({ label, items, userId, canManage, onDelete, muted }: any) {
-  return (
-    <section className="mb-10">
-      <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-muted-foreground/60 mb-3">{label}</p>
-      <div className="grid gap-3">
-        {items.map((s: any) => {
-          const mine = (s.worship_schedule_assignments ?? []).filter((a: any) => a.user_id === userId);
-          return (
-            <Link key={s.id} to="/app/scale/$id" params={{ id: s.id }}
-              className={`rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-3 hover:border-gold/40 transition-colors ${muted ? "opacity-70" : ""}`}>
-              <div className="min-w-0 flex-1">
-                <p className="font-serif text-xl">{s.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(s.service_date).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}
-                  {s.church_name ? ` · ${s.church_name}` : ""}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {mine.map((a: any) => (
-                    <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-gold-soft text-gold text-[11px] px-2.5 py-1">
-                      Você: {a.role_label}
-                    </span>
-                  ))}
-                  <span className="inline-flex items-center gap-1 rounded-full bg-background border border-border text-muted-foreground text-[11px] px-2.5 py-1">
-                    <Users className="h-3 w-3" /> {(s.worship_schedule_assignments ?? []).length} escalados
-                  </span>
-                </div>
-              </div>
-              {canManage && (
-                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(s.id); }}
-                  className="rounded-lg p-2 hover:bg-accent text-muted-foreground hover:text-destructive" title="Excluir">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function Label({ children }: any) {
-  return <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{children}</label>;
-}
-function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...p} className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm focus:border-gold/50 focus:outline-none" />;
 }
 
 function GenerateMonthButton({ onDone }: { onDone: () => void }) {
@@ -220,7 +335,6 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
     opts.push({ y: d.getFullYear(), m: d.getMonth() + 1, label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) });
   }
 
-  // Compute Sundays for the selected month
   const sundays: { ymd: string; label: string }[] = [];
   {
     const last = new Date(year, month, 0).getDate();
@@ -239,11 +353,10 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
   const run = async () => {
     setBusy(true);
     try {
-      // Strip empty selections
       const payloadSetlists: Record<string, string> = {};
       for (const [k, v] of Object.entries(sundaySetlists)) if (v) payloadSetlists[k] = v;
       const r: any = await gen({ data: { year, month, churchName: null, sundaySetlists: payloadSetlists, includeWeekdays } });
-      toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações) em ${r.dayCount} dias.`);
+      toast.success(`Geradas ${r.createdSchedules} escalas (${r.createdAssignments} escalações).`);
       setOpen(false);
       setSundaySetlists({});
       onDone();
@@ -256,70 +369,69 @@ function GenerateMonthButton({ onDone }: { onDone: () => void }) {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-5 py-3 text-xs font-semibold uppercase tracking-widest text-gold hover:bg-gold/15">
-        <Wand2 className="h-4 w-4" /> Gerar mês
-      </button>
+      <Button onClick={() => setOpen(true)} variant="outline" className="gap-2 border-gold/40 text-gold hover:bg-gold/10">
+        <Wand2 className="h-4 w-4" /> Gerar Mês
+      </Button>
       {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => !busy && setOpen(false)}>
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-serif text-2xl mb-1">Gerar escala mensal</h3>
-            <p className="text-xs text-muted-foreground mb-5">Cria 4 escalas (08:00, 10:00, 16:00, 18:00) para cada domingo, usando a disponibilidade dos usuários. O repertório escolhido por domingo é aplicado aos 4 cultos.</p>
-            <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Mês</label>
-            <select
-              value={`${year}-${month}`}
-              onChange={(e) => { const [y, m] = e.target.value.split("-").map(Number); setYear(y); setMonth(m); setSundaySetlists({}); }}
-              className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm capitalize mb-5 focus:border-gold/50 focus:outline-none"
-            >
-              {opts.map((o) => <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`} className="capitalize">{o.label}</option>)}
-            </select>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Gerar Escala Mensal Automática</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 pt-4">
+              <div className="space-y-2">
+                <Label>Mês</Label>
+                <select
+                  value={`${year}-${month}`}
+                  onChange={(e) => { const [y, m] = e.target.value.split("-").map(Number); setYear(y); setMonth(m); setSundaySetlists({}); }}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 capitalize"
+                >
+                  {opts.map((o) => <option key={`${o.y}-${o.m}`} value={`${o.y}-${o.m}`}>{o.label}</option>)}
+                </select>
+              </div>
 
-            <div className="flex items-center space-x-2 mb-5 bg-card/40 p-3 rounded-xl border border-border/30">
-              <input 
-                type="checkbox" 
-                id="genWeekdays" 
-                checked={includeWeekdays} 
-                onChange={(e) => setIncludeWeekdays(e.target.checked)}
-                className="rounded border-border text-gold focus:ring-gold"
-              />
-              <label htmlFor="genWeekdays" className="text-xs font-medium cursor-pointer">Incluir dias da semana (Segunda a Sábado)</label>
-            </div>
+              <div className="flex items-center space-x-2 bg-card/40 p-3 rounded-lg border border-border/30">
+                <Checkbox 
+                  id="genWeekdays" 
+                  checked={includeWeekdays} 
+                  onCheckedChange={(checked) => setIncludeWeekdays(!!checked)}
+                />
+                <Label htmlFor="genWeekdays" className="text-xs cursor-pointer">Incluir dias da semana (Segunda a Sábado)</Label>
+              </div>
 
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Repertório de domingo</p>
-            <div className="space-y-2 mb-2">
-              {sundays.map((s) => (
-                <div key={s.ymd} className="rounded-2xl border border-border bg-background p-3">
-                  <p className="text-xs capitalize mb-2">{s.label}</p>
-                  <select
-                    value={sundaySetlists[s.ymd] ?? ""}
-                    onChange={(e) => setSundaySetlists((prev) => ({ ...prev, [s.ymd]: e.target.value }))}
-                    className="w-full rounded-full border border-border bg-card px-3 py-2 text-sm focus:border-gold/50 focus:outline-none"
-                  >
-                    <option value="">— Sem repertório —</option>
-                    {setlists.map((sl) => (
-                      <option key={sl.id} value={sl.id}>{sl.name}</option>
+              <div className="space-y-3">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Repertório por Domingo</Label>
+                <ScrollArea className="h-[200px] pr-4">
+                  <div className="space-y-3">
+                    {sundays.map((s) => (
+                      <div key={s.ymd} className="rounded-lg border border-border bg-background p-3">
+                        <p className="text-xs font-medium capitalize mb-2">{s.label}</p>
+                        <select
+                          value={sundaySetlists[s.ymd] ?? ""}
+                          onChange={(e) => setSundaySetlists((prev) => ({ ...prev, [s.ymd]: e.target.value }))}
+                          className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                        >
+                          <option value="">— Sem repertório —</option>
+                          {setlists.map((sl) => (
+                            <option key={sl.id} value={sl.id}>{sl.name}</option>
+                          ))}
+                        </select>
+                      </div>
                     ))}
-                  </select>
-                </div>
-              ))}
-              {sundays.length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhum domingo neste mês.</p>
-              )}
-              {setlists.length === 0 && setlistsQ.isFetched && (
-                <p className="text-xs text-muted-foreground">Você ainda não criou repertórios. Crie um em "Repertórios" para selecionar aqui.</p>
-              )}
-            </div>
+                  </div>
+                </ScrollArea>
+              </div>
 
-            <div className="mt-5 flex justify-end gap-2">
-              <button disabled={busy} onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2 text-xs uppercase tracking-widest disabled:opacity-50">Cancelar</button>
-              <button disabled={busy} onClick={run} className="inline-flex items-center gap-1.5 rounded-full bg-gold px-5 py-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50">
-                <Wand2 className="h-3.5 w-3.5" /> {busy ? "Gerando…" : "Gerar"}
-              </button>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button disabled={busy} variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button disabled={busy} onClick={run} className="bg-gold text-white gap-2">
+                  <Wand2 className="h-4 w-4" /> {busy ? "Gerando..." : "Gerar Escala"}
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
 }
-
-
