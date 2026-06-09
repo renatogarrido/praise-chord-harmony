@@ -238,12 +238,30 @@ function Dashboard() {
       });
       setTopSongs([...counts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(([id, v]) => ({ id, ...v })));
       setTopUsers([...userCounts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 10).map(([id, v]) => ({ id, ...v })));
-      // 4. Fetch schedules
+      
+      // 4. Fetch schedules with filtering based on hierarchy
       setLoadingSchedules(true);
-      const { data: schedData } = await supabase
+      
+      let schedQuery = supabase
         .from("worship_schedules")
         .select("*, worship_schedule_assignments(*), technical_team_assignments(*)")
         .order("service_date", { ascending: true });
+
+      if (isLocal && !isAdmin && !isNacional && !isEstadual) {
+        // Local leader sees only their church
+        schedQuery = schedQuery.eq("church_name", myProfile?.church_name || "");
+      } else if (isEstadual && !isAdmin && !isNacional) {
+        // State leader sees all churches in their state
+        const { data: churchInfo } = await supabase.from("churches").select("estadual").eq("name", myProfile?.church_name || "").maybeSingle();
+        if (churchInfo?.estadual) {
+          const { data: relatedChurches } = await supabase.from("churches").select("name").eq("estadual", churchInfo.estadual);
+          const names = (relatedChurches ?? []).map(c => c.name);
+          schedQuery = schedQuery.in("church_name", names);
+        }
+      }
+      // National leaders and Admins see everything (no filter)
+
+      const { data: schedData } = await schedQuery;
       setSchedules(schedData ?? []);
       setLoadingSchedules(false);
     })();
