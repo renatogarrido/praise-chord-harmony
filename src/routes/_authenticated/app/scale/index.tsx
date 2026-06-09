@@ -45,7 +45,7 @@ function ScalePage() {
     enabled: !!user?.id
   });
   
-  const roles = (userRolesQ.data?.data ?? []) as any[];
+  const roles = (userRolesQ.data as any)?.data ?? [];
   const roleNames = roles.map((r: any) => r.role as string);
   const isNacional = roleNames.includes("lider_nacional");
   const isEstadual = roleNames.includes("lider_estadual");
