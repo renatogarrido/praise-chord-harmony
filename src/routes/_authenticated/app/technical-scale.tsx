@@ -41,7 +41,9 @@ function TechnicalScalePage() {
   const [includeWeekdays, setIncludeWeekdays] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const schedules: any[] = (data as any)?.schedules ?? [];
+  const schedules: any[] = ((data as any)?.schedules ?? []).filter((s: any) => 
+    s.title.toLowerCase().includes("técnica") || (s.technical_team_assignments?.length > 0)
+  );
   const upcoming = schedules.filter((s) => {
     const d = new Date(s.service_date);
     const now = new Date();
@@ -194,7 +196,7 @@ function TechnicalScalePage() {
                 <ScrollArea className="h-[280px]">
                   {selectedDate ? (() => {
                     const dateStr = selectedDate.toISOString().split("T")[0];
-                    const daySchedules = schedules.filter(s => s.service_date.startsWith(dateStr) && (s.title.toLowerCase().includes("técnica") || s.technical_team_assignments?.length > 0));
+                    const daySchedules = schedules.filter(s => s.service_date.startsWith(dateStr));
                     
                     if (daySchedules.length === 0) {
                       return <p className="text-sm text-muted-foreground text-center py-10">Nenhuma escala para este dia.</p>;
@@ -290,7 +292,7 @@ function TechnicalScalePage() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {upcoming.filter(s => s.title.toLowerCase().includes("técnica") || s.technical_team_assignments?.length > 0).map((s) => (
+              {upcoming.map((s) => (
                 <div 
                   key={s.id}
                   className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4 hover:border-gold/40 transition-colors group cursor-pointer"
