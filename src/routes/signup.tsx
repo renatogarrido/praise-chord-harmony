@@ -21,6 +21,8 @@ function SignupPage() {
   const [instruments, setInstruments] = useState<string[]>([]);
   const [vocalTypes, setVocalTypes] = useState<string[]>([]);
   const [technicalRoles, setTechnicalRoles] = useState<string[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [tempUserId] = useState(() => `temp-${Math.random().toString(36).substring(2, 15)}`);
   const [loading, setLoading] = useState(false);
   const { groups: instrumentGroups } = useInstrumentGroups();
   const { groups: vocalGroups } = useVocalGroups();
