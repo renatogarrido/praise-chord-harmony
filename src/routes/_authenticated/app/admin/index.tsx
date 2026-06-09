@@ -247,19 +247,28 @@ function Dashboard() {
         .select("*, worship_schedule_assignments(*), technical_team_assignments(*)")
         .order("service_date", { ascending: true });
 
-      if (isLocal && !isAdmin && !isNacional && !isEstadual) {
-        // Local leader sees only their church
-        schedQuery = schedQuery.eq("church_name", myProfile?.church_name || "");
-      } else if (isEstadual && !isAdmin && !isNacional) {
-        // State leader sees all churches in their state
+      if (isAdmin || isNacional) {
+        // No filter for Admins and National Leaders
+      } else if (isEstadual) {
+        // State leader sees all churches in their state OR their own church (if estadual is null)
         const { data: churchInfo } = await supabase.from("churches").select("estadual").eq("name", myProfile?.church_name || "").maybeSingle();
+        
         if (churchInfo?.estadual) {
           const { data: relatedChurches } = await supabase.from("churches").select("name").eq("estadual", churchInfo.estadual);
           const names = (relatedChurches ?? []).map(c => c.name);
+          // Ensure their own church is always included even if not returned by 'related' for some reason
+          if (myProfile?.church_name && !names.includes(myProfile.church_name)) {
+            names.push(myProfile.church_name);
+          }
           schedQuery = schedQuery.in("church_name", names);
+        } else if (myProfile?.church_name) {
+          // Fallback if estadual is not defined: see at least their own church
+          schedQuery = schedQuery.eq("church_name", myProfile.church_name);
         }
+      } else if (isLocal) {
+        // Local leader sees only their church
+        schedQuery = schedQuery.eq("church_name", myProfile?.church_name || "");
       }
-      // National leaders and Admins see everything (no filter)
 
       const { data: schedData } = await schedQuery;
       setSchedules(schedData ?? []);
