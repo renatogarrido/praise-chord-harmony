@@ -194,8 +194,22 @@ function TechnicalScalePage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Igreja</Label>
-                      <Input value={churchName} onChange={(e) => setChurchName(e.target.value)} placeholder="Nome da igreja" />
+                      <Label>Igreja *</Label>
+                      {isAdmin || isNacional || isEstadual ? (
+                        <select 
+                          value={churchName} 
+                          onChange={(e) => setChurchName(e.target.value)}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                          required
+                        >
+                          <option value="">Selecione uma igreja...</option>
+                          {filteredChurches.map((c: any) => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input value={churchName} disabled className="bg-muted cursor-not-allowed" />
+                      )}
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
