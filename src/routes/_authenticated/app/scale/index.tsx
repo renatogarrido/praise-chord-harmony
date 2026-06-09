@@ -1,13 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Plus, Trash2, Users, Wand2, Music2, ArrowRight, Calendar as CalendarIcon, ListMusic } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listSchedules, createSchedule, deleteSchedule, listMySetlists } from "@/lib/worship-schedule.functions";
+import { listSchedules, createSchedule, deleteSchedule, listMySetlists, listAllChurches } from "@/lib/worship-schedule.functions";
 import { generateMonthlySchedules } from "@/lib/availability.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -21,16 +22,41 @@ import { Checkbox } from "@/components/ui/checkbox";
 export const Route = createFileRoute("/_authenticated/app/scale/")({ component: ScalePage });
 
 function ScalePage() {
-  const { canManageSchedule, user } = useAuth();
+  const { isAdmin, canManageSchedule, user } = useAuth();
   const nav = useNavigate();
   const list = useServerFn(listSchedules);
   const create = useServerFn(createSchedule);
   const del = useServerFn(deleteSchedule);
   const setlistsFn = useServerFn(listMySetlists);
   const gen = useServerFn(generateMonthlySchedules);
+  const listChurches = useServerFn(listAllChurches);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules"], queryFn: () => list() });
   const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlistsFn(), enabled: canManageSchedule });
+  const profQ = useQuery({ 
+    queryKey: ["my-profile-church", user?.id], 
+    queryFn: () => supabase.from("profiles").select("church_name").eq("id", user?.id || "").maybeSingle(),
+    enabled: !!user?.id
+  });
+  
+  const userRolesQ = useQuery({ 
+    queryKey: ["user-roles", user?.id], 
+    queryFn: () => supabase.from("user_roles").select("role").eq("user_id", user?.id || ""),
+    enabled: !!user?.id
+  });
+  
+  const roles = (userRolesQ.data as any)?.data ?? [];
+  const roleNames = roles.map((r: any) => r.role as string);
+  const isNacional = roleNames.includes("lider_nacional");
+  const isEstadual = roleNames.includes("lider_estadual");
+  const isLocal = roleNames.includes("lider_local");
+  const myChurch = (profQ.data as any)?.data?.church_name;
+
+  const churchesQ = useQuery({ 
+    queryKey: ["all-churches-picker"], 
+    queryFn: () => listChurches(),
+    enabled: canManageSchedule && (isAdmin || isNacional || isEstadual)
+  });
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -38,9 +64,28 @@ function ScalePage() {
   const [time, setTime] = useState("19:00");
   const [notes, setNotes] = useState("");
   const [churchName, setChurchName] = useState("");
-  const [setlistId, setSetlistId] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [busy, setBusy] = useState(false);
+  const [setlistId, setSetlistId] = useState<string>("");
+
+  useEffect(() => {
+    if (open && isLocal && !isAdmin && !isNacional && !isEstadual && myChurch) {
+      setChurchName(myChurch);
+    }
+  }, [open, isLocal, isAdmin, isNacional, isEstadual, myChurch]);
+
+  const filteredChurches = useMemo(() => {
+    const all = (churchesQ.data as any)?.churches ?? [];
+    if (isAdmin || isNacional) return all;
+    if (isEstadual) {
+      const myChurchObj = all.find((c: any) => c.name === myChurch);
+      if (myChurchObj?.estadual) {
+        return all.filter((c: any) => c.estadual === myChurchObj.estadual);
+      }
+      return myChurch ? all.filter((c: any) => c.name === myChurch) : [];
+    }
+    return [];
+  }, [churchesQ.data, isAdmin, isNacional, isEstadual, myChurch]);
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,8 +171,22 @@ function ScalePage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Igreja</Label>
-                      <Input value={churchName} onChange={(e) => setChurchName(e.target.value)} placeholder="Ex: Renascer Local" />
+                      <Label>Igreja *</Label>
+                      {isAdmin || isNacional || isEstadual ? (
+                        <select 
+                          value={churchName} 
+                          onChange={(e) => setChurchName(e.target.value)}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                          required
+                        >
+                          <option value="">Selecione uma igreja...</option>
+                          {filteredChurches.map((c: any) => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input value={churchName} disabled className="bg-muted cursor-not-allowed" />
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>Repertório</Label>
