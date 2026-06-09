@@ -5,9 +5,10 @@ import { requireVerifiedSupabaseAuth as requireSupabaseAuth } from "@/lib/verifi
 
 const MANAGER_ROLES = ["admin", "lider_nacional", "lider_estadual", "lider_local"] as const;
 
-function throwSafe(label: string, error: unknown): never {
+function throwSafe(label: string, error: any): never {
   console.error(`[worship-schedule] ${label}`, error);
-  throw new Error("Não foi possível concluir a operação. Tente novamente.");
+  const msg = error?.message || error?.details || "Erro desconhecido";
+  throw new Error(`[${label}] ${msg}`);
 }
 
 async function assertCanManage(supabase: any, callerId: string) {

@@ -112,19 +112,26 @@ function ScaleDetail() {
       if (!pickedUser || pickedRoles.length === 0) return toast.error("Escolha colaborador e pelo menos uma função técnica.");
       try {
         const categories = (techCatsQ.data as any)?.categories ?? [];
+        
+        // Execute assignments sequentially to avoid race conditions or potential bulk issues
+        // and to give clear feedback if one fails.
         for (const catId of pickedRoles) {
+          const catName = categories.find((c: any) => c.id === catId)?.name || 'técnica';
           try {
             await assignTech({ data: { scheduleId: id, userId: pickedUser, categoryId: catId } });
           } catch (innerErr: any) {
-            console.error(`Error assigning role ${catId}:`, innerErr);
-            throw new Error(`Erro na função ${categories.find((c: any) => c.id === catId)?.name || 'técnica'}: ${innerErr.message}`);
+            console.error(`Error assigning role ${catName} (${catId}):`, innerErr);
+            // Don't swallow the error, throw it to be caught by the outer catch
+            throw new Error(`Erro na função ${catName}: ${innerErr.message || 'Tente novamente.'}`);
           }
         }
         
         toast.success("Colaborador técnico escalado!");
         setPicker(false); setPickedUser(""); setPickedRoles([]); setSearch("");
         detailQ.refetch();
-      } catch (e: any) { toast.error(e.message || "Erro"); }
+      } catch (e: any) { 
+        toast.error(e.message || "Não foi possível concluir a operação."); 
+      }
     }
   };
 
@@ -142,7 +149,11 @@ function ScaleDetail() {
 
   const doDelete = async () => {
     if (!confirm("Excluir esta escala inteira?")) return;
-    try { await del({ data: { id } }); toast.success("Excluída."); nav({ to: s.title.toLowerCase().includes("técnica") ? "/app/technical-scale" : "/app/scale" }); }
+    try { 
+      await del({ data: { id } }); 
+      toast.success("Excluída."); 
+      nav({ to: isTechnical ? "/app/technical-scale" : "/app/scale" }); 
+    }
     catch (e: any) { toast.error(e.message || "Erro"); }
   };
 

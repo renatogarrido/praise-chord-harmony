@@ -63,9 +63,10 @@ function TechnicalScalePage() {
       }});
       toast.success("Escala manual criada!");
       setOpen(false);
-      // Refresh data and stay on page to show the new scale in the list below
       refetch();
       setTitle(""); setDate(""); setChurchName("");
+      // Navega para a escala recém criada mantendo o contexto técnico
+      nav({ to: "/app/scale/$id", params: { id: (r as any).id }, search: { from: "technical" } });
     } catch (err: any) { toast.error(err.message || "Erro"); }
   };
 
