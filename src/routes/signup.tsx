@@ -61,7 +61,7 @@ function SignupPage() {
           church_name: churchName.trim().slice(0, 255) || null,
           instruments,
           vocal_types: vocalTypes,
-          technical_roles: technicalRoles,
+          technical_roles: technicalRoles.map(id => technicalCategories.find(c => c.id === id)?.name || id),
         } as any)
         .eq("id", userId);
     }
