@@ -45,6 +45,7 @@ function Dashboard() {
   const [voices, setVoices] = useState<VoiceRow[]>([]);
   const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [accessTrend, setAccessTrend] = useState<{ day: string; n: number }[]>([]);
+  const [availByMonth, setAvailByMonth] = useState<{ month: string; n: number }[]>([]);
   const [availDetails, setAvailDetails] = useState<{ filled: string[]; missing: string[] }>({
     filled: [],
     missing: [],
@@ -94,7 +95,7 @@ function Dashboard() {
         }
       }
 
-      const [uRes, sl, al, chRes, avRes, vocCats, ub, bd, recent] = await Promise.all([
+      const [uRes, sl, al, chRes, avRes, vocCats, ub, bd, recent, allAvail] = await Promise.all([
         userQuery,
         supabase.from("songs").select("id", { count: "exact", head: true }),
         supabase.from("albums").select("id", { count: "exact", head: true }),
@@ -104,6 +105,7 @@ function Dashboard() {
         supabase.from("user_badges").select("badge_id"),
         supabase.from("badges").select("id, name, icon"),
         supabase.from("access_history").select("accessed_at").gte("accessed_at", since.toISOString()),
+        supabase.from("monthly_availability").select("month, year").gte("year", year - 1),
       ]);
 
       const profiles = uRes.data ?? [];
@@ -154,6 +156,33 @@ function Dashboard() {
           day: `${k.slice(8, 10)}/${k.slice(5, 7)}`,
           n,
         }))
+      );
+
+      // Disponibilidade por mês
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      const availCounts = new Map<string, number>();
+      
+      // Initialize last 6 months
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const m = d.getMonth() + 1;
+        const y = d.getFullYear();
+        availCounts.set(`${m}/${y}`, 0);
+      }
+
+      (allAvail.data ?? []).forEach((r: any) => {
+        const key = `${r.month}/${r.year}`;
+        if (availCounts.has(key)) {
+          availCounts.set(key, (availCounts.get(key) ?? 0) + 1);
+        }
+      });
+
+      setAvailByMonth(
+        [...availCounts.entries()].map(([key, n]) => {
+          const [m] = key.split("/");
+          return { month: monthNames[parseInt(m) - 1], n };
+        })
       );
 
       // Vozes
@@ -262,33 +291,62 @@ function Dashboard() {
         ))}
       </div>
 
-      {/* Tendência de acessos */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="rounded-2xl border border-border bg-card p-6 mb-6"
-      >
-        <h2 className="font-serif text-xl mb-5">Acessos nos últimos 14 dias</h2>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={accessTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip {...tooltipStyle} />
-              <Bar 
-                dataKey="n" 
-                name="Acessos" 
-                fill={GOLD} 
-                radius={[6, 6, 0, 0]} 
-                isAnimationActive={true}
-                animationDuration={1500}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Tendência de acessos */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="rounded-2xl border border-border bg-card p-6"
+        >
+          <h2 className="font-serif text-xl mb-5">Acessos nos últimos 14 dias</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={accessTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip {...tooltipStyle} />
+                <Bar 
+                  dataKey="n" 
+                  name="Acessos" 
+                  fill={GOLD} 
+                  radius={[6, 6, 0, 0]} 
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        {/* Disponibilidade por Mês */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="rounded-2xl border border-border bg-card p-6"
+        >
+          <h2 className="font-serif text-xl mb-5 text-gold">Disponibilidade por mês</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={availByMonth} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip {...tooltipStyle} />
+                <Bar 
+                  dataKey="n" 
+                  name="Preenchimentos" 
+                  fill="#7E69AB" 
+                  radius={[6, 6, 0, 0]} 
+                  isAnimationActive={true}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         {/* Vozes por naipe */}
