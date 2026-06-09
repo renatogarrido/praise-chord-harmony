@@ -348,32 +348,57 @@ function Dashboard() {
           transition={{ delay: 0.3 }}
           className="rounded-2xl border border-border bg-card p-6"
         >
-          <div className="flex items-center gap-2 mb-6">
-            <ListMusic className="h-5 w-5 text-gold" />
-            <h2 className="font-serif text-2xl">Próximas Escalas</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <ListMusic className="h-5 w-5 text-gold" />
+              <h2 className="font-serif text-2xl">Próximas Escalas</h2>
+            </div>
+            {upcomingSchedules.length > 0 && (
+              <div className="flex items-center gap-2">
+                <select 
+                  className="text-xs bg-background border border-border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gold/50"
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    if (id) {
+                      const s = schedules.find(sched => sched.id === id);
+                      const isTech = s?.title?.toLowerCase()?.includes("técnica");
+                      nav({ to: "/app/scale/$id", params: { id }, search: isTech ? { from: "technical" } : undefined });
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Ver detalhes...</option>
+                  {upcomingSchedules.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {new Date(s.service_date).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })} - {s.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           {loadingSchedules ? (
             <p className="text-sm text-muted-foreground">Carregando...</p>
           ) : upcomingSchedules.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma escala programada.</p>
           ) : (
-            <div className="space-y-3">
-              {upcomingSchedules.slice(0, 10).map(s => (
-                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
+            <div className="space-y-2">
+              {upcomingSchedules.slice(0, 5).map(s => (
+                <div key={s.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-background/50 hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
                   const isTech = s.title.toLowerCase().includes("técnica");
                   nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
                 }}>
                   <div className="flex-1">
-                    <p className="text-sm font-medium group-hover:text-gold transition-colors">{s.title}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1 capitalize">
-                      {new Date(s.service_date).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}
+                    <p className="text-xs font-medium group-hover:text-gold transition-colors">{s.title}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">
+                      {new Date(s.service_date).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
                     </p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-gold group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-gold group-hover:translate-x-1 transition-all" />
                 </div>
               ))}
-              {upcomingSchedules.length > 10 && (
-                <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest pt-4">E mais {upcomingSchedules.length - 10} escalas programadas</p>
+              {upcomingSchedules.length > 5 && (
+                <p className="text-center text-[9px] text-muted-foreground uppercase tracking-widest pt-2">E mais {upcomingSchedules.length - 5} escalas programadas</p>
               )}
             </div>
           )}
