@@ -33,18 +33,24 @@ function ScalePage() {
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["schedules"], queryFn: () => list() });
   const setlistsQ = useQuery({ queryKey: ["my-setlists"], queryFn: () => setlistsFn(), enabled: canManageSchedule });
-  const profQ = useQuery({ queryKey: ["my-profile-church"], queryFn: () => supabase.from("profiles").select("church_name").eq("id", user?.id).maybeSingle() });
+  const profQ = useQuery({ 
+    queryKey: ["my-profile-church", user?.id], 
+    queryFn: () => supabase.from("profiles").select("church_name").eq("id", user?.id || "").maybeSingle(),
+    enabled: !!user?.id
+  });
   
   const userRolesQ = useQuery({ 
     queryKey: ["user-roles", user?.id], 
-    queryFn: () => supabase.from("user_roles").select("role").eq("user_id", user?.id) 
+    queryFn: () => supabase.from("user_roles").select("role").eq("user_id", user?.id || ""),
+    enabled: !!user?.id
   });
   
-  const roles = (userRolesQ.data?.data ?? []).map((r: any) => r.role as string);
-  const isNacional = roles.includes("lider_nacional");
-  const isEstadual = roles.includes("lider_estadual");
-  const isLocal = roles.includes("lider_local");
-  const myChurch = profQ.data?.data?.church_name;
+  const roles = (userRolesQ.data?.data ?? []) as any[];
+  const roleNames = roles.map((r: any) => r.role as string);
+  const isNacional = roleNames.includes("lider_nacional");
+  const isEstadual = roleNames.includes("lider_estadual");
+  const isLocal = roleNames.includes("lider_local");
+  const myChurch = (profQ.data as any)?.data?.church_name;
 
   const churchesQ = useQuery({ 
     queryKey: ["all-churches-picker"], 
