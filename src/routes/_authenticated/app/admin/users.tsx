@@ -414,7 +414,7 @@ function AdminUsers() {
           return (
             <div key={u.id} className="flex items-center gap-3 p-4">
               <Avatar className="h-10 w-10 border border-gold/20">
-                <AvatarImage src={u.avatar_url} className="object-cover" />
+                <AvatarImage src={u.avatar_url || undefined} className="object-cover" />
                 <AvatarFallback className="bg-gold-soft text-gold text-sm font-semibold">
                   {(u.full_name?.[0] || "?").toUpperCase()}
                 </AvatarFallback>
