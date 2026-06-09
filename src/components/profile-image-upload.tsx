@@ -22,6 +22,7 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   const [isUploading, setIsUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,14 +48,20 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
         throw uploadError;
       }
 
-      const { data: publicData } = supabase.storage
+      const { data: signedData, error: signError } = await supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 31536000); // 1 ano de validade
 
-      const publicUrl = publicData.publicUrl;
-      console.log("[ProfileImage] Public URL generated:", publicUrl);
+      if (signError) {
+        console.error("[ProfileImage] Error signing URL:", signError);
+        throw signError;
+      }
 
-      onImageUploaded(publicUrl);
+      const signedUrl = signedData.signedUrl;
+      console.log("[ProfileImage] Signed URL generated:", signedUrl);
+
+      setPreviewUrl(signedUrl);
+      onImageUploaded(signedUrl);
       toast.success("Foto atualizada!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
@@ -125,8 +132,8 @@ export function ProfileImageUpload({ userId, currentImageUrl, onImageUploaded, n
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative group">
-        <Avatar key={currentImageUrl || 'empty'} className="h-24 w-24 border-2 border-gold/20">
-          <AvatarImage src={currentImageUrl || undefined} className="object-cover" />
+        <Avatar key={previewUrl || currentImageUrl || 'empty'} className="h-24 w-24 border-2 border-gold/20">
+          <AvatarImage src={previewUrl || currentImageUrl || undefined} className="object-cover" />
           <AvatarFallback className="bg-gold-soft text-gold text-2xl font-serif">
             {name ? name[0].toUpperCase() : "?"}
           </AvatarFallback>

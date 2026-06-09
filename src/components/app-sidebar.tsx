@@ -67,7 +67,19 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         .select("avatar_url, full_name")
         .eq("id", user.id)
         .maybeSingle();
-      if (data) setProfile(data);
+      
+      if (data) {
+        if (data.avatar_url && data.avatar_url.includes('/storage/v1/object/public/avatars/')) {
+          const path = data.avatar_url.split('/storage/v1/object/public/avatars/')[1].split('?')[0];
+          const { data: signedData } = await supabase.storage
+            .from('avatars')
+            .createSignedUrl(path, 31536000);
+          if (signedData?.signedUrl) {
+            data.avatar_url = signedData.signedUrl;
+          }
+        }
+        setProfile(data);
+      }
     };
     fetchProfile();
 
@@ -77,8 +89,18 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        (payload) => {
-          setProfile(payload.new as any);
+        async (payload) => {
+          const newProfile = payload.new as any;
+          if (newProfile.avatar_url && newProfile.avatar_url.includes('/storage/v1/object/public/avatars/')) {
+            const path = newProfile.avatar_url.split('/storage/v1/object/public/avatars/')[1].split('?')[0];
+            const { data: signedData } = await supabase.storage
+              .from('avatars')
+              .createSignedUrl(path, 31536000);
+            if (signedData?.signedUrl) {
+              newProfile.avatar_url = signedData.signedUrl;
+            }
+          }
+          setProfile(newProfile);
         }
       )
       .subscribe();
