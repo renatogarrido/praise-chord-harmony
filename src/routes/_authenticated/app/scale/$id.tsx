@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -12,11 +12,19 @@ import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/app/scale/$id")({ component: ScaleDetail });
+export const Route = createFileRoute("/_authenticated/app/scale/$id")({ 
+  component: ScaleDetail,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      from: (search.from as string) || undefined
+    };
+  }
+});
 
 
 function ScaleDetail() {
   const { id } = useParams({ from: "/_authenticated/app/scale/$id" });
+  const { from } = useSearch({ from: "/_authenticated/app/scale/$id" });
   const nav = useNavigate();
   const { canManageSchedule } = useAuth();
   const get = useServerFn(getSchedule);
@@ -134,7 +142,7 @@ function ScaleDetail() {
 
   const doDelete = async () => {
     if (!confirm("Excluir esta escala inteira?")) return;
-    try { await del({ data: { id } }); toast.success("Excluída."); nav({ to: "/app/scale" }); }
+    try { await del({ data: { id } }); toast.success("Excluída."); nav({ to: s.title.toLowerCase().includes("técnica") ? "/app/technical-scale" : "/app/scale" }); }
     catch (e: any) { toast.error(e.message || "Erro"); }
   };
 
@@ -186,10 +194,12 @@ function ScaleDetail() {
     (acc[a.role_label] ||= []).push(a); return acc;
   }, {});
 
+  const isTechnical = s.title.toLowerCase().includes("técnica") || from === "technical";
+
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
-      <Link to="/app/scale" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> Escala
+      <Link to={isTechnical ? "/app/technical-scale" : "/app/scale"} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold mb-6">
+        <ArrowLeft className="h-3.5 w-3.5" /> {isTechnical ? "Escala Técnica" : "Escala"}
       </Link>
 
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">

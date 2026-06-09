@@ -318,7 +318,10 @@ function Dashboard() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {todaySchedules.map(s => (
-                <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}>
+                <div key={s.id} className="p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
+                  const isTech = s.title.toLowerCase().includes("técnica");
+                  nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
+                }}>
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-sm text-gold group-hover:text-gold-hover transition-colors">{s.title}</h3>
                     <Badge variant="outline" className="text-[10px]">
@@ -356,7 +359,10 @@ function Dashboard() {
           ) : (
             <div className="space-y-3">
               {upcomingSchedules.slice(0, 10).map(s => (
-                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => nav({ to: "/app/scale/$id", params: { id: s.id } })}>
+                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:border-gold/30 transition-colors group cursor-pointer" onClick={() => {
+                  const isTech = s.title.toLowerCase().includes("técnica");
+                  nav({ to: "/app/scale/$id", params: { id: s.id }, search: isTech ? { from: "technical" } : undefined });
+                }}>
                   <div className="flex-1">
                     <p className="text-sm font-medium group-hover:text-gold transition-colors">{s.title}</p>
                     <p className="text-[10px] text-muted-foreground mt-1 capitalize">
