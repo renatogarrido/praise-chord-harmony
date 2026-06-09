@@ -349,8 +349,7 @@ export const generateMonthlySchedules = createServerFn({ method: "POST" })
           for (const role of worshipRoles) {
             await supabase
               .from("worship_schedule_assignments")
-              .insert({ schedule_id: scheduleId, user_id: uid, role_label: role } as any)
-              .onConflict(["schedule_id", "user_id", "role_label"] as any).ignore();
+              .upsert({ schedule_id: scheduleId, user_id: uid, role_label: role } as any, { onConflict: "schedule_id,user_id,role_label" });
           }
 
           // 2. Assign technical roles
@@ -360,12 +359,11 @@ export const generateMonthlySchedules = createServerFn({ method: "POST" })
             if (catId) {
               await supabase
                 .from("technical_team_assignments")
-                .insert({ 
+                .upsert({ 
                   worship_schedule_id: scheduleId, 
                   user_id: uid, 
                   category_id: catId 
-                } as any)
-                .onConflict(["worship_schedule_id", "user_id", "category_id"] as any).ignore();
+                } as any, { onConflict: "worship_schedule_id,user_id,category_id" });
             }
           }
           createdAssignments++;
