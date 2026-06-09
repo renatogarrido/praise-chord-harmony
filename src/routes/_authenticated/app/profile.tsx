@@ -119,7 +119,7 @@ function ProfilePage() {
               supabase
                 .from("profiles")
                 .update({ avatar_url: url } as any)
-                .eq("id", user?.id)
+                .eq("id", user?.id || "")
                 .then(({ error }) => {
                   if (error) toast.error("Erro ao salvar foto no perfil: " + error.message);
                 });
