@@ -1,18 +1,25 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut, LifeBuoy, UserCircle, Guitar, Mic2, Church, CalendarDays, CalendarCheck, Headphones } from "lucide-react";
+import { Library, Heart, ListMusic, Clock, LayoutDashboard, Music2, Users, Album, Settings, LogOut, LifeBuoy, UserCircle, Guitar, Mic2, Church, CalendarDays, CalendarCheck, Headphones, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppSettings } from "@/hooks/use-app-settings";
+import { useState } from "react";
 
-const userLinks = [
+const libraryLinks = [
   { to: "/app/albums", label: "Álbuns", icon: Library },
   { to: "/app/songs", label: "Cifras", icon: Music2 },
   { to: "/app/favorites", label: "Favoritos", icon: Heart },
   { to: "/app/setlists", label: "Repertórios", icon: ListMusic },
   { to: "/app/vocal-practice", label: "Vozes por Naipe", icon: Headphones },
-  { to: "/app/scale", label: "Escala", icon: CalendarDays },
-  { to: "/app/availability", label: "Disponibilidade", icon: CalendarCheck },
-  { to: "/app/technical-scale", label: "Escala Técnica", icon: Settings },
   { to: "/app/history", label: "Recentes", icon: Clock },
+];
+
+const scaleLinks = [
+  { to: "/app/scale", label: "Escala Louvor", icon: CalendarDays },
+  { to: "/app/technical-scale", label: "Escala Técnica", icon: Settings },
+  { to: "/app/availability", label: "Minha Disponibilidade", icon: CalendarCheck },
+];
+
+const profileLinks = [
   { to: "/app/profile", label: "Meu Perfil", icon: UserCircle },
   { to: "/app/support", label: "Suporte", icon: LifeBuoy },
 ];
@@ -34,6 +41,7 @@ const adminLinks = [
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAdmin, canViewUsers, canManageLocalLeaders, canManageSchedule, signOut } = useAuth();
+  const [scaleOpen, setScaleOpen] = useState(pathname.includes("/app/scale") || pathname === "/app/technical-scale" || pathname === "/app/availability");
   const { app_name, logo_url } = useAppSettings();
 
   const isLeader = canViewUsers || canManageSchedule;
@@ -53,7 +61,42 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 overflow-y-auto px-4 space-y-7">
         <Section label="Biblioteca">
-          {userLinks.map((l) => (
+          {libraryLinks.map((l) => (
+            <NavLink key={l.to} to={l.to} icon={l.icon} active={pathname === l.to || pathname.startsWith(l.to + "/")} onClick={onNavigate}>
+              {l.label}
+            </NavLink>
+          ))}
+        </Section>
+
+        <Section label="Agenda">
+          <div className="space-y-1">
+            <button
+              onClick={() => setScaleOpen(!scaleOpen)}
+              className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                scaleOpen ? "text-gold font-medium" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CalendarDays className="h-4 w-4" />
+                <span>Escalas</span>
+              </div>
+              <ChevronDown className={`h-3 w-3 transition-transform ${scaleOpen ? "rotate-180" : ""}`} />
+            </button>
+            
+            {scaleOpen && (
+              <div className="ml-4 pl-4 border-l border-border/50 space-y-1 mt-1">
+                {scaleLinks.map((l) => (
+                  <NavLink key={l.to} to={l.to} icon={l.icon} active={pathname === l.to || pathname.startsWith(l.to + "/")} onClick={onNavigate}>
+                    {l.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
+        </Section>
+
+        <Section label="Conta">
+          {profileLinks.map((l) => (
             <NavLink key={l.to} to={l.to} icon={l.icon} active={pathname === l.to || pathname.startsWith(l.to + "/")} onClick={onNavigate}>
               {l.label}
             </NavLink>
