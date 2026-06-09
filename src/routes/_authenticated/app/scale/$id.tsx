@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -12,11 +12,19 @@ import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft, CheckCircle2, Music2, Pencil, Plus, UserPlus, X, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/app/scale/$id")({ component: ScaleDetail });
+export const Route = createFileRoute("/_authenticated/app/scale/$id")({ 
+  component: ScaleDetail,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      from: (search.from as string) || undefined
+    };
+  }
+});
 
 
 function ScaleDetail() {
   const { id } = useParams({ from: "/_authenticated/app/scale/$id" });
+  const { from } = useSearch({ from: "/_authenticated/app/scale/$id" });
   const nav = useNavigate();
   const { canManageSchedule } = useAuth();
   const get = useServerFn(getSchedule);
@@ -186,7 +194,7 @@ function ScaleDetail() {
     (acc[a.role_label] ||= []).push(a); return acc;
   }, {});
 
-  const isTechnical = s.title.toLowerCase().includes("técnica");
+  const isTechnical = s.title.toLowerCase().includes("técnica") || from === "technical";
 
   return (
     <div className="px-6 md:px-12 py-8 md:py-12 max-w-5xl mx-auto">
