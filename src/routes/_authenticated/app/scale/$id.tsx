@@ -365,14 +365,20 @@ function ScaleDetail() {
               </>
             ) : (
               <div className="mb-4">
-                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Função Técnica</label>
+                <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Funções Técnicas</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {((techCatsQ.data as any)?.categories ?? []).map((c: any) => (
-                    <button key={c.id} type="button" onClick={() => setPickedTechCat(c.id)}
-                      className={`rounded-full px-3 py-1 text-[11px] border ${pickedTechCat === c.id ? "bg-slate-700 text-white border-slate-700" : "border-border text-muted-foreground hover:text-foreground"}`}>
-                      {c.name}
-                    </button>
-                  ))}
+                  {((techCatsQ.data as any)?.categories ?? []).map((c: any) => {
+                    const selected = pickedRoles.includes(c.id);
+                    return (
+                      <button key={c.id} type="button" 
+                        onClick={() => setPickedRoles(prev => 
+                          selected ? prev.filter(id => id !== c.id) : [...prev, c.id]
+                        )}
+                        className={`rounded-full px-3 py-1 text-[11px] border transition-colors ${selected ? "bg-slate-700 text-white border-slate-700" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                        {c.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
