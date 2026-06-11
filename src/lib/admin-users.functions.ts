@@ -393,17 +393,19 @@ export const logoutUserAdmin = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // This invalidates all refresh tokens for the user, effectively logging them out from all devices
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-      ban_duration: "none", // Reset ban if any, but main point is to trigger session invalidation if possible
-    });
-    
-    // Better way to force logout in Supabase is to sign out the user
-    const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId);
-
-    if (signOutError) throwSafe("logout user", signOutError);
-
-    return { ok: true };
+    try {
+      // Sign out the user from all sessions using the admin API
+      const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId);
+      if (signOutError) {
+        console.error("[admin-users] logout error:", signOutError);
+        throw signOutError;
+      }
+      return { ok: true };
+    } catch (error: any) {
+      console.error("[admin-users] logout exception:", error);
+      throw new Error(error.message || "Não foi possível deslogar o usuário.");
+    }
   });
+
 
 
