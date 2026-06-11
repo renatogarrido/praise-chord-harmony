@@ -15,26 +15,10 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const isReturningFromClose = localStorage.getItem("was_closed") === "true";
-    
     if (!authLoading && session) {
-      if (isReturningFromClose) {
-        // Se fechou a aba recentemente, força o logout para exigir login manual
-        localStorage.removeItem("was_closed");
-        supabase.auth.signOut({ scope: "local" });
-        return;
-      }
       navigate({ to: (isAdmin || canViewUsers || canManageSchedule) ? "/app/admin/" : "/app/albums" });
     }
   }, [authLoading, session, isAdmin, navigate]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.setItem("was_closed", "true");
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
