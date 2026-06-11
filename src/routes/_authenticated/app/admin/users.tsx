@@ -460,6 +460,10 @@ function AdminUsers() {
                   <button onClick={() => impersonate(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-gold transition-colors" title="Conectar como este usuário">
                     <LogIn className="h-4 w-4" />
                   </button>
+                  <button onClick={() => handleLogoutUser(u.id, u.full_name || u.email || "usuário")} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Deslogar usuário">
+                    <LogOut className="h-4 w-4" />
+                  </button>
+
                   <button onClick={() => toggleAdmin(u.id, targetIsAdmin)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-accent" title={targetIsAdmin ? "Remover Admin" : "Tornar Admin"}>
                     {targetIsAdmin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
                   </button>
