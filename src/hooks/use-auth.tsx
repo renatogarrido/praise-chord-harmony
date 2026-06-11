@@ -47,8 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    // scope: 'global' invalida o token em TODOS os dispositivos/navegadores
-    await supabase.auth.signOut({ scope: 'global' });
+    // Use 'local' if you don't want to kick out other devices by default,
+    // or keep 'global' if that was intended.
+    await supabase.auth.signOut({ scope: 'local' });
   }, []);
 
   const resetInactivityTimer = useCallback(() => {
