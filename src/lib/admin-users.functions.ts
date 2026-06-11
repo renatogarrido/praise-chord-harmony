@@ -394,17 +394,21 @@ export const logoutUserAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     try {
-      // Invalidate all user sessions by updating their password to a random string.
-      // This is a common workaround when auth.admin.signOut fails with JWT errors.
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      // Forcing logout by banning and immediately unbanning the user.
+      // This is the most reliable way to kill all active sessions/refresh tokens
+      // from the admin side without hitting JWT parsing issues.
+      const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
         data.userId,
-        { password: Math.random().toString(36) + Math.random().toString(36) }
+        { ban_duration: "1s" }
       );
       
-      if (updateError) {
-        // If password update fails, try the standard sign out as a fallback
-        const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId, "global");
-        if (signOutError) throw signOutError;
+      if (banError) {
+        console.error("[admin-users] ban error:", banError);
+        // Fallback to password update if ban fails
+        await supabaseAdmin.auth.admin.updateUserById(
+          data.userId,
+          { password: Math.random().toString(36) + Math.random().toString(36) }
+        );
       }
 
       return { ok: true };
