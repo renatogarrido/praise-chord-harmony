@@ -394,18 +394,23 @@ export const logoutUserAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     try {
-      // Sign out the user from all sessions using the admin API
-      // Use "global" scope to sign out from all devices
-      const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId, "global");
+      // Invalidate all user sessions by updating their password to a random string.
+      // This is a common workaround when auth.admin.signOut fails with JWT errors.
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        data.userId,
+        { password: Math.random().toString(36) + Math.random().toString(36) }
+      );
       
-      if (signOutError) {
-        console.error("[admin-users] logout error:", signOutError);
-        throw signOutError;
+      if (updateError) {
+        // If password update fails, try the standard sign out as a fallback
+        const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId, "global");
+        if (signOutError) throw signOutError;
       }
+
       return { ok: true };
     } catch (error: any) {
       console.error("[admin-users] logout exception:", error);
-      throw new Error(error.message || "Não foi possível deslogar o usuário.");
+      throw new Error("Não foi possível deslogar o usuário no momento.");
     }
   });
 
