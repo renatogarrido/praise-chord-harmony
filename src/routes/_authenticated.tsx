@@ -15,7 +15,10 @@ function AuthLayout() {
   useAppSettings(); // applies theme
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/login" });
+    if (!loading && !session) {
+      console.warn("[AuthLayout] No session found, redirecting to login");
+      navigate({ to: "/login" });
+    }
   }, [loading, session, navigate]);
 
   if (loading || !session) {
