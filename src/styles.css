@@ -120,7 +120,7 @@
 }
 
 /* Chord sheet styles */
-.chord-sheet { font-family: var(--font-mono); white-space: pre-wrap; line-height: 1.9; }
+.chord-sheet { font-family: var(--font-mono); white-space: pre-wrap; line-height: 1.5; }
 .chord-sheet .chord { color: var(--chord); font-weight: 700; }
 .chord-sheet .section { color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.75em; margin-top: 1.25em; display: block; }
 
