@@ -41,7 +41,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-serif: 'Cormorant Garamond', ui-serif, Georgia, serif;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-mono: Arial, Helvetica, sans-serif;
 }
 
 /* Default = Modern & Warm Light Theme */
@@ -120,7 +120,7 @@
 }
 
 /* Chord sheet styles */
-.chord-sheet { font-family: var(--font-mono); white-space: pre-wrap; line-height: 1.9; }
+.chord-sheet { font-family: var(--font-mono); white-space: pre-wrap; line-height: 1.5; }
 .chord-sheet .chord { color: var(--chord); font-weight: 700; }
 .chord-sheet .section { color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.75em; margin-top: 1.25em; display: block; }
 

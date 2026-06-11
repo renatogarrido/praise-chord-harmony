@@ -142,7 +142,7 @@ function SongView() {
       if (isChordLine(line)) {
         const transposed = transposeChordLine(line, transposeDelta);
         return (
-          <div key={idx} className="font-mono font-bold text-[#F97316] whitespace-pre leading-none py-1" style={{ fontSize: `${fontSize}px` }}>
+          <div key={idx} className="font-mono font-bold text-[#F97316] whitespace-pre-wrap leading-none py-1" style={{ fontSize: `${fontSize}px` }}>
             {transposed}
           </div>
         );
@@ -150,7 +150,7 @@ function SongView() {
 
       // Linhas de letra (e introduções que não foram detectadas como apenas acordes)
       return (
-        <div key={idx} className="font-mono flex flex-wrap items-end leading-none mb-3 text-foreground font-medium whitespace-pre" style={{ fontSize: `${fontSize}px` }}>
+        <div key={idx} className="font-mono flex flex-wrap items-end leading-none mb-3 text-foreground font-medium whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
           {line}
         </div>
       );
