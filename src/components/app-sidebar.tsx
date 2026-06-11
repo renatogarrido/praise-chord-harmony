@@ -102,8 +102,10 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           }
           setProfile(newProfile);
         }
-      )
-      .subscribe();
+      );
+
+    // Call subscribe() after defining all callbacks
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
