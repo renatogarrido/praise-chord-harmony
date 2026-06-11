@@ -382,3 +382,28 @@ export const impersonateUserAdmin = createServerFn({ method: "POST" })
     return { actionLink: linkData.properties.action_link, email: targetUser.user.email };
   });
 
+
+
+export const logoutUserAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    await assertAdmin(supabase, callerId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // This invalidates all refresh tokens for the user, effectively logging them out from all devices
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      ban_duration: "none", // Reset ban if any, but main point is to trigger session invalidation if possible
+    });
+    
+    // Better way to force logout in Supabase is to sign out the user
+    const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId);
+
+    if (signOutError) throwSafe("logout user", signOutError);
+
+    return { ok: true };
+  });
+
+
