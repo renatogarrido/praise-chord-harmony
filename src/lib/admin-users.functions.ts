@@ -395,7 +395,9 @@ export const logoutUserAdmin = createServerFn({ method: "POST" })
 
     try {
       // Sign out the user from all sessions using the admin API
-      const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId);
+      // Use "global" scope to sign out from all devices
+      const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId, "global");
+      
       if (signOutError) {
         console.error("[admin-users] logout error:", signOutError);
         throw signOutError;
