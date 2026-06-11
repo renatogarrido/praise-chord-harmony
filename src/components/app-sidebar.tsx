@@ -84,11 +84,17 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
     fetchProfile();
 
     // Subscribe to profile changes
+    const channelName = `profile-sidebar-${user.id}-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel("profile-sidebar")
+      .channel(channelName)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        { 
+          event: "UPDATE", 
+          schema: "public", 
+          table: "profiles", 
+          filter: `id=eq.${user.id}` 
+        },
         async (payload) => {
           const newProfile = payload.new as any;
           if (newProfile.avatar_url && newProfile.avatar_url.includes('/storage/v1/object/public/avatars/')) {
@@ -102,10 +108,8 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           }
           setProfile(newProfile);
         }
-      );
-
-    // Call subscribe() after defining all callbacks
-    channel.subscribe();
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
