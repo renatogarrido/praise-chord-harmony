@@ -379,6 +379,10 @@ export const impersonateUserAdmin = createServerFn({ method: "POST" })
       throw new Error(linkErr?.message || "Falha ao gerar link de acesso.");
     }
 
+    return { actionLink: linkData.properties.action_link, email: targetUser.user.email };
+  });
+
+
 
 export const logoutUserAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
