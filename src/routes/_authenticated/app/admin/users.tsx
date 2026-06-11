@@ -175,7 +175,18 @@ function AdminUsers() {
     }
   };
 
+  const handleLogoutUser = async (userId: string, name: string) => {
+    if (!confirm(`Deslogar "${name}" de todos os dispositivos?`)) return;
+    try {
+      await logoutUserAdmin({ data: { userId } });
+      toast.success("Usuário deslogado com sucesso!");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao deslogar usuário");
+    }
+  };
+
   const handleSaveUser = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!formData.churchName.trim()) {
       toast.error("Selecione a igreja do usuário.");
