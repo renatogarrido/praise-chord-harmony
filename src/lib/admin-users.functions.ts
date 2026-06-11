@@ -394,21 +394,14 @@ export const logoutUserAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     try {
-      // Forcing logout by banning and immediately unbanning the user.
-      // This is the most reliable way to kill all active sessions/refresh tokens
-      // from the admin side without hitting JWT parsing issues.
-      const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
-        data.userId,
-        { ban_duration: "1s" }
-      );
+      // Direct sign out using the admin API with service role
+      // This is the cleanest way to terminate all sessions when service role is available
+      const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(data.userId, "global");
       
-      if (banError) {
-        console.error("[admin-users] ban error:", banError);
-        // Fallback to password update if ban fails
-        await supabaseAdmin.auth.admin.updateUserById(
-          data.userId,
-          { password: Math.random().toString(36) + Math.random().toString(36) }
-        );
+      if (signOutError) {
+        console.warn("[admin-users] Standard signout failed, trying ban/unban", signOutError);
+        // Fallback: temporary ban to force session invalidation
+        await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "1s" });
       }
 
       return { ok: true };

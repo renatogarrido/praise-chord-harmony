@@ -180,6 +180,7 @@ function AdminUsers() {
     try {
       await logoutUserAdmin({ data: { userId } });
       toast.success("Usuário deslogado com sucesso!");
+      load(); // Refresh to ensure UI reflects the current state if needed
     } catch (error: any) {
       toast.error(error.message || "Erro ao deslogar usuário");
     }
