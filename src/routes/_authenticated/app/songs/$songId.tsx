@@ -8,6 +8,7 @@ import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex, isCho
 import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSwipeable } from "react-swipeable";
+import { SpotifyEmbed, YouTubeEmbed } from "@/components/media-embed";
 
 export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ 
   component: SongView,
@@ -54,10 +55,24 @@ function SongView() {
     queryFn: async () => {
       const { data } = await supabase
         .from("setlist_songs")
-        .select("song_id, position")
+        .select("song_id, position, spotify_url, youtube_url")
         .eq("setlist_id", setlistId!)
         .order("position");
       return data ?? [];
+    },
+    enabled: !!setlistId,
+    staleTime: STALE,
+  });
+
+  const { data: setlistMedia } = useQuery({
+    queryKey: ["setlist-media", setlistId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("setlists")
+        .select("spotify_url, youtube_url")
+        .eq("id", setlistId!)
+        .maybeSingle();
+      return data;
     },
     enabled: !!setlistId,
     staleTime: STALE,
@@ -358,6 +373,23 @@ function SongView() {
           </div>
         )}
       </div>
+
+      {setlistId && (() => {
+        const current: any = setlistSongs.find((s: any) => s.song_id === songId);
+        const sp = current?.spotify_url || setlistMedia?.spotify_url;
+        const yt = current?.youtube_url || setlistMedia?.youtube_url;
+        if (!sp && !yt) return null;
+        return (
+          <div className="rounded-2xl border border-border bg-card/50 p-4 space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Trilha</p>
+            <div className={`grid gap-3 ${sp && yt ? "md:grid-cols-2" : "grid-cols-1"}`}>
+              {sp && <SpotifyEmbed url={sp} />}
+              {yt && <YouTubeEmbed url={yt} />}
+            </div>
+          </div>
+        );
+      })()}
+
 
       {/* Main Song Content */}
       <div className="relative group">
