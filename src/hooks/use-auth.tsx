@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [checkRolesAndProfile]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, refreshProfile, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, roles, loading, refreshProfile, signOut }}>
       {children}
 
     </Ctx.Provider>
