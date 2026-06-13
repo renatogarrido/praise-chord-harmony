@@ -486,34 +486,40 @@ export type Database = {
         Row: {
           church_name: string | null
           created_at: string
+          estadual: string | null
           id: string
           name: string
           share_token: string
           spotify_url: string | null
           updated_at: string
           user_id: string
+          visibility: string
           youtube_url: string | null
         }
         Insert: {
           church_name?: string | null
           created_at?: string
+          estadual?: string | null
           id?: string
           name: string
           share_token?: string
           spotify_url?: string | null
           updated_at?: string
           user_id: string
+          visibility?: string
           youtube_url?: string | null
         }
         Update: {
           church_name?: string | null
           created_at?: string
+          estadual?: string | null
           id?: string
           name?: string
           share_token?: string
           spotify_url?: string | null
           updated_at?: string
           user_id?: string
+          visibility?: string
           youtube_url?: string | null
         }
         Relationships: []
