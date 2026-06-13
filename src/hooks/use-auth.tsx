@@ -119,6 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        const savedTokens = getSavedSessionTokens();
+        if (savedTokens) {
+          await supabase.auth.setSession(savedTokens);
+        }
+
         const { data: { session: s }, error } = await supabase.auth.getSession();
         if (error) throw error;
 
@@ -143,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setSession(s);
+        saveSession(s);
         const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
         setIsAdmin(admin);
         setCanViewUsers(viewUsers);
@@ -173,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         setLoading(true);
         setSession(s);
+        saveSession(s);
         // Defer Supabase calls to evitar deadlock dentro do callback de auth
         setTimeout(async () => {
           const { data: { user }, error } = await supabase.auth.getUser();
@@ -201,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         }, 0);
       } else {
+        saveSession(null);
         setSession(null);
         setIsAdmin(false);
         setCanViewUsers(false);
@@ -214,29 +222,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [checkRolesAndProfile]);
-
-  useEffect(() => {
-    if (!session?.user) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
-
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
-    events.forEach(e => window.addEventListener(e, resetInactivityTimer));
-
-    timerRef.current = setInterval(() => {
-      const now = Date.now();
-      if (now - lastActivityRef.current > INACTIVITY_LIMIT) {
-        signOut();
-        toast.info("Sessão encerrada por inatividade.");
-      }
-    }, 60000); // Check every minute
-
-    return () => {
-      events.forEach(e => window.removeEventListener(e, resetInactivityTimer));
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
     <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, refreshProfile, signOut }}>
