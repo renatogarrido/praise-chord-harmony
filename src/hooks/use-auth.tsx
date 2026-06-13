@@ -112,11 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
+      const { admin, viewUsers, canManage, manageSchedule, roles, acceptedTerms } = await checkRolesAndProfile(user.id);
       setIsAdmin(admin);
       setCanViewUsers(viewUsers);
       setCanManageLocalLeaders(canManage);
       setCanManageSchedule(manageSchedule);
+      setRoles(roles);
       setAcceptedTerms(acceptedTerms);
     }
   }, [checkRolesAndProfile]);
