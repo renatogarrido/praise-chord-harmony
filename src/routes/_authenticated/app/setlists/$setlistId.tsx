@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2, Share2, Search, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { MediaLinksEditor } from "@/components/media-embed";
+import { MediaLinksEditor, SpotifyEmbed, YouTubeEmbed } from "@/components/media-embed";
 
 export const Route = createFileRoute("/_authenticated/app/setlists/$setlistId")({ component: SetlistDetail });
 
