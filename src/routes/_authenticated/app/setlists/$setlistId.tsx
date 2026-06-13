@@ -157,6 +157,14 @@ function SetlistDetail() {
                 <button onClick={() => move(i, +1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowDown className="h-3.5 w-3.5" /></button>
                 <button onClick={() => remove(it.id)} className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
               </div>
+              {hasMedia && !isOpen && (
+                <div className="px-4 pb-4 pt-1 bg-background/40">
+                  <div className={`grid gap-3 ${it.spotify_url && it.youtube_url ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                    {it.spotify_url && <SpotifyEmbed url={it.spotify_url} compact />}
+                    {it.youtube_url && <YouTubeEmbed url={it.youtube_url} compact />}
+                  </div>
+                </div>
+              )}
               {isOpen && (
                 <div className="px-4 pb-4 pt-1 bg-background/40">
                   <MediaLinksEditor
