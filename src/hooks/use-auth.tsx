@@ -1,7 +1,6 @@
-import { useEffect, useState, createContext, useContext, type ReactNode, useRef, useCallback } from "react";
+import { useEffect, useState, createContext, useContext, type ReactNode, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { enforceDeviceLimit } from "@/lib/device-limit.functions";
 
 type AuthCtx = {
@@ -30,8 +29,33 @@ const Ctx = createContext<AuthCtx>({
   signOut: async () => {} 
 });
 
+const SESSION_STORAGE_KEY = "cifras-praise-session";
 
-const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
+function saveSession(session: Session | null) {
+  if (typeof window === "undefined") return;
+  if (!session?.access_token || !session.refresh_token) {
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    return;
+  }
+  window.sessionStorage.setItem(
+    SESSION_STORAGE_KEY,
+    JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }),
+  );
+}
+
+function getSavedSessionTokens() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: string; refresh_token?: string };
+    if (!parsed.access_token || !parsed.refresh_token) return null;
+    return parsed;
+  } catch {
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -42,18 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [canManageSchedule, setCanManageSchedule] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const lastActivityRef = useRef<number>(Date.now());
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const signOut = useCallback(async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    saveSession(null);
     // Use 'local' if you don't want to kick out other devices by default,
     // or keep 'global' if that was intended.
     await supabase.auth.signOut({ scope: 'local' });
-  }, []);
-
-  const resetInactivityTimer = useCallback(() => {
-    lastActivityRef.current = Date.now();
   }, []);
 
   const checkRolesAndProfile = useCallback(async (userId: string) => {
