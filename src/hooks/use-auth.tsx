@@ -204,11 +204,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(s.user.id);
+          const { admin, viewUsers, canManage, manageSchedule, roles, acceptedTerms } = await checkRolesAndProfile(s.user.id);
           setIsAdmin(admin);
           setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
           setCanManageSchedule(manageSchedule);
+          setRoles(roles);
           setAcceptedTerms(acceptedTerms);
 
           // Limita usuários comuns a 2 dispositivos ativos (admins ilimitados)
