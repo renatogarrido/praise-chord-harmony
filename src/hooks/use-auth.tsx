@@ -66,6 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [canViewUsers, setCanViewUsers] = useState(false);
   const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
   const [canManageSchedule, setCanManageSchedule] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+
 
   const [loading, setLoading] = useState(true);
 
