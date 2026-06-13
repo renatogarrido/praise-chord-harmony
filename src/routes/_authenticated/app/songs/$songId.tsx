@@ -8,6 +8,7 @@ import { parseLine, transposeChord, ALL_KEYS, semitonesBetween, noteIndex, isCho
 import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNote, ChevronRight, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSwipeable } from "react-swipeable";
+import { SpotifyEmbed, YouTubeEmbed } from "@/components/media-embed";
 
 export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ 
   component: SongView,
