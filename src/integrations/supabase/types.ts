@@ -442,6 +442,8 @@ export type Database = {
           position: number
           setlist_id: string
           song_id: string
+          spotify_url: string | null
+          youtube_url: string | null
         }
         Insert: {
           created_at?: string
@@ -450,6 +452,8 @@ export type Database = {
           position?: number
           setlist_id: string
           song_id: string
+          spotify_url?: string | null
+          youtube_url?: string | null
         }
         Update: {
           created_at?: string
@@ -458,6 +462,8 @@ export type Database = {
           position?: number
           setlist_id?: string
           song_id?: string
+          spotify_url?: string | null
+          youtube_url?: string | null
         }
         Relationships: [
           {
@@ -483,8 +489,10 @@ export type Database = {
           id: string
           name: string
           share_token: string
+          spotify_url: string | null
           updated_at: string
           user_id: string
+          youtube_url: string | null
         }
         Insert: {
           church_name?: string | null
@@ -492,8 +500,10 @@ export type Database = {
           id?: string
           name: string
           share_token?: string
+          spotify_url?: string | null
           updated_at?: string
           user_id: string
+          youtube_url?: string | null
         }
         Update: {
           church_name?: string | null
@@ -501,8 +511,10 @@ export type Database = {
           id?: string
           name?: string
           share_token?: string
+          spotify_url?: string | null
           updated_at?: string
           user_id?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }
