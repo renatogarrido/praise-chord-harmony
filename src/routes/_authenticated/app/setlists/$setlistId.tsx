@@ -125,19 +125,51 @@ function SetlistDetail() {
         )}
       </div>
 
+      <div className="mb-6">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">Trilha do repertório</p>
+        <MediaLinksEditor
+          spotifyUrl={setlist.spotify_url}
+          youtubeUrl={setlist.youtube_url}
+          onSave={saveSetlistMedia}
+        />
+      </div>
+
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
         {items.length === 0 ? (
           <div className="p-12 text-center text-sm text-muted-foreground">Adicione músicas a este repertório.</div>
-        ) : items.map((it, i) => (
-          <div key={it.id} className="flex items-center gap-3 px-4 py-3">
-            <span className="font-mono text-xs text-muted-foreground/60 w-6 text-right">{i + 1}</span>
-            <Link to="/app/songs/$songId" params={{ songId: it.songs.id }} search={{ setlist: setlistId }} className="flex-1 min-w-0 hover:text-gold">{it.songs.title}</Link>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-gold-soft text-gold">{it.songs.original_key}</span>
-            <button onClick={() => move(i, -1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowUp className="h-3.5 w-3.5" /></button>
-            <button onClick={() => move(i, +1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowDown className="h-3.5 w-3.5" /></button>
-            <button onClick={() => remove(it.id)} className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
-          </div>
-        ))}
+        ) : items.map((it, i) => {
+          const isOpen = !!expanded[it.id];
+          const hasMedia = !!(it.spotify_url || it.youtube_url);
+          return (
+            <div key={it.id}>
+              <div className="flex items-center gap-3 px-4 py-3">
+                <span className="font-mono text-xs text-muted-foreground/60 w-6 text-right">{i + 1}</span>
+                <Link to="/app/songs/$songId" params={{ songId: it.songs.id }} search={{ setlist: setlistId }} className="flex-1 min-w-0 hover:text-gold truncate">{it.songs.title}</Link>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-gold-soft text-gold">{it.songs.original_key}</span>
+                <button
+                  onClick={() => setExpanded((e) => ({ ...e, [it.id]: !e[it.id] }))}
+                  className={`p-1.5 hover:bg-accent rounded transition-colors ${hasMedia ? "text-gold" : "text-muted-foreground"}`}
+                  title="Trilha (Spotify / YouTube)"
+                >
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+                <button onClick={() => move(i, -1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowUp className="h-3.5 w-3.5" /></button>
+                <button onClick={() => move(i, +1)} className="p-1.5 hover:bg-accent rounded text-muted-foreground"><ArrowDown className="h-3.5 w-3.5" /></button>
+                <button onClick={() => remove(it.id)} className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+              </div>
+              {isOpen && (
+                <div className="px-4 pb-4 pt-1 bg-background/40">
+                  <MediaLinksEditor
+                    spotifyUrl={it.spotify_url}
+                    youtubeUrl={it.youtube_url}
+                    onSave={(v) => saveSongMedia(it.id, v)}
+                    compact
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
