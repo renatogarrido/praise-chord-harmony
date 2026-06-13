@@ -11,6 +11,7 @@ type AuthCtx = {
   canViewUsers: boolean;
   canManageLocalLeaders: boolean;
   canManageSchedule: boolean;
+  roles: string[];
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -24,6 +25,7 @@ const Ctx = createContext<AuthCtx>({
   canViewUsers: false, 
   canManageLocalLeaders: false, 
   canManageSchedule: false, 
+  roles: [],
   loading: true, 
   refreshProfile: async () => {},
   signOut: async () => {} 
@@ -64,6 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [canViewUsers, setCanViewUsers] = useState(false);
   const [canManageLocalLeaders, setCanManageLocalLeaders] = useState(false);
   const [canManageSchedule, setCanManageSchedule] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+
 
   const [loading, setLoading] = useState(true);
 
@@ -97,21 +101,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         viewUsers, 
         canManage, 
         manageSchedule,
+        roles,
         acceptedTerms: profile?.accepted_terms ?? false
       };
     } catch {
-      return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, acceptedTerms: true };
+      return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, roles: [], acceptedTerms: true };
     }
   }, []);
 
   const refreshProfile = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
+      const { admin, viewUsers, canManage, manageSchedule, roles, acceptedTerms } = await checkRolesAndProfile(user.id);
       setIsAdmin(admin);
       setCanViewUsers(viewUsers);
       setCanManageLocalLeaders(canManage);
       setCanManageSchedule(manageSchedule);
+      setRoles(roles);
       setAcceptedTerms(acceptedTerms);
     }
   }, [checkRolesAndProfile]);
@@ -151,11 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setSession(s);
         saveSession(s);
-        const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
+        const { admin, viewUsers, canManage, manageSchedule, roles, acceptedTerms } = await checkRolesAndProfile(user.id);
         setIsAdmin(admin);
         setCanViewUsers(viewUsers);
         setCanManageLocalLeaders(canManage);
         setCanManageSchedule(manageSchedule);
+        setRoles(roles);
         setAcceptedTerms(acceptedTerms);
       } catch (err) {
         console.error("Auth initialization error:", err);
@@ -197,11 +204,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             return;
           }
-          const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(s.user.id);
+          const { admin, viewUsers, canManage, manageSchedule, roles, acceptedTerms } = await checkRolesAndProfile(s.user.id);
           setIsAdmin(admin);
           setCanViewUsers(viewUsers);
           setCanManageLocalLeaders(canManage);
           setCanManageSchedule(manageSchedule);
+          setRoles(roles);
           setAcceptedTerms(acceptedTerms);
 
           // Limita usuários comuns a 2 dispositivos ativos (admins ilimitados)
@@ -227,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [checkRolesAndProfile]);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, refreshProfile, signOut }}>
+    <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, roles, loading, refreshProfile, signOut }}>
       {children}
 
     </Ctx.Provider>
