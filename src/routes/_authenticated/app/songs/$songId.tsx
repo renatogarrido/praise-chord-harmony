@@ -54,10 +54,24 @@ function SongView() {
     queryFn: async () => {
       const { data } = await supabase
         .from("setlist_songs")
-        .select("song_id, position")
+        .select("song_id, position, spotify_url, youtube_url")
         .eq("setlist_id", setlistId!)
         .order("position");
       return data ?? [];
+    },
+    enabled: !!setlistId,
+    staleTime: STALE,
+  });
+
+  const { data: setlistMedia } = useQuery({
+    queryKey: ["setlist-media", setlistId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("setlists")
+        .select("spotify_url, youtube_url")
+        .eq("id", setlistId!)
+        .maybeSingle();
+      return data;
     },
     enabled: !!setlistId,
     staleTime: STALE,
