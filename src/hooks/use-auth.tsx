@@ -1,7 +1,6 @@
-import { useEffect, useState, createContext, useContext, type ReactNode, useRef, useCallback } from "react";
+import { useEffect, useState, createContext, useContext, type ReactNode, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { enforceDeviceLimit } from "@/lib/device-limit.functions";
 
 type AuthCtx = {
@@ -30,8 +29,33 @@ const Ctx = createContext<AuthCtx>({
   signOut: async () => {} 
 });
 
+const SESSION_STORAGE_KEY = "cifras-praise-session";
 
-const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour in ms
+function saveSession(session: Session | null) {
+  if (typeof window === "undefined") return;
+  if (!session?.access_token || !session.refresh_token) {
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    return;
+  }
+  window.sessionStorage.setItem(
+    SESSION_STORAGE_KEY,
+    JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }),
+  );
+}
+
+function getSavedSessionTokens(): { access_token: string; refresh_token: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: string; refresh_token?: string };
+    if (!parsed.access_token || !parsed.refresh_token) return null;
+    return { access_token: parsed.access_token, refresh_token: parsed.refresh_token };
+  } catch {
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -42,18 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [canManageSchedule, setCanManageSchedule] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const lastActivityRef = useRef<number>(Date.now());
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const signOut = useCallback(async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    saveSession(null);
     // Use 'local' if you don't want to kick out other devices by default,
     // or keep 'global' if that was intended.
     await supabase.auth.signOut({ scope: 'local' });
-  }, []);
-
-  const resetInactivityTimer = useCallback(() => {
-    lastActivityRef.current = Date.now();
   }, []);
 
   const checkRolesAndProfile = useCallback(async (userId: string) => {
@@ -101,10 +119,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        const savedTokens = getSavedSessionTokens();
+        if (savedTokens) {
+          await supabase.auth.setSession(savedTokens);
+        }
+
         const { data: { session: s }, error } = await supabase.auth.getSession();
         if (error) throw error;
 
         if (!s) {
+          saveSession(null);
           setSession(null);
           setIsAdmin(false);
           setCanViewUsers(false);
@@ -115,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
+          saveSession(null);
           setSession(null);
           setIsAdmin(false);
           setCanViewUsers(false);
@@ -125,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setSession(s);
+        saveSession(s);
         const { admin, viewUsers, canManage, manageSchedule, acceptedTerms } = await checkRolesAndProfile(user.id);
         setIsAdmin(admin);
         setCanViewUsers(viewUsers);
@@ -133,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAcceptedTerms(acceptedTerms);
       } catch (err) {
         console.error("Auth initialization error:", err);
+        saveSession(null);
         setSession(null);
         setIsAdmin(false);
         setCanViewUsers(false);
@@ -155,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         setLoading(true);
         setSession(s);
+        saveSession(s);
         // Defer Supabase calls to evitar deadlock dentro do callback de auth
         setTimeout(async () => {
           const { data: { user }, error } = await supabase.auth.getUser();
@@ -183,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         }, 0);
       } else {
+        saveSession(null);
         setSession(null);
         setIsAdmin(false);
         setCanViewUsers(false);
@@ -196,29 +225,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [checkRolesAndProfile]);
-
-  useEffect(() => {
-    if (!session?.user) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
-
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
-    events.forEach(e => window.addEventListener(e, resetInactivityTimer));
-
-    timerRef.current = setInterval(() => {
-      const now = Date.now();
-      if (now - lastActivityRef.current > INACTIVITY_LIMIT) {
-        signOut();
-        toast.info("Sessão encerrada por inatividade.");
-      }
-    }, 60000); // Check every minute
-
-    return () => {
-      events.forEach(e => window.removeEventListener(e, resetInactivityTimer));
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [session, isAdmin, signOut, resetInactivityTimer]);
 
   return (
     <Ctx.Provider value={{ session, user: session?.user ?? null, isAdmin, acceptedTerms, canViewUsers, canManageLocalLeaders, canManageSchedule, loading, refreshProfile, signOut }}>
