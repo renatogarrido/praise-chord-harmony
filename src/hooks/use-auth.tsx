@@ -43,14 +43,14 @@ function saveSession(session: Session | null) {
   );
 }
 
-function getSavedSessionTokens() {
+function getSavedSessionTokens(): { access_token: string; refresh_token: string } | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { access_token?: string; refresh_token?: string };
     if (!parsed.access_token || !parsed.refresh_token) return null;
-    return parsed;
+    return { access_token: parsed.access_token, refresh_token: parsed.refresh_token };
   } catch {
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
     return null;
@@ -128,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
 
         if (!s) {
+          saveSession(null);
           setSession(null);
           setIsAdmin(false);
           setCanViewUsers(false);
@@ -138,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
+          saveSession(null);
           setSession(null);
           setIsAdmin(false);
           setCanViewUsers(false);
@@ -157,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAcceptedTerms(acceptedTerms);
       } catch (err) {
         console.error("Auth initialization error:", err);
+        saveSession(null);
         setSession(null);
         setIsAdmin(false);
         setCanViewUsers(false);
