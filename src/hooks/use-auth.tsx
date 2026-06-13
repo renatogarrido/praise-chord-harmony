@@ -101,10 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         viewUsers, 
         canManage, 
         manageSchedule,
+        roles,
         acceptedTerms: profile?.accepted_terms ?? false
       };
     } catch {
-      return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, acceptedTerms: true };
+      return { admin: false, viewUsers: false, canManage: false, manageSchedule: false, roles: [], acceptedTerms: true };
     }
   }, []);
 
