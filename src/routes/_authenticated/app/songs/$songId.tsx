@@ -374,6 +374,23 @@ function SongView() {
         )}
       </div>
 
+      {setlistId && (() => {
+        const current: any = setlistSongs.find((s: any) => s.song_id === songId);
+        const sp = current?.spotify_url || setlistMedia?.spotify_url;
+        const yt = current?.youtube_url || setlistMedia?.youtube_url;
+        if (!sp && !yt) return null;
+        return (
+          <div className="rounded-2xl border border-border bg-card/50 p-4 space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Trilha</p>
+            <div className={`grid gap-3 ${sp && yt ? "md:grid-cols-2" : "grid-cols-1"}`}>
+              {sp && <SpotifyEmbed url={sp} />}
+              {yt && <YouTubeEmbed url={yt} />}
+            </div>
+          </div>
+        );
+      })()}
+
+
       {/* Main Song Content */}
       <div className="relative group">
         <div 
