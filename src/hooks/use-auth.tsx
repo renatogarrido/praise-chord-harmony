@@ -11,6 +11,7 @@ type AuthCtx = {
   canViewUsers: boolean;
   canManageLocalLeaders: boolean;
   canManageSchedule: boolean;
+  roles: string[];
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -24,6 +25,7 @@ const Ctx = createContext<AuthCtx>({
   canViewUsers: false, 
   canManageLocalLeaders: false, 
   canManageSchedule: false, 
+  roles: [],
   loading: true, 
   refreshProfile: async () => {},
   signOut: async () => {} 
