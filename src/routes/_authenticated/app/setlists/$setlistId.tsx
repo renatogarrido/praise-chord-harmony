@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2, Share2, Search } from "lucide-react";
+import { ChevronLeft, Plus, ArrowUp, ArrowDown, X, Maximize2, Share2, Search, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { MediaLinksEditor } from "@/components/media-embed";
 
 export const Route = createFileRoute("/_authenticated/app/setlists/$setlistId")({ component: SetlistDetail });
 
@@ -12,6 +13,7 @@ function SetlistDetail() {
   const [items, setItems] = useState<any[]>([]);
   const [allSongs, setAllSongs] = useState<any[]>([]);
   const [songFilter, setSongFilter] = useState("");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     const { data: sl } = await supabase.from("setlists").select("*").eq("id", setlistId).maybeSingle();
@@ -19,6 +21,20 @@ function SetlistDetail() {
     const { data: songs } = await supabase.from("setlist_songs").select("*, songs(id,title,original_key)").eq("setlist_id", setlistId).order("position");
     setItems(songs ?? []);
   }, [setlistId]);
+
+  const saveSetlistMedia = async (v: { spotify_url: string | null; youtube_url: string | null }) => {
+    const { error } = await supabase.from("setlists").update(v).eq("id", setlistId);
+    if (error) { toast.error("Erro ao salvar links"); return; }
+    toast.success("Trilha do repertório atualizada");
+    load();
+  };
+
+  const saveSongMedia = async (id: string, v: { spotify_url: string | null; youtube_url: string | null }) => {
+    const { error } = await supabase.from("setlist_songs").update(v).eq("id", id);
+    if (error) { toast.error("Erro ao salvar links"); return; }
+    toast.success("Trilha da música atualizada");
+    load();
+  };
 
   useEffect(() => {
     load();
