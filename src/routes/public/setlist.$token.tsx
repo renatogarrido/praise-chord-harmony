@@ -9,6 +9,7 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 export const Route = createFileRoute("/public/setlist/$token")({ component: PublicSetlistView });
 
 function PublicSetlistView() {
+  useWakeLock(true);
   const { token } = Route.useParams();
   const fetchSetlist = useServerFn(getPublicSetlist);
   const [setlist, setSetlist] = useState<any>(null);
