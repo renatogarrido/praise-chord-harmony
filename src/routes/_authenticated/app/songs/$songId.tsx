@@ -9,6 +9,7 @@ import { ChevronLeft, Minus, Plus, Type, Maximize2, Play, Pause, Heart, StickyNo
 import { toast } from "sonner";
 import { useSwipeable } from "react-swipeable";
 import { SpotifyEmbed, YouTubeEmbed } from "@/components/media-embed";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 
 export const Route = createFileRoute("/_authenticated/app/songs/$songId")({ 
   component: SongView,
@@ -37,6 +38,7 @@ function SongView() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const rafRef = useRef<number | null>(null);
   const presentationRef = useRef<HTMLDivElement>(null);
+  useWakeLock(presenting);
 
   // Cifra (cache 5min — conteúdo muda raramente)
   const { data: song, isLoading: loading } = useQuery({
