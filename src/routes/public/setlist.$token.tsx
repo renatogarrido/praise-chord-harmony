@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getPublicSetlist } from "@/lib/public-setlist.functions";
 import { parseLine, transposeChord, ALL_KEYS, semitonesBetween } from "@/lib/chords";
 import { ChevronLeft, ChevronRight, Minus, Plus, Type, Play, Pause, X } from "lucide-react";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 
 export const Route = createFileRoute("/public/setlist/$token")({ component: PublicSetlistView });
 
