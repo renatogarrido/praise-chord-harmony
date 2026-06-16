@@ -486,6 +486,7 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
 function makeBlock(type: Block["type"]): Block {
   if (type === "todo") return { id: newId(), type, text: "", checked: false };
   if (type === "divider") return { id: newId(), type };
+  if (type === "image") return { id: newId(), type, url: "", caption: "" };
   return { id: newId(), type, text: "" } as Block;
 }
 
