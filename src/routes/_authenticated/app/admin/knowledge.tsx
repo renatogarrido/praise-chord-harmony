@@ -356,7 +356,6 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
   onDelete: () => void; onToggleFavorite: () => void; onAddChild: () => void;
 }) {
   const [localTitle, setLocalTitle] = useState(page.title);
-  const [localIcon, setLocalIcon] = useState(page.icon || "📄");
   const [blocks, setBlocks] = useState<Block[]>(Array.isArray(page.content) && page.content.length ? page.content : [{ id: newId(), type: "p", text: "" }]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
