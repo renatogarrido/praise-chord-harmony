@@ -220,10 +220,19 @@ function KnowledgePage() {
                     {roots.length === 0 ? (
                       <p className="text-[11px] text-muted-foreground/60 px-2">Sem páginas.</p>
                     ) : (
-                      roots.map((node) => (
-                        <TreeNode key={node.page.id} node={node} depth={0}
-                          selectedId={selectedId} onSelect={setSelectedId}
-                          onAddChild={(pid) => createPage(pid, node.page.scope)} />
+                      groupByDeptCat(roots).map((group) => (
+                        <div key={group.key} className="mb-2">
+                          {(group.department || group.category) && (
+                            <p className="text-[10px] text-muted-foreground/70 px-2 mt-1 mb-0.5 font-medium">
+                              {[group.department, group.category].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                          {group.nodes.map((node) => (
+                            <TreeNode key={node.page.id} node={node} depth={0}
+                              selectedId={selectedId} onSelect={setSelectedId}
+                              onAddChild={(pid) => createPage(pid, node.page.scope)} />
+                          ))}
+                        </div>
                       ))
                     )}
                   </div>
