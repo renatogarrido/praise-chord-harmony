@@ -24,7 +24,8 @@ type Scope = "personal" | "local" | "estadual" | "nacional" | "global";
 type Block =
   | { id: string; type: "p" | "h1" | "h2" | "h3" | "bullet" | "quote" | "code"; text: string }
   | { id: string; type: "todo"; text: string; checked: boolean }
-  | { id: string; type: "divider" };
+  | { id: string; type: "divider" }
+  | { id: string; type: "image"; url: string; caption?: string };
 
 type Page = {
   id: string;
@@ -38,6 +39,8 @@ type Page = {
   owner_id: string;
   position: number;
   updated_at: string;
+  category: string | null;
+  department: string | null;
 };
 
 const SCOPE_LABEL: Record<Scope, string> = {
