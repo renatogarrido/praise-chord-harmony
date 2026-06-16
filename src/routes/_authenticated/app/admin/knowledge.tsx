@@ -467,6 +467,7 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
               ["todo", "To-do", CheckSquare],
               ["quote", "Citação", Quote],
               ["code", "Código", Code],
+              ["image", "Imagem", ImageIcon],
               ["divider", "Divisor", Minus],
             ] as const).map(([t, label, Icon]) => (
               <Button key={t} variant="ghost" size="sm"
