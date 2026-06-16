@@ -384,9 +384,11 @@ export type Database = {
       }
       knowledge_pages: {
         Row: {
+          category: string | null
           church_name: string | null
           content: Json
           created_at: string
+          department: string | null
           estadual: string | null
           icon: string | null
           id: string
@@ -398,9 +400,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           church_name?: string | null
           content?: Json
           created_at?: string
+          department?: string | null
           estadual?: string | null
           icon?: string | null
           id?: string
@@ -412,9 +416,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           church_name?: string | null
           content?: Json
           created_at?: string
+          department?: string | null
           estadual?: string | null
           icon?: string | null
           id?: string

@@ -11,6 +11,7 @@ import {
 import {
   ChevronRight, ChevronDown, Plus, Trash2, Star, FileText,
   Heading1, Heading2, Heading3, List, CheckSquare, Quote, Code, Minus, Search, Loader2, BookOpen,
+  Image as ImageIcon, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,7 +24,8 @@ type Scope = "personal" | "local" | "estadual" | "nacional" | "global";
 type Block =
   | { id: string; type: "p" | "h1" | "h2" | "h3" | "bullet" | "quote" | "code"; text: string }
   | { id: string; type: "todo"; text: string; checked: boolean }
-  | { id: string; type: "divider" };
+  | { id: string; type: "divider" }
+  | { id: string; type: "image"; url: string; caption?: string };
 
 type Page = {
   id: string;
@@ -37,6 +39,8 @@ type Page = {
   owner_id: string;
   position: number;
   updated_at: string;
+  category: string | null;
+  department: string | null;
 };
 
 const SCOPE_LABEL: Record<Scope, string> = {
@@ -216,10 +220,19 @@ function KnowledgePage() {
                     {roots.length === 0 ? (
                       <p className="text-[11px] text-muted-foreground/60 px-2">Sem páginas.</p>
                     ) : (
-                      roots.map((node) => (
-                        <TreeNode key={node.page.id} node={node} depth={0}
-                          selectedId={selectedId} onSelect={setSelectedId}
-                          onAddChild={(pid) => createPage(pid, node.page.scope)} />
+                      groupByDeptCat(roots).map((group) => (
+                        <div key={group.key} className="mb-2">
+                          {(group.department || group.category) && (
+                            <p className="text-[10px] text-muted-foreground/70 px-2 mt-1 mb-0.5 font-medium">
+                              {[group.department, group.category].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                          {group.nodes.map((node) => (
+                            <TreeNode key={node.page.id} node={node} depth={0}
+                              selectedId={selectedId} onSelect={setSelectedId}
+                              onAddChild={(pid) => createPage(pid, node.page.scope)} />
+                          ))}
+                        </div>
                       ))
                     )}
                   </div>
@@ -270,6 +283,29 @@ function buildTree(pages: Page[]): Node[] {
   });
   return roots;
 }
+
+function groupByDeptCat(nodes: Node[]): { key: string; department: string | null; category: string | null; nodes: Node[] }[] {
+  const map = new Map<string, { department: string | null; category: string | null; nodes: Node[] }>();
+  for (const n of nodes) {
+    const dep = n.page.department || null;
+    const cat = n.page.category || null;
+    const key = `${dep ?? ""}|${cat ?? ""}`;
+    if (!map.has(key)) map.set(key, { department: dep, category: cat, nodes: [] });
+    map.get(key)!.nodes.push(n);
+  }
+  return Array.from(map.entries())
+    .map(([key, v]) => ({ key, ...v }))
+    .sort((a, b) => {
+      // Untagged ("" |"") goes last
+      const aEmpty = !a.department && !a.category;
+      const bEmpty = !b.department && !b.category;
+      if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+      return (a.department ?? "").localeCompare(b.department ?? "") ||
+             (a.category ?? "").localeCompare(b.category ?? "");
+    });
+}
+
+
 
 function TreeNode({ node, depth, selectedId, onSelect, onAddChild }: {
   node: Node; depth: number; selectedId: string | null;
@@ -382,14 +418,32 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
       </div>
 
       {canEdit && (
-        <div className="flex items-center gap-2 mb-6 text-xs">
+        <div className="flex flex-wrap items-center gap-2 mb-6 text-xs">
           <span className="text-muted-foreground">Visibilidade:</span>
           <Select value={page.scope} onValueChange={(v) => onChange({ scope: v as Scope })}>
-            <SelectTrigger className="h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {allowedScopes.map((s) => <SelectItem key={s} value={s}>{SCOPE_LABEL[s]}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Input
+            defaultValue={page.department ?? ""}
+            placeholder="Departamento"
+            className="h-8 w-40 text-xs"
+            onBlur={(e) => {
+              const v = e.target.value.trim() || null;
+              if (v !== (page.department ?? null)) onChange({ department: v } as any);
+            }}
+          />
+          <Input
+            defaultValue={page.category ?? ""}
+            placeholder="Categoria"
+            className="h-8 w-40 text-xs"
+            onBlur={(e) => {
+              const v = e.target.value.trim() || null;
+              if (v !== (page.category ?? null)) onChange({ category: v } as any);
+            }}
+          />
         </div>
       )}
 
@@ -413,6 +467,7 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
               ["todo", "To-do", CheckSquare],
               ["quote", "Citação", Quote],
               ["code", "Código", Code],
+              ["image", "Imagem", ImageIcon],
               ["divider", "Divisor", Minus],
             ] as const).map(([t, label, Icon]) => (
               <Button key={t} variant="ghost" size="sm"
@@ -431,6 +486,7 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
 function makeBlock(type: Block["type"]): Block {
   if (type === "todo") return { id: newId(), type, text: "", checked: false };
   if (type === "divider") return { id: newId(), type };
+  if (type === "image") return { id: newId(), type, url: "", caption: "" };
   return { id: newId(), type, text: "" } as Block;
 }
 
@@ -456,6 +512,12 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
         <hr className="flex-1 border-border" />
         {!disabled && <button onClick={onDelete} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>}
       </div>
+    );
+  }
+
+  if (block.type === "image") {
+    return (
+      <ImageBlock block={block} disabled={disabled} onChange={onChange} onDelete={onDelete} />
     );
   }
 
@@ -525,3 +587,86 @@ function placeholderFor(t: Block["type"]) {
     default: return "Escreva algo...";
   }
 }
+
+function ImageBlock({ block, disabled, onChange, onDelete }: {
+  block: Extract<Block, { type: "image" }>;
+  disabled: boolean;
+  onChange: (patch: Partial<Block>) => void;
+  onDelete: () => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!block.url) { setSignedUrl(null); return; }
+      const { data } = await supabase.storage.from("knowledge-images").createSignedUrl(block.url, 3600);
+      if (!cancelled) setSignedUrl(data?.signedUrl ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [block.url]);
+
+  const onPick = async (file: File) => {
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u.user?.id;
+    if (!uid) return toast.error("Sessão expirada.");
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("knowledge-images").upload(path, file, { upsert: false });
+    setUploading(false);
+    if (error) return toast.error("Falha no upload", { description: error.message });
+    onChange({ url: path } as any);
+  };
+
+  return (
+    <div className="group py-2">
+      {signedUrl ? (
+        <figure className="relative">
+          <img src={signedUrl} alt={block.caption || ""} className="rounded-lg max-h-[480px] w-auto mx-auto" />
+          {!disabled && (
+            <button onClick={onDelete}
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-background/80 rounded p-1 text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {!disabled ? (
+            <input
+              defaultValue={block.caption ?? ""}
+              placeholder="Legenda (opcional)"
+              className="mt-2 w-full text-xs text-center bg-transparent border-none outline-none text-muted-foreground"
+              onBlur={(e) => onChange({ caption: e.target.value } as any)}
+            />
+          ) : block.caption ? (
+            <figcaption className="mt-2 text-xs text-center text-muted-foreground">{block.caption}</figcaption>
+          ) : null}
+        </figure>
+      ) : (
+        !disabled && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-full flex items-center justify-center gap-2 py-8 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:bg-accent/30"
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {uploading ? "Enviando..." : "Clique para enviar uma imagem"}
+          </button>
+        )
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
