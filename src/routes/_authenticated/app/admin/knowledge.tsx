@@ -11,9 +11,10 @@ import {
 import {
   ChevronRight, ChevronDown, Plus, Trash2, Star, FileText,
   Heading1, Heading2, Heading3, List, CheckSquare, Quote, Code, Minus, Search, Loader2, BookOpen,
-  Image as ImageIcon, Upload,
+  Image as ImageIcon, Upload, Smile,
 } from "lucide-react";
 import { toast } from "sonner";
+import { IconPicker } from "@/components/icon-picker";
 
 
 export const Route = createFileRoute("/_authenticated/app/admin/knowledge")({
