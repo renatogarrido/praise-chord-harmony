@@ -418,14 +418,32 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
       </div>
 
       {canEdit && (
-        <div className="flex items-center gap-2 mb-6 text-xs">
+        <div className="flex flex-wrap items-center gap-2 mb-6 text-xs">
           <span className="text-muted-foreground">Visibilidade:</span>
           <Select value={page.scope} onValueChange={(v) => onChange({ scope: v as Scope })}>
-            <SelectTrigger className="h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {allowedScopes.map((s) => <SelectItem key={s} value={s}>{SCOPE_LABEL[s]}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Input
+            defaultValue={page.department ?? ""}
+            placeholder="Departamento"
+            className="h-8 w-40 text-xs"
+            onBlur={(e) => {
+              const v = e.target.value.trim() || null;
+              if (v !== (page.department ?? null)) onChange({ department: v } as any);
+            }}
+          />
+          <Input
+            defaultValue={page.category ?? ""}
+            placeholder="Categoria"
+            className="h-8 w-40 text-xs"
+            onBlur={(e) => {
+              const v = e.target.value.trim() || null;
+              if (v !== (page.category ?? null)) onChange({ category: v } as any);
+            }}
+          />
         </div>
       )}
 
