@@ -23,6 +23,7 @@ const scaleLinks = [
 
 const profileLinks = [
   { to: "/app/profile", label: "Meu Perfil", icon: UserCircle },
+  { to: "/app/admin/knowledge", label: "Base", icon: BookOpen },
   { to: "/app/support", label: "Suporte", icon: LifeBuoy },
 ];
 
