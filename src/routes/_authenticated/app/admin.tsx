@@ -12,7 +12,8 @@ function AdminLayout() {
   
   // Dashboard access for admins and leaders (who can manage schedule/view users)
   const isLeader = canViewUsers || canManageSchedule;
-  const canAccessRoute = isAdmin || (isLeader && pathname === "/app/admin") || (canViewUsers && pathname === "/app/admin/users");
+  const isKnowledge = pathname.startsWith("/app/admin/knowledge");
+  const canAccessRoute = isAdmin || isKnowledge || (isLeader && pathname === "/app/admin") || (canViewUsers && pathname === "/app/admin/users");
   
   useEffect(() => { 
     if (!loading && !canAccessRoute) nav({ to: "/app/albums" }); 

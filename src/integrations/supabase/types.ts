@@ -356,6 +356,85 @@ export type Database = {
           },
         ]
       }
+      knowledge_favorites: {
+        Row: {
+          created_at: string
+          page_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          page_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          page_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_favorites_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_pages: {
+        Row: {
+          church_name: string | null
+          content: Json
+          created_at: string
+          estadual: string | null
+          icon: string | null
+          id: string
+          owner_id: string
+          parent_id: string | null
+          position: number
+          scope: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          church_name?: string | null
+          content?: Json
+          created_at?: string
+          estadual?: string | null
+          icon?: string | null
+          id?: string
+          owner_id: string
+          parent_id?: string | null
+          position?: number
+          scope?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          church_name?: string | null
+          content?: Json
+          created_at?: string
+          estadual?: string | null
+          icon?: string | null
+          id?: string
+          owner_id?: string
+          parent_id?: string | null
+          position?: number
+          scope?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_pages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_availability: {
         Row: {
           created_at: string

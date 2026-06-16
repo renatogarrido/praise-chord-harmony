@@ -48,6 +48,7 @@ import { Route as AuthenticatedAppAdminTechnicalCategoriesRouteImport } from './
 import { Route as AuthenticatedAppAdminSupportRouteImport } from './routes/_authenticated/app/admin/support'
 import { Route as AuthenticatedAppAdminSongsRouteImport } from './routes/_authenticated/app/admin/songs'
 import { Route as AuthenticatedAppAdminSettingsRouteImport } from './routes/_authenticated/app/admin/settings'
+import { Route as AuthenticatedAppAdminKnowledgeRouteImport } from './routes/_authenticated/app/admin/knowledge'
 import { Route as AuthenticatedAppAdminInstrumentsRouteImport } from './routes/_authenticated/app/admin/instruments'
 import { Route as AuthenticatedAppAdminChurchesRouteImport } from './routes/_authenticated/app/admin/churches'
 import { Route as AuthenticatedAppAdminAlbumsRouteImport } from './routes/_authenticated/app/admin/albums'
@@ -268,6 +269,12 @@ const AuthenticatedAppAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminKnowledgeRoute =
+  AuthenticatedAppAdminKnowledgeRouteImport.update({
+    id: '/knowledge',
+    path: '/knowledge',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminInstrumentsRoute =
   AuthenticatedAppAdminInstrumentsRouteImport.update({
     id: '/instruments',
@@ -308,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
   '/app/admin/churches': typeof AuthenticatedAppAdminChurchesRoute
   '/app/admin/instruments': typeof AuthenticatedAppAdminInstrumentsRoute
+  '/app/admin/knowledge': typeof AuthenticatedAppAdminKnowledgeRoute
   '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
@@ -349,6 +357,7 @@ export interface FileRoutesByTo {
   '/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
   '/app/admin/churches': typeof AuthenticatedAppAdminChurchesRoute
   '/app/admin/instruments': typeof AuthenticatedAppAdminInstrumentsRoute
+  '/app/admin/knowledge': typeof AuthenticatedAppAdminKnowledgeRoute
   '/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
@@ -394,6 +403,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/albums': typeof AuthenticatedAppAdminAlbumsRoute
   '/_authenticated/app/admin/churches': typeof AuthenticatedAppAdminChurchesRoute
   '/_authenticated/app/admin/instruments': typeof AuthenticatedAppAdminInstrumentsRoute
+  '/_authenticated/app/admin/knowledge': typeof AuthenticatedAppAdminKnowledgeRoute
   '/_authenticated/app/admin/settings': typeof AuthenticatedAppAdminSettingsRoute
   '/_authenticated/app/admin/songs': typeof AuthenticatedAppAdminSongsRoute
   '/_authenticated/app/admin/support': typeof AuthenticatedAppAdminSupportRoute
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/app/admin/albums'
     | '/app/admin/churches'
     | '/app/admin/instruments'
+    | '/app/admin/knowledge'
     | '/app/admin/settings'
     | '/app/admin/songs'
     | '/app/admin/support'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/app/admin/albums'
     | '/app/admin/churches'
     | '/app/admin/instruments'
+    | '/app/admin/knowledge'
     | '/app/admin/settings'
     | '/app/admin/songs'
     | '/app/admin/support'
@@ -524,6 +536,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/albums'
     | '/_authenticated/app/admin/churches'
     | '/_authenticated/app/admin/instruments'
+    | '/_authenticated/app/admin/knowledge'
     | '/_authenticated/app/admin/settings'
     | '/_authenticated/app/admin/songs'
     | '/_authenticated/app/admin/support'
@@ -839,6 +852,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/knowledge': {
+      id: '/_authenticated/app/admin/knowledge'
+      path: '/knowledge'
+      fullPath: '/app/admin/knowledge'
+      preLoaderRoute: typeof AuthenticatedAppAdminKnowledgeRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/instruments': {
       id: '/_authenticated/app/admin/instruments'
       path: '/instruments'
@@ -867,6 +887,7 @@ interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminAlbumsRoute: typeof AuthenticatedAppAdminAlbumsRoute
   AuthenticatedAppAdminChurchesRoute: typeof AuthenticatedAppAdminChurchesRoute
   AuthenticatedAppAdminInstrumentsRoute: typeof AuthenticatedAppAdminInstrumentsRoute
+  AuthenticatedAppAdminKnowledgeRoute: typeof AuthenticatedAppAdminKnowledgeRoute
   AuthenticatedAppAdminSettingsRoute: typeof AuthenticatedAppAdminSettingsRoute
   AuthenticatedAppAdminSongsRoute: typeof AuthenticatedAppAdminSongsRoute
   AuthenticatedAppAdminSupportRoute: typeof AuthenticatedAppAdminSupportRoute
@@ -880,6 +901,7 @@ const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
   AuthenticatedAppAdminAlbumsRoute: AuthenticatedAppAdminAlbumsRoute,
   AuthenticatedAppAdminChurchesRoute: AuthenticatedAppAdminChurchesRoute,
   AuthenticatedAppAdminInstrumentsRoute: AuthenticatedAppAdminInstrumentsRoute,
+  AuthenticatedAppAdminKnowledgeRoute: AuthenticatedAppAdminKnowledgeRoute,
   AuthenticatedAppAdminSettingsRoute: AuthenticatedAppAdminSettingsRoute,
   AuthenticatedAppAdminSongsRoute: AuthenticatedAppAdminSongsRoute,
   AuthenticatedAppAdminSupportRoute: AuthenticatedAppAdminSupportRoute,
