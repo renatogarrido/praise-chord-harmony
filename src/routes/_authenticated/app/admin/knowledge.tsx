@@ -13,7 +13,7 @@ import {
   Heading1, Heading2, Heading3, List, CheckSquare, Quote, Code, Minus, Search, Loader2, BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
+
 
 export const Route = createFileRoute("/_authenticated/app/admin/knowledge")({
   component: KnowledgePage,
