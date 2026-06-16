@@ -303,6 +303,9 @@ function groupByDeptCat(nodes: Node[]): { key: string; department: string | null
       return (a.department ?? "").localeCompare(b.department ?? "") ||
              (a.category ?? "").localeCompare(b.category ?? "");
     });
+}
+
+
 
 function TreeNode({ node, depth, selectedId, onSelect, onAddChild }: {
   node: Node; depth: number; selectedId: string | null;
