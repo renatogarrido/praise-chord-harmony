@@ -50,7 +50,10 @@ const SCOPE_LABEL: Record<Scope, string> = {
 const newId = () => crypto.randomUUID();
 
 function KnowledgePage() {
-  const { user, isAdmin, isNacional, isEstadual, isLocal } = useAuth() as any;
+  const { user, isAdmin, roles } = useAuth();
+  const isNacional = roles.includes("lider_nacional");
+  const isEstadual = roles.includes("lider_estadual");
+  const isLocal = roles.includes("lider_local");
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
