@@ -406,10 +406,12 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
       </div>
 
       <div className="flex items-start gap-3 mb-6">
-        <input value={localIcon} onChange={(e) => setLocalIcon(e.target.value.slice(0, 2))}
-          onBlur={() => canEdit && localIcon !== page.icon && onChange({ icon: localIcon })}
-          disabled={!canEdit}
-          className="text-4xl w-14 bg-transparent border-none outline-none" />
+        <IconPicker value={page.icon} onChange={(v) => canEdit && onChange({ icon: v })}>
+          <button type="button" disabled={!canEdit}
+            className="text-4xl w-14 h-14 grid place-items-center rounded hover:bg-accent transition-colors disabled:cursor-default">
+            {page.icon || "📄"}
+          </button>
+        </IconPicker>
         <input value={localTitle} onChange={(e) => setLocalTitle(e.target.value)}
           onBlur={() => canEdit && localTitle !== page.title && onChange({ title: localTitle || "Sem título" })}
           disabled={!canEdit}
