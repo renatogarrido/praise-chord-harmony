@@ -515,6 +515,12 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
     );
   }
 
+  if (block.type === "image") {
+    return (
+      <ImageBlock block={block} disabled={disabled} onChange={onChange} onDelete={onDelete} />
+    );
+  }
+
   const baseTextarea = "w-full bg-transparent border-none outline-none resize-none px-2 py-1 rounded hover:bg-accent/30 focus:bg-accent/30";
   const styles: Record<string, string> = {
     h1: "text-3xl font-serif font-semibold",
