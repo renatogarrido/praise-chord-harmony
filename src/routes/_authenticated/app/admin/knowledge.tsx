@@ -284,6 +284,26 @@ function buildTree(pages: Page[]): Node[] {
   return roots;
 }
 
+function groupByDeptCat(nodes: Node[]): { key: string; department: string | null; category: string | null; nodes: Node[] }[] {
+  const map = new Map<string, { department: string | null; category: string | null; nodes: Node[] }>();
+  for (const n of nodes) {
+    const dep = n.page.department || null;
+    const cat = n.page.category || null;
+    const key = `${dep ?? ""}|${cat ?? ""}`;
+    if (!map.has(key)) map.set(key, { department: dep, category: cat, nodes: [] });
+    map.get(key)!.nodes.push(n);
+  }
+  return Array.from(map.entries())
+    .map(([key, v]) => ({ key, ...v }))
+    .sort((a, b) => {
+      // Untagged ("" |"") goes last
+      const aEmpty = !a.department && !a.category;
+      const bEmpty = !b.department && !b.category;
+      if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+      return (a.department ?? "").localeCompare(b.department ?? "") ||
+             (a.category ?? "").localeCompare(b.category ?? "");
+    });
+
 function TreeNode({ node, depth, selectedId, onSelect, onAddChild }: {
   node: Node; depth: number; selectedId: string | null;
   onSelect: (id: string) => void; onAddChild: (pid: string) => void;
