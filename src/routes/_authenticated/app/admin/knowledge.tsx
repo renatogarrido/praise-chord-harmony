@@ -11,9 +11,10 @@ import {
 import {
   ChevronRight, ChevronDown, Plus, Trash2, Star, FileText,
   Heading1, Heading2, Heading3, List, CheckSquare, Quote, Code, Minus, Search, Loader2, BookOpen,
-  Image as ImageIcon, Upload,
+  Image as ImageIcon, Upload, Smile,
 } from "lucide-react";
 import { toast } from "sonner";
+import { IconPicker } from "@/components/icon-picker";
 
 
 export const Route = createFileRoute("/_authenticated/app/admin/knowledge")({
@@ -355,7 +356,6 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
   onDelete: () => void; onToggleFavorite: () => void; onAddChild: () => void;
 }) {
   const [localTitle, setLocalTitle] = useState(page.title);
-  const [localIcon, setLocalIcon] = useState(page.icon || "📄");
   const [blocks, setBlocks] = useState<Block[]>(Array.isArray(page.content) && page.content.length ? page.content : [{ id: newId(), type: "p", text: "" }]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -406,10 +406,12 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
       </div>
 
       <div className="flex items-start gap-3 mb-6">
-        <input value={localIcon} onChange={(e) => setLocalIcon(e.target.value.slice(0, 2))}
-          onBlur={() => canEdit && localIcon !== page.icon && onChange({ icon: localIcon })}
-          disabled={!canEdit}
-          className="text-4xl w-14 bg-transparent border-none outline-none" />
+        <IconPicker value={page.icon} onChange={(v) => canEdit && onChange({ icon: v })}>
+          <button type="button" disabled={!canEdit}
+            className="text-4xl w-14 h-14 grid place-items-center rounded hover:bg-accent transition-colors disabled:cursor-default">
+            {page.icon || "📄"}
+          </button>
+        </IconPicker>
         <input value={localTitle} onChange={(e) => setLocalTitle(e.target.value)}
           onBlur={() => canEdit && localTitle !== page.title && onChange({ title: localTitle || "Sem título" })}
           disabled={!canEdit}
@@ -553,6 +555,15 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
       />
       {!disabled && (
         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 pt-1">
+          <IconPicker
+            value={null}
+            allowRemove={false}
+            onChange={(v) => v && onChange({ text: ((block as any).text ?? "") + v } as any)}
+          >
+            <button type="button" className="text-muted-foreground hover:text-gold" title="Inserir emoji">
+              <Smile className="h-3.5 w-3.5" />
+            </button>
+          </IconPicker>
           <Select value={block.type} onValueChange={(v) => onChangeType(v as any)}>
             <SelectTrigger className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
