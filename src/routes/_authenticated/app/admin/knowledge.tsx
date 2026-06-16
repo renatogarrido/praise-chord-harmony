@@ -555,6 +555,15 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
       />
       {!disabled && (
         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 pt-1">
+          <IconPicker
+            value={null}
+            allowRemove={false}
+            onChange={(v) => v && onChange({ text: ((block as any).text ?? "") + v } as any)}
+          >
+            <button type="button" className="text-muted-foreground hover:text-gold" title="Inserir emoji">
+              <Smile className="h-3.5 w-3.5" />
+            </button>
+          </IconPicker>
           <Select value={block.type} onValueChange={(v) => onChangeType(v as any)}>
             <SelectTrigger className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
