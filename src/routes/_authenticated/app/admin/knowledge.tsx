@@ -587,3 +587,86 @@ function placeholderFor(t: Block["type"]) {
     default: return "Escreva algo...";
   }
 }
+
+function ImageBlock({ block, disabled, onChange, onDelete }: {
+  block: Extract<Block, { type: "image" }>;
+  disabled: boolean;
+  onChange: (patch: Partial<Block>) => void;
+  onDelete: () => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!block.url) { setSignedUrl(null); return; }
+      const { data } = await supabase.storage.from("knowledge-images").createSignedUrl(block.url, 3600);
+      if (!cancelled) setSignedUrl(data?.signedUrl ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [block.url]);
+
+  const onPick = async (file: File) => {
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u.user?.id;
+    if (!uid) return toast.error("Sessão expirada.");
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("knowledge-images").upload(path, file, { upsert: false });
+    setUploading(false);
+    if (error) return toast.error("Falha no upload", { description: error.message });
+    onChange({ url: path } as any);
+  };
+
+  return (
+    <div className="group py-2">
+      {signedUrl ? (
+        <figure className="relative">
+          <img src={signedUrl} alt={block.caption || ""} className="rounded-lg max-h-[480px] w-auto mx-auto" />
+          {!disabled && (
+            <button onClick={onDelete}
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-background/80 rounded p-1 text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {!disabled ? (
+            <input
+              defaultValue={block.caption ?? ""}
+              placeholder="Legenda (opcional)"
+              className="mt-2 w-full text-xs text-center bg-transparent border-none outline-none text-muted-foreground"
+              onBlur={(e) => onChange({ caption: e.target.value } as any)}
+            />
+          ) : block.caption ? (
+            <figcaption className="mt-2 text-xs text-center text-muted-foreground">{block.caption}</figcaption>
+          ) : null}
+        </figure>
+      ) : (
+        !disabled && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-full flex items-center justify-center gap-2 py-8 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:bg-accent/30"
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {uploading ? "Enviando..." : "Clique para enviar uma imagem"}
+          </button>
+        )
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
