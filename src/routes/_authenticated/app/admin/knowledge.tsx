@@ -11,6 +11,7 @@ import {
 import {
   ChevronRight, ChevronDown, Plus, Trash2, Star, FileText,
   Heading1, Heading2, Heading3, List, CheckSquare, Quote, Code, Minus, Search, Loader2, BookOpen,
+  Image as ImageIcon, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
