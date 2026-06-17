@@ -607,6 +607,7 @@ function ImageBlock({ block, disabled, onChange, onDelete }: {
 }) {
   const [uploading, setUploading] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -636,7 +637,22 @@ function ImageBlock({ block, disabled, onChange, onDelete }: {
     <div className="group py-2">
       {signedUrl ? (
         <figure className="relative">
-          <img src={signedUrl} alt={block.caption || ""} className="rounded-lg max-h-[480px] w-auto mx-auto" />
+          <img
+            src={signedUrl}
+            alt={block.caption || ""}
+            onClick={() => setZoom(true)}
+            className="rounded-lg max-h-[480px] w-auto mx-auto cursor-zoom-in transition-transform hover:scale-[1.01]"
+          />
+          {zoom && (
+            <div
+              role="dialog"
+              onClick={() => setZoom(false)}
+              className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4 cursor-zoom-out animate-in fade-in"
+            >
+              <img src={signedUrl} alt={block.caption || ""} className="max-h-[92vh] max-w-[95vw] object-contain rounded-md" />
+              {block.caption && <p className="mt-3 text-xs text-white/80">{block.caption}</p>}
+            </div>
+          )}
           {!disabled && (
             <button onClick={onDelete}
               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-background/80 rounded p-1 text-muted-foreground hover:text-destructive">
