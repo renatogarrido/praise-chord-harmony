@@ -607,6 +607,7 @@ function ImageBlock({ block, disabled, onChange, onDelete }: {
 }) {
   const [uploading, setUploading] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
