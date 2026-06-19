@@ -544,13 +544,23 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
           className="mt-2.5 ml-2" />
       )}
       <Textarea
+        ref={(el) => {
+          if (el) {
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+          }
+        }}
         value={(block as any).text}
         disabled={disabled}
-        onChange={(e) => onChange({ text: e.target.value } as any)}
+        onChange={(e) => {
+          e.target.style.height = "auto";
+          e.target.style.height = e.target.scrollHeight + "px";
+          onChange({ text: e.target.value } as any);
+        }}
         onKeyDown={onKeyDown}
         placeholder={placeholderFor(block.type)}
         rows={1}
-        className={`${baseTextarea} ${styles[block.type] ?? ""} ${(block as any).checked ? "line-through text-muted-foreground" : ""}`}
+        className={`${baseTextarea} ${styles[block.type] ?? ""} ${(block as any).checked ? "line-through text-muted-foreground" : ""} overflow-hidden`}
         style={{ minHeight: block.type === "code" ? 80 : undefined }}
       />
       {!disabled && (
