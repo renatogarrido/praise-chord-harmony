@@ -528,11 +528,11 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
     h1: "text-3xl font-serif font-semibold",
     h2: "text-2xl font-serif font-semibold",
     h3: "text-xl font-serif font-semibold",
-    p: "text-base",
-    bullet: "text-base pl-6 relative before:content-['•'] before:absolute before:left-2",
-    quote: "text-base italic border-l-2 border-gold pl-3",
-    code: "text-sm font-mono bg-muted/50 rounded p-3",
-    todo: "text-base flex-1",
+    p: "text-lg leading-relaxed",
+    bullet: "text-lg leading-relaxed pl-6 relative before:content-['•'] before:absolute before:left-2",
+    quote: "text-lg leading-relaxed italic border-l-2 border-gold pl-3",
+    code: "text-base font-mono bg-muted/50 rounded p-3",
+    todo: "text-lg leading-relaxed flex-1",
   };
 
   return (
