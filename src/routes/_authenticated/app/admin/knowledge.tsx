@@ -498,6 +498,18 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
   onDelete: () => void; onEnter: () => void;
   onChangeType: (t: Block["type"]) => void;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const textValue = (block as any).text ?? "";
+
+  const resizeTextarea = (el: HTMLTextAreaElement) => {
+    el.style.height = "0px";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    if (textareaRef.current) resizeTextarea(textareaRef.current);
+  }, [textValue, block.type]);
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && block.type !== "code") {
       e.preventDefault();
@@ -544,24 +556,18 @@ function BlockEditor({ block, disabled, onChange, onDelete, onEnter, onChangeTyp
           className="mt-2.5 ml-2" />
       )}
       <Textarea
-        ref={(el) => {
-          if (el) {
-            el.style.height = "auto";
-            el.style.height = el.scrollHeight + "px";
-          }
-        }}
-        value={(block as any).text}
+        ref={textareaRef}
+        value={textValue}
         disabled={disabled}
         onChange={(e) => {
-          e.target.style.height = "auto";
-          e.target.style.height = e.target.scrollHeight + "px";
+          resizeTextarea(e.target);
           onChange({ text: e.target.value } as any);
         }}
         onKeyDown={onKeyDown}
         placeholder={placeholderFor(block.type)}
         rows={1}
         className={`${baseTextarea} ${styles[block.type] ?? ""} ${(block as any).checked ? "line-through text-muted-foreground" : ""} overflow-hidden`}
-        style={{ minHeight: block.type === "code" ? 80 : undefined }}
+        style={{ minHeight: block.type === "code" ? 80 : undefined, overflowY: "hidden" }}
       />
       {!disabled && (
         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 pt-1">
