@@ -383,7 +383,7 @@ function PageEditor({ page, allowedScopes, isFavorite, canEdit, onChange, onDele
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 md:px-10 py-8">
+    <div className="w-full max-w-[1400px] mx-auto px-6 md:px-12 py-8">
       <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
         <span className="px-2 py-0.5 rounded bg-muted">{SCOPE_LABEL[page.scope]}</span>
         {page.scope === "local" && page.church_name && <span>· {page.church_name}</span>}
